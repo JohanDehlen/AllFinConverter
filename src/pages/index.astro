@@ -1,20 +1,25 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import '../styles/global.css';
+import ConverterPlaceholder from '../components/ConverterPlaceholder.astro';
+import AssetCategories from '../components/AssetCategories.astro';
 ---
 
 <BaseLayout
-  title="WorthPair"
-  description="Currency, Crypto & Precious Metals Converter"
+  title="WorthPair — Currency, Crypto & Precious Metals Converter"
+  description="Currency, Crypto & Precious Metals Converter. The fastest way to convert anything financial into anything else."
 >
-  <main class="container">
-    <header class="hero">
-      <h1 class="site-title">WorthPair</h1>
-      <p class="site-description">Currency, Crypto & Precious Metals Converter</p>
-    </header>
+  <main class="page-main">
+    <div class="content-container">
+      <section class="hero-section" aria-label="Introduction">
+        <h1 class="hero-title">Currency, Crypto & Precious Metals Converter</h1>
+        <p class="hero-tagline">
+          The fastest way to convert anything financial into anything else.
+        </p>
+      </section>
 
-    <section class="status-card" aria-label="Development Status">
-      <p class="status-badge">Foundation build in progress.</p>
-    </section>
+      <ConverterPlaceholder />
+
+      <AssetCategories />
+    </div>
   </main>
 </BaseLayout>

@@ -1,0 +1,92 @@
+---
+---
+
+<section class="converter-wrapper" aria-labelledby="converter-heading">
+  <div class="converter-card">
+    <div class="converter-card-header">
+      <span id="converter-heading" class="converter-title">Convert Financial Assets</span>
+      <span class="demo-badge" role="status">
+        <span class="demo-dot" aria-hidden="true"></span>
+        Demo &mdash; rates not connected
+      </span>
+    </div>
+
+    <div class="converter-card-body">
+      <!-- From Block -->
+      <div class="converter-unit">
+        <div class="unit-header">
+          <label for="amount-from" class="unit-label">Amount</label>
+          <span class="unit-badge">FIAT</span>
+        </div>
+        <div class="unit-inputs">
+          <div class="amount-field-wrapper">
+            <input
+              id="amount-from"
+              type="text"
+              class="amount-input"
+              value="1,000"
+              disabled
+              aria-label="Source amount placeholder"
+            />
+          </div>
+          <div class="asset-field-wrapper">
+            <select id="asset-from" class="asset-select" disabled aria-label="Source asset">
+              <option value="USD" selected>USD &bull; US Dollar</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Swap Control -->
+      <div class="swap-divider">
+        <button
+          type="button"
+          class="swap-btn"
+          disabled
+          aria-label="Swap source and target assets (disabled in demo)"
+          title="Swap assets (disabled in demo)"
+        >
+          <svg class="swap-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="7" y1="9" x2="17" y2="9"></line>
+            <polyline points="13 5 17 9 13 13"></polyline>
+            <line x1="17" y1="15" x2="7" y2="15"></line>
+            <polyline points="11 19 7 15 11 11"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- To Block -->
+      <div class="converter-unit">
+        <div class="unit-header">
+          <label for="amount-to" class="unit-label">Converted to (estimate)</label>
+          <span class="unit-badge">FIAT</span>
+        </div>
+        <div class="unit-inputs">
+          <div class="amount-field-wrapper">
+            <input
+              id="amount-to"
+              type="text"
+              class="amount-input"
+              value="920.00"
+              disabled
+              aria-label="Destination amount placeholder"
+            />
+          </div>
+          <div class="asset-field-wrapper">
+            <select id="asset-to" class="asset-select" disabled aria-label="Destination asset">
+              <option value="EUR" selected>EUR &bull; Euro</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Converted Result Display -->
+      <div class="conversion-summary" aria-live="polite">
+        <div class="summary-rate">
+          <span class="summary-calculation">1,000 USD = 920.00 EUR</span>
+        </div>
+        <p class="summary-disclaimer">Placeholder rate for interface preview &bull; Live rates not connected</p>
+      </div>
+    </div>
+  </div>
+</section>
