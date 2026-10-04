@@ -12,51 +12,49 @@
 
 import Big from 'big.js';
 
-export type AssetCategory = 'fiat' | 'crypto' | 'commodity';
-
-export interface Asset {
-  code: string;
-  name: string;
-  category: AssetCategory;
-  ratePerUsd: string; // Fictional normalized rate: 1 USD = X units
-}
-
 /**
- * Fictional mock asset dataset for milestone M1.0.
+ * Fictional mock rate dataset for milestone M1.1.
  * Plausible demo numbers for realistic UI testing; entirely local and offline.
+ * Covers all 19 supported assets across Fiat, Crypto, and Precious Metals.
  */
-export const MOCK_ASSETS: readonly Asset[] = [
-  // Required Fiat Currencies
-  { code: 'USD', name: 'US Dollar', category: 'fiat', ratePerUsd: '1' },
-  { code: 'EUR', name: 'Euro', category: 'fiat', ratePerUsd: '0.92' },
-  { code: 'GBP', name: 'British Pound', category: 'fiat', ratePerUsd: '0.79' },
-  { code: 'JPY', name: 'Japanese Yen', category: 'fiat', ratePerUsd: '155.0' },
-  { code: 'CHF', name: 'Swiss Franc', category: 'fiat', ratePerUsd: '0.90' },
-  { code: 'CAD', name: 'Canadian Dollar', category: 'fiat', ratePerUsd: '1.36' },
-  { code: 'AUD', name: 'Australian Dollar', category: 'fiat', ratePerUsd: '1.52' },
-  { code: 'ZAR', name: 'South African Rand', category: 'fiat', ratePerUsd: '18.25' },
-  { code: 'INR', name: 'Indian Rupee', category: 'fiat', ratePerUsd: '83.50' },
-  { code: 'AED', name: 'UAE Dirham', category: 'fiat', ratePerUsd: '3.67' },
+export const MOCK_RATES: Readonly<Record<string, string>> = {
+  // Fiat Currencies (units per 1 USD)
+  USD: '1',
+  EUR: '0.92',
+  GBP: '0.79',
+  JPY: '155.0',
+  CHF: '0.90',
+  CAD: '1.36',
+  AUD: '1.52',
+  ZAR: '18.25',
+  INR: '83.50',
+  AED: '3.67',
 
-  // Additional Demo Assets for WorthPair multi-asset concept (Crypto & Precious Metals)
-  { code: 'BTC', name: 'Bitcoin', category: 'crypto', ratePerUsd: '0.000015' },
-  { code: 'XAU', name: 'Gold (troy oz)', category: 'commodity', ratePerUsd: '0.000416' },
-] as const;
+  // Cryptocurrencies (units per 1 USD) - Fictional development values
+  BTC: '0.000015',
+  ETH: '0.00038',
+  SOL: '0.0068',
+  XRP: '1.85',
+  DOGE: '8.33',
+
+  // Precious Metals (units per 1 USD, reference troy ounce) - Fictional development values
+  XAU: '0.000416',
+  XAG: '0.0357',
+  XPT: '0.00104',
+  XPD: '0.00102',
+};
 
 const RATE_MAP = new Map<string, Big>(
-  MOCK_ASSETS.map((a) => [a.code, new Big(a.ratePerUsd)])
-);
-
-const ASSET_MAP = new Map<string, Asset>(
-  MOCK_ASSETS.map((a) => [a.code, a])
+  Object.entries(MOCK_RATES).map(([code, rateStr]) => [code, new Big(rateStr)])
 );
 
 /**
  * Abstraction function: Retrieve the normalized mock rate (units per 1 USD) for an asset.
- * Throws an Error if the asset code is unknown.
+ * Normalizes input code to uppercase.
+ * Throws an Error if the asset code is unknown in the mock rate dataset.
  */
 export function getMockRate(assetCode: string): Big {
-  const code = assetCode.toUpperCase();
+  const code = assetCode.trim().toUpperCase();
   const rate = RATE_MAP.get(code);
   if (!rate) {
     throw new Error(`Asset code '${assetCode}' not found in mock rate dataset.`);
@@ -65,15 +63,8 @@ export function getMockRate(assetCode: string): Big {
 }
 
 /**
- * Abstraction function: Get the full list of supported mock assets.
+ * Checks whether a given asset code has an available mock rate.
  */
-export function getSupportedAssets(): readonly Asset[] {
-  return MOCK_ASSETS;
-}
-
-/**
- * Abstraction function: Get metadata for a specific asset code.
- */
-export function getAssetMeta(assetCode: string): Asset | undefined {
-  return ASSET_MAP.get(assetCode.toUpperCase());
+export function hasMockRate(assetCode: string): boolean {
+  return RATE_MAP.has(assetCode.trim().toUpperCase());
 }

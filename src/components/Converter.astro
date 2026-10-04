@@ -1,7 +1,6 @@
 ---
-import { getSupportedAssets } from '../lib/mockRates';
+import { ASSET_CATEGORIES, getAssetsByCategory } from '../lib/assets';
 
-const assets = getSupportedAssets();
 const defaultFrom = 'USD';
 const defaultTo = 'EUR';
 const defaultAmount = '100';
@@ -39,11 +38,18 @@ const defaultAmount = '100';
           </div>
           <div class="asset-field-wrapper">
             <select id="asset-from" class="asset-select" aria-label="Source asset">
-              {assets.map((asset) => (
-                <option value={asset.code} selected={asset.code === defaultFrom}>
-                  {asset.code} &bull; {asset.name}
-                </option>
-              ))}
+              {ASSET_CATEGORIES.map((cat) => {
+                const categoryAssets = getAssetsByCategory(cat.id);
+                return (
+                  <optgroup label={cat.label}>
+                    {categoryAssets.map((asset) => (
+                      <option value={asset.code} selected={asset.code === defaultFrom}>
+                        {asset.code} &mdash; {asset.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
             </select>
           </div>
         </div>
@@ -88,11 +94,18 @@ const defaultAmount = '100';
           </div>
           <div class="asset-field-wrapper">
             <select id="asset-to" class="asset-select" aria-label="Destination asset">
-              {assets.map((asset) => (
-                <option value={asset.code} selected={asset.code === defaultTo}>
-                  {asset.code} &bull; {asset.name}
-                </option>
-              ))}
+              {ASSET_CATEGORIES.map((cat) => {
+                const categoryAssets = getAssetsByCategory(cat.id);
+                return (
+                  <optgroup label={cat.label}>
+                    {categoryAssets.map((asset) => (
+                      <option value={asset.code} selected={asset.code === defaultTo}>
+                        {asset.code} &mdash; {asset.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
             </select>
           </div>
         </div>
@@ -105,6 +118,9 @@ const defaultAmount = '100';
         </div>
         <p id="summary-subtext" class="summary-disclaimer">
           1 USD = 0.92 EUR &bull; Demo conversion using fictional development rates.
+        </p>
+        <p id="metal-note" class="metal-disclaimer" style="display: none;">
+          Precious metals are represented as reference assets in this development version.
         </p>
       </div>
     </div>
@@ -119,7 +135,7 @@ const defaultAmount = '100';
     formatUnitRate,
     sanitizeAmountInput,
   } from '../lib/converter';
-  import { getAssetMeta } from '../lib/mockRates';
+  import { getAsset, getCategoryPill } from '../lib/assets';
 
   function initConverter() {
     const amountFrom = document.getElementById('amount-from') as HTMLInputElement | null;
@@ -131,6 +147,7 @@ const defaultAmount = '100';
     const badgeTo = document.getElementById('badge-to') as HTMLElement | null;
     const summaryHeadline = document.getElementById('summary-headline') as HTMLElement | null;
     const summarySubtext = document.getElementById('summary-subtext') as HTMLElement | null;
+    const metalNote = document.getElementById('metal-note') as HTMLElement | null;
 
     if (!amountFrom || !amountTo || !assetFrom || !assetTo || !swapBtn || !summaryHeadline || !summarySubtext) {
       return;
@@ -140,13 +157,18 @@ const defaultAmount = '100';
     let isCalculating = false;
 
     function updateCategoryBadges() {
-      const metaFrom = getAssetMeta(assetFrom!.value);
-      const metaTo = getAssetMeta(assetTo!.value);
+      const metaFrom = getAsset(assetFrom!.value);
+      const metaTo = getAsset(assetTo!.value);
       if (metaFrom && badgeFrom) {
-        badgeFrom.textContent = metaFrom.category.toUpperCase();
+        badgeFrom.textContent = getCategoryPill(metaFrom.category);
       }
       if (metaTo && badgeTo) {
-        badgeTo.textContent = metaTo.category.toUpperCase();
+        badgeTo.textContent = getCategoryPill(metaTo.category);
+      }
+
+      const isMetalInvolved = metaFrom?.category === 'metal' || metaTo?.category === 'metal';
+      if (metalNote) {
+        metalNote.style.display = isMetalInvolved ? 'block' : 'none';
       }
     }
 
