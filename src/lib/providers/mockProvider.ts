@@ -10,6 +10,13 @@ import type { RateProvider } from '../rateProviders';
 import type { RawRatePayload } from '../rates';
 
 /**
+ * Explicit static snapshot timestamp for fictional development mock rates.
+ * Fixed reference: 2026-01-01T00:00:00.000Z.
+ * Mock data does NOT invent dynamic "live" timestamps on each invocation.
+ */
+export const MOCK_DATASET_TIMESTAMP = 1767225600000;
+
+/**
  * Fictional mock rate dataset for local development and testing.
  * Covers all 19 supported assets across Fiat, Crypto, and Precious Metals.
  */
@@ -49,19 +56,24 @@ export class MockRateProvider implements RateProvider {
   readonly isMock = true;
 
   private readonly rates: Readonly<Record<string, string>>;
+  private readonly timestamp: number;
 
-  constructor(customRates?: Record<string, string>) {
+  constructor(
+    customRates?: Record<string, string>,
+    timestamp: number = MOCK_DATASET_TIMESTAMP
+  ) {
     this.rates = customRates ? Object.freeze({ ...customRates }) : FICTIONAL_MOCK_RATES;
+    this.timestamp = timestamp;
   }
 
   /**
-   * Returns the raw rate payload synchronously without any network requests.
+   * Returns the raw rate payload synchronously with an explicit static mock timestamp.
    */
   getRates(): RawRatePayload {
     return {
       providerId: this.id,
       providerName: this.name,
-      timestamp: Date.now(),
+      timestamp: this.timestamp,
       isMock: true,
       rates: this.rates,
     };

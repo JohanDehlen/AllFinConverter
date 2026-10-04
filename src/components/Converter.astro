@@ -207,9 +207,15 @@ const defaultAmount = '100';
         // Handle empty or incomplete decimal input
         if (!unformatted || unformatted === '.') {
           targetInput.value = '';
-          const baseResult = calculateConversion('1', fromCode, toCode);
-          summaryHeadline!.textContent = `1 ${fromCode} = ${formatUnitRate(baseResult.unitRate)} ${toCode}`;
-          summarySubtext!.textContent = 'Demo conversion using fictional development rates.';
+          try {
+            const baseResult = calculateConversion('1', fromCode, toCode);
+            summaryHeadline!.textContent = `1 ${fromCode} = ${formatUnitRate(baseResult.unitRate)} ${toCode}`;
+            summarySubtext!.textContent = 'Demo conversion using fictional development rates.';
+          } catch (baseErr: unknown) {
+            const msg = baseErr instanceof Error ? baseErr.message : 'Rate data is unavailable.';
+            summaryHeadline!.textContent = 'Rate unavailable';
+            summarySubtext!.textContent = msg;
+          }
           return;
         }
 
@@ -220,16 +226,23 @@ const defaultAmount = '100';
           return;
         }
 
-        if (activeSide === 'from') {
-          const result = calculateConversion(bigAmount, fromCode, toCode);
-          targetInput.value = formatDisplayAmount(result.targetAmount);
-          summaryHeadline!.textContent = `${formatDisplayAmount(bigAmount)} ${fromCode} = ${formatDisplayAmount(result.targetAmount)} ${toCode}`;
-          summarySubtext!.textContent = `1 ${fromCode} = ${formatUnitRate(result.unitRate)} ${toCode} \u2022 Demo conversion using fictional development rates.`;
-        } else {
-          const result = calculateConversion(bigAmount, toCode, fromCode);
-          targetInput.value = formatDisplayAmount(result.targetAmount);
-          summaryHeadline!.textContent = `${formatDisplayAmount(result.targetAmount)} ${fromCode} = ${formatDisplayAmount(bigAmount)} ${toCode}`;
-          summarySubtext!.textContent = `1 ${fromCode} = ${formatUnitRate(result.inverseRate)} ${toCode} \u2022 Demo conversion using fictional development rates.`;
+        try {
+          if (activeSide === 'from') {
+            const result = calculateConversion(bigAmount, fromCode, toCode);
+            targetInput.value = formatDisplayAmount(result.targetAmount);
+            summaryHeadline!.textContent = `${formatDisplayAmount(bigAmount)} ${fromCode} = ${formatDisplayAmount(result.targetAmount)} ${toCode}`;
+            summarySubtext!.textContent = `1 ${fromCode} = ${formatUnitRate(result.unitRate)} ${toCode} \u2022 Demo conversion using fictional development rates.`;
+          } else {
+            const result = calculateConversion(bigAmount, toCode, fromCode);
+            targetInput.value = formatDisplayAmount(result.targetAmount);
+            summaryHeadline!.textContent = `${formatDisplayAmount(result.targetAmount)} ${fromCode} = ${formatDisplayAmount(bigAmount)} ${toCode}`;
+            summarySubtext!.textContent = `1 ${fromCode} = ${formatUnitRate(result.inverseRate)} ${toCode} \u2022 Demo conversion using fictional development rates.`;
+          }
+        } catch (calcErr: unknown) {
+          targetInput.value = '';
+          const msg = calcErr instanceof Error ? calcErr.message : 'Rate data is unavailable.';
+          summaryHeadline!.textContent = 'Conversion unavailable';
+          summarySubtext!.textContent = msg;
         }
       } finally {
         isCalculating = false;
