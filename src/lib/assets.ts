@@ -12,6 +12,13 @@
 
 export type AssetCategory = 'fiat' | 'crypto' | 'metal';
 
+export type MetalUnit = 'troy-oz' | 'g';
+
+/** Exact conversion constant: 1 troy ounce = 31.1034768 grams */
+export const GRAMS_PER_TROY_OUNCE_STR = '31.1034768';
+
+export const PRECIOUS_METAL_CODES: ReadonlySet<string> = new Set(['XAU', 'XAG', 'XPT', 'XPD']);
+
 export interface Asset {
   /** Canonical uppercase code (e.g., 'USD', 'BTC', 'XAU') */
   readonly code: string;
@@ -106,3 +113,46 @@ export function getCategoryPill(category: AssetCategory): string {
   const cat = ASSET_CATEGORIES.find((c) => c.id === category);
   return cat ? cat.pill : category.toUpperCase();
 }
+
+/**
+ * Checks whether an asset code represents a precious metal.
+ */
+export function isPreciousMetal(code: string | undefined | null): boolean {
+  if (!code) return false;
+  const upper = code.trim().toUpperCase();
+  return PRECIOUS_METAL_CODES.has(upper);
+}
+
+/**
+ * Returns the human-readable label for a metal unit ('troy oz' or 'g').
+ */
+export function getMetalUnitLabel(unit: MetalUnit | string | undefined | null): string {
+  return unit === 'g' ? 'g' : 'troy oz';
+}
+
+/**
+ * Returns the visual amount prefix for an asset (e.g. '$', '€', '£', '₿').
+ * Returns empty string for precious metals (which use suffixes instead).
+ */
+export function getAssetAmountPrefix(assetCode: string | undefined | null): string {
+  const asset = getAsset(assetCode);
+  if (!asset || asset.category === 'metal') {
+    return '';
+  }
+  return asset.symbol || asset.code;
+}
+
+/**
+ * Returns the visual amount suffix for an asset and unit (e.g. 'troy oz', 'g').
+ * Returns empty string for non-metal assets (which use prefixes instead).
+ */
+export function getAssetAmountSuffix(
+  assetCode: string | undefined | null,
+  unit?: MetalUnit | string | null
+): string {
+  if (!isPreciousMetal(assetCode)) {
+    return '';
+  }
+  return getMetalUnitLabel(unit);
+}
+

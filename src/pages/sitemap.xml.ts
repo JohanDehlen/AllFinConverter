@@ -1,15 +1,20 @@
 import type { APIRoute } from 'astro';
+import { getFeaturedPairs } from '../lib/pairs';
 
 /**
  * WorthPair Sitemap Endpoint
  *
- * Generates a valid sitemap.xml for existing routes.
- * Prepared for future conversion pair routes without populating non-existent pages.
+ * Generates a valid sitemap.xml containing exclusively real, generated routes:
+ * 1. Homepage ('/')
+ * 2. Generated conversion pair pages (from getFeaturedPairs())
+ *
+ * Automatically stays synchronized with the pair engine to prevent 404s or stale entries.
  */
 export const GET: APIRoute = ({ site }) => {
-  const baseUrl = site ? site.toString().replace(/\/$/, '') : '';
+  const baseUrl = site ? site.toString().replace(/\/$/, '') : 'https://worthpair.com';
 
-  // Only existing, real pages are included
+  const featuredPairs = getFeaturedPairs();
+
   const routes = [
     {
       path: '/',
@@ -17,6 +22,12 @@ export const GET: APIRoute = ({ site }) => {
       changefreq: 'daily',
       priority: '1.0',
     },
+    ...featuredPairs.map((pair) => ({
+      path: `/${pair.slug}`,
+      lastmod: '2026-01-01',
+      changefreq: 'daily',
+      priority: '0.8',
+    })),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

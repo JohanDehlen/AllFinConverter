@@ -6,8 +6,8 @@
  * All rates are normalized to USD (1 USD = R asset units).
  */
 
-import type { RateProvider } from '../rateProviders';
-import type { RawRatePayload } from '../rates';
+import type { RateProvider } from '../rateProviders.ts';
+import type { RawRatePayload } from '../rates.ts';
 
 /**
  * Explicit static snapshot timestamp for fictional development mock rates.

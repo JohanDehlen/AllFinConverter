@@ -11,8 +11,8 @@
  */
 
 import Big from 'big.js';
-import { getAsset } from './assets';
-import type { RateProvider } from './rateProviders';
+import { getAsset } from './assets.ts';
+import type { RateProvider } from './rateProviders.ts';
 import {
   type NormalizedRateDataset,
   type RawRatePayload,
@@ -21,8 +21,8 @@ import {
   type RateDatasetStatusInfo,
   DEFAULT_FRESHNESS_THRESHOLD_MS,
   evaluateDatasetFreshness,
-} from './rates';
-import { defaultMockProvider } from './providers/mockProvider';
+} from './rates.ts';
+import { defaultMockProvider } from './providers/mockProvider.ts';
 
 /**
  * Custom error class for rate engine operational failures.

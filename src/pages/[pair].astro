@@ -1,0 +1,207 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Converter from '../components/Converter.astro';
+import { getFeaturedPairs, getRelatedPairs, type ConversionPair } from '../lib/pairs';
+import {
+  getWebSiteStructuredData,
+  getWebApplicationStructuredData,
+  getBreadcrumbStructuredData,
+  resolveCanonicalUrl,
+} from '../lib/seo';
+import { calculateConversion, formatUnitRateWithUnit } from '../lib/converter.ts';
+
+export async function getStaticPaths() {
+  const pairs = getFeaturedPairs();
+  return pairs.map((pair) => ({
+    params: { pair: pair.slug },
+    props: { pair },
+  }));
+}
+
+interface Props {
+  pair: ConversionPair;
+}
+
+const { pair } = Astro.props;
+
+const relatedPairs = getRelatedPairs(pair.slug, 4);
+
+// Calculate initial unit rates via rate engine and Big.js
+const unitConversion = calculateConversion('1', pair.fromCode, pair.toCode);
+const formattedUnitRate = formatUnitRateWithUnit(unitConversion.unitRate, pair.fromCode, pair.toCode);
+const formattedInverseRate = formatUnitRateWithUnit(unitConversion.inverseRate, pair.toCode, pair.fromCode);
+
+// Friendly category labels
+function getCategoryDisplay(cat: string): string {
+  if (cat === 'fiat') return 'Fiat Currency';
+  if (cat === 'crypto') return 'Cryptocurrency';
+  if (cat === 'metal') return 'Precious Metal (Reference Asset)';
+  return cat;
+}
+
+const fromCategoryDisplay = getCategoryDisplay(pair.fromAsset.category);
+const toCategoryDisplay = getCategoryDisplay(pair.toAsset.category);
+const isMetalInvolved = pair.fromAsset.category === 'metal' || pair.toAsset.category === 'metal';
+
+const canonicalUrl = resolveCanonicalUrl(`/${pair.slug}`, Astro.site);
+const siteBase = Astro.site ? Astro.site.toString().replace(/\/$/, '') : 'https://worthpair.com';
+
+const structuredData = [
+  getWebSiteStructuredData(siteBase),
+  getWebApplicationStructuredData(siteBase),
+  getBreadcrumbStructuredData([
+    { name: 'Home', url: `${siteBase}/` },
+    { name: `${pair.fromAsset.code} to ${pair.toAsset.code}`, url: canonicalUrl },
+  ]),
+];
+---
+
+<BaseLayout
+  title={pair.title}
+  description={pair.description}
+  canonicalUrl={canonicalUrl}
+  structuredData={structuredData}
+>
+  <main class="page-main">
+    <div class="content-container">
+      <!-- Breadcrumb Navigation -->
+      <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <ol class="breadcrumb-list">
+          <li class="breadcrumb-item">
+            <a href="/" class="breadcrumb-link">Home</a>
+          </li>
+          <li class="breadcrumb-separator" aria-hidden="true">/</li>
+          <li class="breadcrumb-item breadcrumb-current" aria-current="page">
+            {pair.fromAsset.code} to {pair.toAsset.code}
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Pair Hero Header -->
+      <section class="pair-hero-section" aria-label="Conversion pair header">
+        <h1 class="hero-title">{pair.headline}</h1>
+        <p class="hero-tagline">
+          Convert {pair.fromAsset.name} ({pair.fromAsset.code}) to {pair.toAsset.name} ({pair.toAsset.code}) with WorthPair's high-precision converter.
+        </p>
+      </section>
+
+      <!-- Pre-configured Interactive Converter Component -->
+      <Converter initialFrom={pair.fromCode} initialTo={pair.toCode} />
+
+      <!-- Pair Overview & Mock Rate Summary -->
+      <section class="pair-details-section" aria-label="Pair conversion details">
+        <div class="pair-details-card">
+          <div class="pair-details-header">
+            <h2 class="pair-details-title">{pair.fromAsset.code} / {pair.toAsset.code} Conversion Overview</h2>
+            <span class="demo-badge" role="status" aria-label="Demo mode: fictional mock exchange rates">
+              <span class="demo-dot" aria-hidden="true"></span>
+              Demo rates &bull; Offline preview
+            </span>
+          </div>
+
+          <div class="pair-rate-grid">
+            <div class="pair-rate-box">
+              <span class="pair-rate-label">Direct Rate (Mock)</span>
+              <span class="pair-rate-value">{formattedUnitRate}</span>
+            </div>
+            <div class="pair-rate-box">
+              <span class="pair-rate-label">Inverse Rate (Mock)</span>
+              <span class="pair-rate-value">{formattedInverseRate}</span>
+            </div>
+          </div>
+
+          <div class="pair-assets-info">
+            <div class="asset-info-col">
+              <h3 class="asset-info-name">{pair.fromAsset.name}</h3>
+              <dl class="asset-meta-list">
+                <div class="asset-meta-row">
+                  <dt>Code</dt>
+                  <dd>{pair.fromCode}</dd>
+                </div>
+                <div class="asset-meta-row">
+                  <dt>Category</dt>
+                  <dd>{fromCategoryDisplay}</dd>
+                </div>
+                {pair.fromAsset.symbol && (
+                  <div class="asset-meta-row">
+                    <dt>Symbol</dt>
+                    <dd>{pair.fromAsset.symbol}</dd>
+                  </div>
+                )}
+                {pair.fromAsset.defaultUnit && (
+                  <div class="asset-meta-row">
+                    <dt>Unit</dt>
+                    <dd>{pair.fromAsset.category === 'metal' ? 'troy oz (default), g' : pair.fromAsset.defaultUnit}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+
+            <div class="asset-info-col">
+              <h3 class="asset-info-name">{pair.toAsset.name}</h3>
+              <dl class="asset-meta-list">
+                <div class="asset-meta-row">
+                  <dt>Code</dt>
+                  <dd>{pair.toCode}</dd>
+                </div>
+                <div class="asset-meta-row">
+                  <dt>Category</dt>
+                  <dd>{toCategoryDisplay}</dd>
+                </div>
+                {pair.toAsset.symbol && (
+                  <div class="asset-meta-row">
+                    <dt>Symbol</dt>
+                    <dd>{pair.toAsset.symbol}</dd>
+                  </div>
+                )}
+                {pair.toAsset.defaultUnit && (
+                  <div class="asset-meta-row">
+                    <dt>Unit</dt>
+                    <dd>{pair.toAsset.category === 'metal' ? 'troy oz (default), g' : pair.toAsset.defaultUnit}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          </div>
+
+          {isMetalInvolved && (
+            <p class="metal-disclaimer-box">
+              Precious metals are represented as reference assets in this development version.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <!-- Related Generated Pairs -->
+      {relatedPairs.length > 0 && (
+        <section class="related-pairs-section" aria-label="Related conversion pairs">
+          <div class="related-pairs-header">
+            <h2 class="related-pairs-heading">Related Conversion Pairs</h2>
+            <p class="related-pairs-subheading">Explore other popular conversion pairs</p>
+          </div>
+          <div class="related-pairs-grid">
+            {relatedPairs.map((rel) => (
+              <a href={`/${rel.slug}`} class="related-pair-card">
+                <div class="related-pair-codes">
+                  <span class="related-code">{rel.fromCode}</span>
+                  <span class="related-arrow" aria-hidden="true">&rarr;</span>
+                  <span class="related-code">{rel.toCode}</span>
+                </div>
+                <div class="related-pair-names">
+                  {rel.fromAsset.name} to {rel.toAsset.name}
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Crawlable Back Link -->
+      <div class="back-home-container">
+        <a href="/" class="back-home-link">
+          <span aria-hidden="true">&larr;</span> All Currencies & Assets
+        </a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

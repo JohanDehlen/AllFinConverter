@@ -1,9 +1,65 @@
 ---
-import { ASSET_CATEGORIES, getAssetsByCategory } from '../lib/assets';
+import {
+  ASSET_CATEGORIES,
+  getAssetsByCategory,
+  getAsset,
+  getCategoryPill,
+  isPreciousMetal,
+  getAssetAmountPrefix,
+  getAssetAmountSuffix,
+} from '../lib/assets.ts';
+import {
+  calculateConversion,
+  formatDisplayAmount,
+  formatQuantityWithUnit,
+  formatUnitRateWithUnit,
+  type MetalUnit,
+} from '../lib/converter.ts';
 
-const defaultFrom = 'USD';
-const defaultTo = 'EUR';
-const defaultAmount = '100';
+interface Props {
+  initialFrom?: string;
+  initialTo?: string;
+  initialAmount?: string;
+}
+
+const {
+  initialFrom = 'USD',
+  initialTo = 'EUR',
+  initialAmount = '100',
+} = Astro.props;
+
+const fromMeta = getAsset(initialFrom);
+const toMeta = getAsset(initialTo);
+const initialBadgeFrom = fromMeta ? getCategoryPill(fromMeta.category) : 'FIAT';
+const initialBadgeTo = toMeta ? getCategoryPill(toMeta.category) : 'FIAT';
+const isFromMetal = isPreciousMetal(initialFrom);
+const isToMetal = isPreciousMetal(initialTo);
+const isInitialMetal = isFromMetal || isToMetal;
+
+const initialFromUnit: MetalUnit = 'troy-oz';
+const initialToUnit: MetalUnit = 'troy-oz';
+
+const initialPrefixFrom = getAssetAmountPrefix(initialFrom);
+const initialPrefixTo = getAssetAmountPrefix(initialTo);
+const initialSuffixFrom = getAssetAmountSuffix(initialFrom, initialFromUnit);
+const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
+
+// Compute initial server-side values for instant rendering
+let initialTargetAmount = '92';
+let initialSummaryHeadline = `${initialAmount} ${initialFrom} = 92 ${initialTo}`;
+let initialSummarySubtext = `1 ${initialFrom} = 0.92 ${initialTo} \u2022 Demo conversion using fictional development rates.`;
+
+try {
+  const initResult = calculateConversion(initialAmount, initialFrom, initialTo, {
+    fromUnit: initialFromUnit,
+    toUnit: initialToUnit,
+  });
+  initialTargetAmount = formatDisplayAmount(initResult.targetAmount);
+  initialSummaryHeadline = `${formatQuantityWithUnit(initialAmount, initialFrom, initialFromUnit)} = ${formatQuantityWithUnit(initResult.targetAmount, initialTo, initialToUnit)}`;
+  initialSummarySubtext = `${formatUnitRateWithUnit(initResult.unitRate, initialFrom, initialTo, initialFromUnit, initialToUnit)} \u2022 Demo conversion using fictional development rates.`;
+} catch {
+  // Graceful fallback if calculation fails at render time
+}
 ---
 
 <section class="converter-wrapper" aria-labelledby="converter-heading">
@@ -21,22 +77,66 @@ const defaultAmount = '100';
       <div class="converter-unit">
         <div class="unit-header">
           <label for="amount-from" class="unit-label">Amount</label>
-          <span id="badge-from" class="unit-badge">FIAT</span>
+          <div class="unit-header-meta">
+            <!-- Source Metal Unit Toggle -->
+            <div
+              id="unit-toggle-from"
+              class="unit-toggle"
+              style={isFromMetal ? "display: inline-flex;" : "display: none;"}
+              role="radiogroup"
+              aria-label="Source metal unit"
+            >
+              <button
+                type="button"
+                class="unit-toggle-btn active"
+                data-unit="troy-oz"
+                aria-checked="true"
+                role="radio"
+              >
+                troy oz
+              </button>
+              <button
+                type="button"
+                class="unit-toggle-btn"
+                data-unit="g"
+                aria-checked="false"
+                role="radio"
+              >
+                g
+              </button>
+            </div>
+            <span id="badge-from" class="unit-badge">{initialBadgeFrom}</span>
+          </div>
         </div>
         <div class="unit-inputs">
           <div class="amount-field-wrapper">
-            <input
-              id="amount-from"
-              type="text"
-              class="amount-input"
-              value={defaultAmount}
-              placeholder="0"
-              inputmode="decimal"
-              autocomplete="off"
-              spellcheck="false"
-              aria-label="Source amount"
-              aria-describedby="summary-headline"
-            />
+            <div class="amount-input-container">
+              <span
+                id="prefix-from"
+                class="amount-prefix"
+                style={initialPrefixFrom ? "display: inline-flex;" : "display: none;"}
+                aria-hidden="true"
+              >{initialPrefixFrom}</span>
+              <input
+                id="amount-from"
+                type="text"
+                class="amount-input"
+                value={initialAmount}
+                placeholder="0"
+                size={initialAmount ? initialAmount.length : 1}
+                inputmode="decimal"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="Source amount"
+                aria-describedby="summary-headline"
+              />
+              <span
+                id="suffix-from"
+                class="amount-suffix"
+                style={initialSuffixFrom ? "display: inline-flex;" : "display: none;"}
+                aria-hidden="true"
+              >{initialSuffixFrom}</span>
+            </div>
           </div>
           <div class="asset-field-wrapper">
             <select id="asset-from" class="asset-select" aria-label="Source asset">
@@ -45,7 +145,7 @@ const defaultAmount = '100';
                 return (
                   <optgroup label={cat.label}>
                     {categoryAssets.map((asset) => (
-                      <option value={asset.code} selected={asset.code === defaultFrom}>
+                      <option value={asset.code} selected={asset.code === initialFrom}>
                         {asset.code} &mdash; {asset.name}
                       </option>
                     ))}
@@ -79,22 +179,66 @@ const defaultAmount = '100';
       <div class="converter-unit">
         <div class="unit-header">
           <label for="amount-to" class="unit-label">Converted to (estimate)</label>
-          <span id="badge-to" class="unit-badge">FIAT</span>
+          <div class="unit-header-meta">
+            <!-- Destination Metal Unit Toggle -->
+            <div
+              id="unit-toggle-to"
+              class="unit-toggle"
+              style={isToMetal ? "display: inline-flex;" : "display: none;"}
+              role="radiogroup"
+              aria-label="Destination metal unit"
+            >
+              <button
+                type="button"
+                class="unit-toggle-btn active"
+                data-unit="troy-oz"
+                aria-checked="true"
+                role="radio"
+              >
+                troy oz
+              </button>
+              <button
+                type="button"
+                class="unit-toggle-btn"
+                data-unit="g"
+                aria-checked="false"
+                role="radio"
+              >
+                g
+              </button>
+            </div>
+            <span id="badge-to" class="unit-badge">{initialBadgeTo}</span>
+          </div>
         </div>
         <div class="unit-inputs">
           <div class="amount-field-wrapper">
-            <input
-              id="amount-to"
-              type="text"
-              class="amount-input"
-              value="92"
-              placeholder="0"
-              inputmode="decimal"
-              autocomplete="off"
-              spellcheck="false"
-              aria-label="Converted amount"
-              aria-describedby="summary-headline"
-            />
+            <div class="amount-input-container">
+              <span
+                id="prefix-to"
+                class="amount-prefix"
+                style={initialPrefixTo ? "display: inline-flex;" : "display: none;"}
+                aria-hidden="true"
+              >{initialPrefixTo}</span>
+              <input
+                id="amount-to"
+                type="text"
+                class="amount-input"
+                value={initialTargetAmount}
+                placeholder="0"
+                size={initialTargetAmount ? initialTargetAmount.length : 1}
+                inputmode="decimal"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="Converted amount"
+                aria-describedby="summary-headline"
+              />
+              <span
+                id="suffix-to"
+                class="amount-suffix"
+                style={initialSuffixTo ? "display: inline-flex;" : "display: none;"}
+                aria-hidden="true"
+              >{initialSuffixTo}</span>
+            </div>
           </div>
           <div class="asset-field-wrapper">
             <select id="asset-to" class="asset-select" aria-label="Destination asset">
@@ -103,7 +247,7 @@ const defaultAmount = '100';
                 return (
                   <optgroup label={cat.label}>
                     {categoryAssets.map((asset) => (
-                      <option value={asset.code} selected={asset.code === defaultTo}>
+                      <option value={asset.code} selected={asset.code === initialTo}>
                         {asset.code} &mdash; {asset.name}
                       </option>
                     ))}
@@ -118,12 +262,12 @@ const defaultAmount = '100';
       <!-- Converted Result Display -->
       <div class="conversion-summary" aria-live="polite">
         <div class="summary-rate">
-          <span id="summary-headline" class="summary-calculation">100 USD = 92 EUR</span>
+          <span id="summary-headline" class="summary-calculation">{initialSummaryHeadline}</span>
         </div>
         <p id="summary-subtext" class="summary-disclaimer">
-          1 USD = 0.92 EUR &bull; Demo conversion using fictional development rates.
+          {initialSummarySubtext}
         </p>
-        <p id="metal-note" class="metal-disclaimer" style="display: none;">
+        <p id="metal-note" class="metal-disclaimer" style={isInitialMetal ? "display: block;" : "display: none;"}>
           Precious metals are represented as reference assets in this development version.
         </p>
       </div>
@@ -135,11 +279,21 @@ const defaultAmount = '100';
   import Big from 'big.js';
   import {
     calculateConversion,
+    convertTroyOzToGrams,
+    convertGramsToTroyOz,
     formatDisplayAmount,
-    formatUnitRate,
+    formatQuantityWithUnit,
+    formatUnitRateWithUnit,
     sanitizeAmountInput,
-  } from '../lib/converter';
-  import { getAsset, getCategoryPill } from '../lib/assets';
+    type MetalUnit,
+  } from '../lib/converter.ts';
+  import {
+    getAsset,
+    getCategoryPill,
+    isPreciousMetal,
+    getAssetAmountPrefix,
+    getAssetAmountSuffix,
+  } from '../lib/assets.ts';
 
   function initConverter() {
     const amountFrom = document.getElementById('amount-from') as HTMLInputElement | null;
@@ -149,16 +303,34 @@ const defaultAmount = '100';
     const swapBtn = document.getElementById('swap-button') as HTMLButtonElement | null;
     const badgeFrom = document.getElementById('badge-from') as HTMLElement | null;
     const badgeTo = document.getElementById('badge-to') as HTMLElement | null;
+    const unitToggleFrom = document.getElementById('unit-toggle-from') as HTMLElement | null;
+    const unitToggleTo = document.getElementById('unit-toggle-to') as HTMLElement | null;
+    const prefixFrom = document.getElementById('prefix-from') as HTMLElement | null;
+    const prefixTo = document.getElementById('prefix-to') as HTMLElement | null;
+    const suffixFrom = document.getElementById('suffix-from') as HTMLElement | null;
+    const suffixTo = document.getElementById('suffix-to') as HTMLElement | null;
     const summaryHeadline = document.getElementById('summary-headline') as HTMLElement | null;
     const summarySubtext = document.getElementById('summary-subtext') as HTMLElement | null;
     const metalNote = document.getElementById('metal-note') as HTMLElement | null;
 
-    if (!amountFrom || !amountTo || !assetFrom || !assetTo || !swapBtn || !summaryHeadline || !summarySubtext) {
+    if (
+      !amountFrom ||
+      !amountTo ||
+      !assetFrom ||
+      !assetTo ||
+      !swapBtn ||
+      !summaryHeadline ||
+      !summarySubtext ||
+      !unitToggleFrom ||
+      !unitToggleTo
+    ) {
       return;
     }
 
     let activeSide: 'from' | 'to' = 'from';
     let isCalculating = false;
+    let fromUnit: MetalUnit = 'troy-oz';
+    let toUnit: MetalUnit = 'troy-oz';
 
     function updateCategoryBadges() {
       const metaFrom = getAsset(assetFrom!.value);
@@ -176,6 +348,57 @@ const defaultAmount = '100';
       }
     }
 
+    function updateAmountAffixes() {
+      const pFrom = getAssetAmountPrefix(assetFrom!.value);
+      const pTo = getAssetAmountPrefix(assetTo!.value);
+      const sFrom = getAssetAmountSuffix(assetFrom!.value, fromUnit);
+      const sTo = getAssetAmountSuffix(assetTo!.value, toUnit);
+
+      if (prefixFrom) {
+        prefixFrom.textContent = pFrom;
+        prefixFrom.style.display = pFrom ? 'inline-flex' : 'none';
+      }
+      if (prefixTo) {
+        prefixTo.textContent = pTo;
+        prefixTo.style.display = pTo ? 'inline-flex' : 'none';
+      }
+      if (suffixFrom) {
+        suffixFrom.textContent = sFrom;
+        suffixFrom.style.display = sFrom ? 'inline-flex' : 'none';
+      }
+      if (suffixTo) {
+        suffixTo.textContent = sTo;
+        suffixTo.style.display = sTo ? 'inline-flex' : 'none';
+      }
+    }
+
+    function updateUnitToggleUI() {
+      const fromIsMetal = isPreciousMetal(assetFrom!.value);
+      const toIsMetal = isPreciousMetal(assetTo!.value);
+
+      unitToggleFrom!.style.display = fromIsMetal ? 'inline-flex' : 'none';
+      unitToggleTo!.style.display = toIsMetal ? 'inline-flex' : 'none';
+
+      if (!fromIsMetal) fromUnit = 'troy-oz';
+      if (!toIsMetal) toUnit = 'troy-oz';
+
+      const fromBtns = unitToggleFrom!.querySelectorAll<HTMLButtonElement>('.unit-toggle-btn');
+      fromBtns.forEach((btn) => {
+        const u = btn.getAttribute('data-unit');
+        const isActive = u === fromUnit;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+      });
+
+      const toBtns = unitToggleTo!.querySelectorAll<HTMLButtonElement>('.unit-toggle-btn');
+      toBtns.forEach((btn) => {
+        const u = btn.getAttribute('data-unit');
+        const isActive = u === toUnit;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+      });
+    }
+
     function recalculate() {
       if (isCalculating) return;
       isCalculating = true;
@@ -184,6 +407,8 @@ const defaultAmount = '100';
         const fromCode = assetFrom!.value;
         const toCode = assetTo!.value;
         updateCategoryBadges();
+        updateUnitToggleUI();
+        updateAmountAffixes();
 
         const activeInput = activeSide === 'from' ? amountFrom! : amountTo!;
         const targetInput = activeSide === 'from' ? amountTo! : amountFrom!;
@@ -212,8 +437,8 @@ const defaultAmount = '100';
         if (!unformatted || unformatted === '.') {
           targetInput.value = '';
           try {
-            const baseResult = calculateConversion('1', fromCode, toCode);
-            summaryHeadline!.textContent = `1 ${fromCode} = ${formatUnitRate(baseResult.unitRate)} ${toCode}`;
+            const baseResult = calculateConversion('1', fromCode, toCode, { fromUnit, toUnit });
+            summaryHeadline!.textContent = formatUnitRateWithUnit(baseResult.unitRate, fromCode, toCode, fromUnit, toUnit);
             summarySubtext!.textContent = 'Demo conversion using fictional development rates.';
           } catch (baseErr: unknown) {
             const msg = baseErr instanceof Error ? baseErr.message : 'Rate data is unavailable.';
@@ -235,26 +460,49 @@ const defaultAmount = '100';
 
         try {
           if (activeSide === 'from') {
-            const result = calculateConversion(bigAmount, fromCode, toCode);
+            const result = calculateConversion(bigAmount, fromCode, toCode, { fromUnit, toUnit });
             targetInput.value = formatDisplayAmount(result.targetAmount);
-            summaryHeadline!.textContent = `${formatDisplayAmount(bigAmount)} ${fromCode} = ${formatDisplayAmount(result.targetAmount)} ${toCode}`;
-            summarySubtext!.textContent = `1 ${fromCode} = ${formatUnitRate(result.unitRate)} ${toCode} \u2022 Demo conversion using fictional development rates.`;
+            summaryHeadline!.textContent = `${formatQuantityWithUnit(bigAmount, fromCode, fromUnit)} = ${formatQuantityWithUnit(result.targetAmount, toCode, toUnit)}`;
+            summarySubtext!.textContent = `${formatUnitRateWithUnit(result.unitRate, fromCode, toCode, fromUnit, toUnit)} \u2022 Demo conversion using fictional development rates.`;
           } else {
-            const result = calculateConversion(bigAmount, toCode, fromCode);
+            const result = calculateConversion(bigAmount, toCode, fromCode, { fromUnit: toUnit, toUnit: fromUnit });
             targetInput.value = formatDisplayAmount(result.targetAmount);
-            summaryHeadline!.textContent = `${formatDisplayAmount(result.targetAmount)} ${fromCode} = ${formatDisplayAmount(bigAmount)} ${toCode}`;
-            summarySubtext!.textContent = `1 ${fromCode} = ${formatUnitRate(result.inverseRate)} ${toCode} \u2022 Demo conversion using fictional development rates.`;
+            summaryHeadline!.textContent = `${formatQuantityWithUnit(result.targetAmount, fromCode, fromUnit)} = ${formatQuantityWithUnit(bigAmount, toCode, toUnit)}`;
+            summarySubtext!.textContent = `${formatUnitRateWithUnit(result.inverseRate, fromCode, toCode, fromUnit, toUnit)} \u2022 Demo conversion using fictional development rates.`;
           }
         } catch (calcErr: unknown) {
           targetInput.value = '';
           const msg = calcErr instanceof Error ? calcErr.message : 'Rate data is unavailable.';
           summaryHeadline!.textContent = 'Conversion unavailable';
           summarySubtext!.textContent = msg;
+        } finally {
+          syncInputSizes();
         }
       } finally {
         isCalculating = false;
       }
     }
+
+    function syncInputSizes() {
+      if (amountFrom) {
+        amountFrom.size = Math.max(1, (amountFrom.value || '0').length);
+      }
+      if (amountTo) {
+        amountTo.size = Math.max(1, (amountTo.value || '0').length);
+      }
+    }
+
+    // Amount field container click to focus input
+    const wrapperFrom = amountFrom.closest('.amount-field-wrapper');
+    const wrapperTo = amountTo.closest('.amount-field-wrapper');
+
+    wrapperFrom?.addEventListener('click', (e) => {
+      if (e.target !== amountFrom) amountFrom.focus();
+    });
+
+    wrapperTo?.addEventListener('click', (e) => {
+      if (e.target !== amountTo) amountTo.focus();
+    });
 
     // Input event listeners for two-way reactivity
     amountFrom.addEventListener('input', () => {
@@ -274,6 +522,7 @@ const defaultAmount = '100';
       if (val && val !== '.') {
         try {
           amountFrom.value = formatDisplayAmount(new Big(val));
+          syncInputSizes();
         } catch {}
       }
     });
@@ -284,17 +533,55 @@ const defaultAmount = '100';
       if (val && val !== '.') {
         try {
           amountTo.value = formatDisplayAmount(new Big(val));
+          syncInputSizes();
         } catch {}
       }
     });
 
     // Select change listeners
     assetFrom.addEventListener('change', () => {
+      fromUnit = 'troy-oz';
       recalculate();
     });
 
     assetTo.addEventListener('change', () => {
+      toUnit = 'troy-oz';
       recalculate();
+    });
+
+    // Unit toggle button click listeners (Source Side)
+    unitToggleFrom.querySelectorAll<HTMLButtonElement>('.unit-toggle-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const newUnit = btn.getAttribute('data-unit') as MetalUnit;
+        if (!newUnit || newUnit === fromUnit) return;
+
+        // Convert current source amount so financial value is preserved
+        const rawVal = amountFrom.value.replace(/,/g, '').trim();
+        if (rawVal && rawVal !== '.' && !rawVal.startsWith('-')) {
+          try {
+            const currentBig = new Big(rawVal);
+            const converted = fromUnit === 'troy-oz' && newUnit === 'g'
+              ? convertTroyOzToGrams(currentBig)
+              : convertGramsToTroyOz(currentBig);
+            amountFrom.value = formatDisplayAmount(converted);
+          } catch {}
+        }
+
+        fromUnit = newUnit;
+        activeSide = 'from';
+        recalculate();
+      });
+    });
+
+    // Unit toggle button click listeners (Destination Side)
+    unitToggleTo.querySelectorAll<HTMLButtonElement>('.unit-toggle-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const newUnit = btn.getAttribute('data-unit') as MetalUnit;
+        if (!newUnit || newUnit === toUnit) return;
+
+        toUnit = newUnit;
+        recalculate();
+      });
     });
 
     // Swap button listener with subtle rotational animation feedback
@@ -312,12 +599,18 @@ const defaultAmount = '100';
       amountFrom.value = prevToVal;
       amountTo.value = prevFromVal;
 
+      const prevFromUnit = fromUnit;
+      fromUnit = toUnit;
+      toUnit = prevFromUnit;
+
       activeSide = 'from';
       recalculate();
     });
 
     // Initial calculation run
     updateCategoryBadges();
+    updateUnitToggleUI();
+    updateAmountAffixes();
     recalculate();
   }
 

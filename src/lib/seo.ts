@@ -5,7 +5,7 @@
  * JSON-LD structured data generators, and future pair-page slug conventions.
  */
 
-import { getAsset } from './assets';
+import { getAsset } from './assets.ts';
 
 /**
  * Standard page metadata interface for BaseLayout.
@@ -77,11 +77,24 @@ export function getWebApplicationStructuredData(siteUrl = 'https://worthpair.com
     operatingSystem: 'All',
     browserRequirements: 'Requires JavaScript. Requires HTML5.',
     description: 'Calculate cross-rates between fiat currencies, cryptocurrencies, and precious metals instantly.',
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'USD',
-    },
+  };
+}
+
+/**
+ * Generates Schema.org BreadcrumbList structured data.
+ */
+export function getBreadcrumbStructuredData(
+  items: readonly { name: string; url: string }[]
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
   };
 }
 

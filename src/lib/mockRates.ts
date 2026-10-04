@@ -12,8 +12,8 @@
  */
 
 import type Big from 'big.js';
-import { FICTIONAL_MOCK_RATES } from './providers/mockProvider';
-import { getRate, hasRate } from './rateEngine';
+import { FICTIONAL_MOCK_RATES } from './providers/mockProvider.ts';
+import { getRate, hasRate } from './rateEngine.ts';
 
 /**
  * Fictional mock rate dataset for milestone M1.1/M1.2.

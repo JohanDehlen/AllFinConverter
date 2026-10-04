@@ -6,7 +6,7 @@
  * They do NOT perform calculations, validation, or UI formatting.
  */
 
-import type { RawRatePayload } from './rates';
+import type { RawRatePayload } from './rates.ts';
 
 /**
  * Generic interface for a rate provider.
