@@ -2,11 +2,22 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Converter from '../components/Converter.astro';
 import AssetCategories from '../components/AssetCategories.astro';
+import { getWebSiteStructuredData, getWebApplicationStructuredData } from '../lib/seo';
+
+const pageTitle = 'WorthPair — Currency, Crypto & Precious Metals Converter';
+const pageDescription =
+  'Fast, high-precision currency, cryptocurrency, and precious metals converter. Convert between fiat, crypto, and commodity reference assets instantly.';
+
+const structuredData = [
+  getWebSiteStructuredData(),
+  getWebApplicationStructuredData(),
+];
 ---
 
 <BaseLayout
-  title="WorthPair — Currency, Crypto & Precious Metals Converter"
-  description="Currency, Crypto & Precious Metals Converter. The fastest way to convert anything financial into anything else."
+  title={pageTitle}
+  description={pageDescription}
+  structuredData={structuredData}
 >
   <main class="page-main">
     <div class="content-container">

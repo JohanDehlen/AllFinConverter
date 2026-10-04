@@ -1,25 +1,35 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { resolveCanonicalUrl, type PageMetadata } from '../lib/seo';
 import '../styles/global.css';
 
-interface Props {
-  title?: string;
-  description?: string;
-  canonicalUrl?: string;
-  ogImage?: string;
-  ogType?: string;
+interface Props extends Partial<PageMetadata> {
+  siteTitleSuffix?: boolean;
 }
 
 const {
   title = 'WorthPair — Currency, Crypto & Precious Metals Converter',
-  description = 'Currency, Crypto & Precious Metals Converter',
+  description = 'Fast, high-precision currency, cryptocurrency, and precious metals converter. Convert between fiat, crypto, and commodity reference assets instantly.',
   canonicalUrl,
   ogImage = '/favicon.svg',
   ogType = 'website',
+  robots = 'index, follow',
+  structuredData,
+  siteTitleSuffix = true,
 } = Astro.props;
 
-const siteTitle = title.includes('WorthPair') ? title : `${title} | WorthPair`;
+const pageTitle = siteTitleSuffix && !title.includes('WorthPair')
+  ? `${title} | WorthPair`
+  : title;
+
+const resolvedCanonical = canonicalUrl ?? resolveCanonicalUrl(Astro.url.pathname, Astro.site);
+
+const jsonLdData = Array.isArray(structuredData)
+  ? structuredData
+  : structuredData
+    ? [structuredData]
+    : [];
 ---
 
 <!doctype html>
@@ -30,25 +40,32 @@ const siteTitle = title.includes('WorthPair') ? title : `${title} | WorthPair`;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- SEO Foundation -->
-    <title>{siteTitle}</title>
+    <!-- Technical SEO Metadata -->
+    <title>{pageTitle}</title>
     <meta name="description" content={description} />
-    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <meta name="robots" content={robots} />
+    <link rel="canonical" href={resolvedCanonical} />
 
-    <!-- Open Graph / Social Media -->
+    <!-- Open Graph Metadata -->
     <meta property="og:type" content={ogType} />
-    <meta property="og:title" content={siteTitle} />
+    <meta property="og:site_name" content="WorthPair" />
+    <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
-    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    <meta property="og:url" content={resolvedCanonical} />
     {ogImage && <meta property="og:image" content={ogImage} />}
 
-    <!-- Twitter Cards -->
+    <!-- Twitter Cards Metadata -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={siteTitle} />
+    <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description} />
     {ogImage && <meta name="twitter:image" content={ogImage} />}
 
-    <!-- Slot for structured data (JSON-LD) or page-specific head elements -->
+    <!-- Structured Data (JSON-LD) -->
+    {jsonLdData.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
+
+    <!-- Additional Page-Specific Head Elements Slot -->
     <slot name="head" />
   </head>
   <body>

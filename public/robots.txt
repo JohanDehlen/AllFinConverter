@@ -1,2 +1,5 @@
 User-agent: *
 Allow: /
+
+# Sitemap will be referenced once production domain is configured:
+# Sitemap: https://worthpair.com/sitemap.xml
