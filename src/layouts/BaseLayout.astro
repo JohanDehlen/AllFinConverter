@@ -1,0 +1,53 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+  ogType?: string;
+}
+
+const {
+  title = 'WorthPair — Currency, Crypto & Precious Metals Converter',
+  description = 'Currency, Crypto & Precious Metals Converter',
+  canonicalUrl,
+  ogImage = '/favicon.svg',
+  ogType = 'website',
+} = Astro.props;
+
+const siteTitle = title.includes('WorthPair') ? title : `${title} | WorthPair`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO Foundation -->
+    <title>{siteTitle}</title>
+    <meta name="description" content={description} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={siteTitle} />
+    <meta property="og:description" content={description} />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={siteTitle} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+
+    <!-- Slot for structured data (JSON-LD) or page-specific head elements -->
+    <slot name="head" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
