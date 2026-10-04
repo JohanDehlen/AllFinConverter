@@ -4,7 +4,7 @@
  */
 
 import Big from 'big.js';
-import { getMockRate } from './mockRates';
+import { getRate } from './rateEngine';
 
 // Configure high precision for intermediate calculations
 Big.DP = 30;
@@ -17,7 +17,7 @@ export interface ConversionResult {
 }
 
 /**
- * Calculates cross-rate conversion between two assets using normalized USD mock rates.
+ * Calculates cross-rate conversion between two assets using normalized USD rates.
  *
  * Mathematical derivation:
  * Base is USD.
@@ -41,8 +41,8 @@ export function calculateConversion(
     throw new Error('Financial conversion amount cannot be negative.');
   }
 
-  const fromRate = getMockRate(fromAsset);
-  const toRate = getMockRate(toAsset);
+  const fromRate = getRate(fromAsset);
+  const toRate = getRate(toAsset);
 
   if (fromAsset.toUpperCase() === toAsset.toUpperCase()) {
     return {
@@ -70,8 +70,8 @@ export function calculateConversion(
  * Returns the unit exchange rate (1 unit of fromAsset = X units of toAsset).
  */
 export function getUnitRate(fromAsset: string, toAsset: string): Big {
-  const fromRate = getMockRate(fromAsset);
-  const toRate = getMockRate(toAsset);
+  const fromRate = getRate(fromAsset);
+  const toRate = getRate(toAsset);
   return toRate.div(fromRate);
 }
 
