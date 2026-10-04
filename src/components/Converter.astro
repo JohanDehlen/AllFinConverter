@@ -1,0 +1,285 @@
+---
+import { getSupportedAssets } from '../lib/mockRates';
+
+const assets = getSupportedAssets();
+const defaultFrom = 'USD';
+const defaultTo = 'EUR';
+const defaultAmount = '100';
+---
+
+<section class="converter-wrapper" aria-labelledby="converter-heading">
+  <div class="converter-card">
+    <div class="converter-card-header">
+      <span id="converter-heading" class="converter-title">Convert Financial Assets</span>
+      <span class="demo-badge" role="status">
+        <span class="demo-dot" aria-hidden="true"></span>
+        Demo &mdash; mock rates
+      </span>
+    </div>
+
+    <div class="converter-card-body">
+      <!-- Source Asset Block -->
+      <div class="converter-unit">
+        <div class="unit-header">
+          <label for="amount-from" class="unit-label">Amount</label>
+          <span id="badge-from" class="unit-badge">FIAT</span>
+        </div>
+        <div class="unit-inputs">
+          <div class="amount-field-wrapper">
+            <input
+              id="amount-from"
+              type="text"
+              class="amount-input"
+              value={defaultAmount}
+              inputmode="decimal"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Source amount"
+            />
+          </div>
+          <div class="asset-field-wrapper">
+            <select id="asset-from" class="asset-select" aria-label="Source asset">
+              {assets.map((asset) => (
+                <option value={asset.code} selected={asset.code === defaultFrom}>
+                  {asset.code} &bull; {asset.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Swap Control -->
+      <div class="swap-divider">
+        <button
+          id="swap-button"
+          type="button"
+          class="swap-btn"
+          aria-label="Swap assets"
+          title="Swap assets"
+        >
+          <svg class="swap-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="7" y1="9" x2="17" y2="9"></line>
+            <polyline points="13 5 17 9 13 13"></polyline>
+            <line x1="17" y1="15" x2="7" y2="15"></line>
+            <polyline points="11 19 7 15 11 11"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Destination Asset Block -->
+      <div class="converter-unit">
+        <div class="unit-header">
+          <label for="amount-to" class="unit-label">Converted to (estimate)</label>
+          <span id="badge-to" class="unit-badge">FIAT</span>
+        </div>
+        <div class="unit-inputs">
+          <div class="amount-field-wrapper">
+            <input
+              id="amount-to"
+              type="text"
+              class="amount-input"
+              value="92"
+              inputmode="decimal"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Converted amount"
+            />
+          </div>
+          <div class="asset-field-wrapper">
+            <select id="asset-to" class="asset-select" aria-label="Destination asset">
+              {assets.map((asset) => (
+                <option value={asset.code} selected={asset.code === defaultTo}>
+                  {asset.code} &bull; {asset.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Converted Result Display -->
+      <div class="conversion-summary" aria-live="polite">
+        <div class="summary-rate">
+          <span id="summary-headline" class="summary-calculation">100 USD = 92 EUR</span>
+        </div>
+        <p id="summary-subtext" class="summary-disclaimer">
+          1 USD = 0.92 EUR &bull; Demo conversion using fictional development rates.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import Big from 'big.js';
+  import {
+    calculateConversion,
+    formatDisplayAmount,
+    formatUnitRate,
+    sanitizeAmountInput,
+  } from '../lib/converter';
+  import { getAssetMeta } from '../lib/mockRates';
+
+  function initConverter() {
+    const amountFrom = document.getElementById('amount-from') as HTMLInputElement | null;
+    const amountTo = document.getElementById('amount-to') as HTMLInputElement | null;
+    const assetFrom = document.getElementById('asset-from') as HTMLSelectElement | null;
+    const assetTo = document.getElementById('asset-to') as HTMLSelectElement | null;
+    const swapBtn = document.getElementById('swap-button') as HTMLButtonElement | null;
+    const badgeFrom = document.getElementById('badge-from') as HTMLElement | null;
+    const badgeTo = document.getElementById('badge-to') as HTMLElement | null;
+    const summaryHeadline = document.getElementById('summary-headline') as HTMLElement | null;
+    const summarySubtext = document.getElementById('summary-subtext') as HTMLElement | null;
+
+    if (!amountFrom || !amountTo || !assetFrom || !assetTo || !swapBtn || !summaryHeadline || !summarySubtext) {
+      return;
+    }
+
+    let activeSide: 'from' | 'to' = 'from';
+    let isCalculating = false;
+
+    function updateCategoryBadges() {
+      const metaFrom = getAssetMeta(assetFrom!.value);
+      const metaTo = getAssetMeta(assetTo!.value);
+      if (metaFrom && badgeFrom) {
+        badgeFrom.textContent = metaFrom.category.toUpperCase();
+      }
+      if (metaTo && badgeTo) {
+        badgeTo.textContent = metaTo.category.toUpperCase();
+      }
+    }
+
+    function recalculate() {
+      if (isCalculating) return;
+      isCalculating = true;
+
+      try {
+        const fromCode = assetFrom!.value;
+        const toCode = assetTo!.value;
+        updateCategoryBadges();
+
+        const activeInput = activeSide === 'from' ? amountFrom! : amountTo!;
+        const targetInput = activeSide === 'from' ? amountTo! : amountFrom!;
+
+        // Clear any previous error indicators
+        amountFrom!.removeAttribute('aria-invalid');
+        amountTo!.removeAttribute('aria-invalid');
+
+        const rawSanitized = sanitizeAmountInput(activeInput.value);
+        if (activeInput.value !== rawSanitized) {
+          activeInput.value = rawSanitized;
+        }
+
+        const unformatted = rawSanitized.replace(/,/g, '').trim();
+
+        // Reject negative numbers safely without calculation
+        if (unformatted.startsWith('-')) {
+          targetInput.value = '';
+          activeInput.setAttribute('aria-invalid', 'true');
+          summaryHeadline!.textContent = 'Amount must be positive';
+          summarySubtext!.textContent = 'Negative financial amounts are not supported.';
+          return;
+        }
+
+        // Handle empty or incomplete decimal input
+        if (!unformatted || unformatted === '.') {
+          targetInput.value = '';
+          const baseResult = calculateConversion('1', fromCode, toCode);
+          summaryHeadline!.textContent = `1 ${fromCode} = ${formatUnitRate(baseResult.unitRate)} ${toCode}`;
+          summarySubtext!.textContent = 'Demo conversion using fictional development rates.';
+          return;
+        }
+
+        let bigAmount: Big;
+        try {
+          bigAmount = new Big(unformatted);
+        } catch {
+          return;
+        }
+
+        if (activeSide === 'from') {
+          const result = calculateConversion(bigAmount, fromCode, toCode);
+          targetInput.value = formatDisplayAmount(result.targetAmount);
+          summaryHeadline!.textContent = `${formatDisplayAmount(bigAmount)} ${fromCode} = ${formatDisplayAmount(result.targetAmount)} ${toCode}`;
+          summarySubtext!.textContent = `1 ${fromCode} = ${formatUnitRate(result.unitRate)} ${toCode} \u2022 Demo conversion using fictional development rates.`;
+        } else {
+          const result = calculateConversion(bigAmount, toCode, fromCode);
+          targetInput.value = formatDisplayAmount(result.targetAmount);
+          summaryHeadline!.textContent = `${formatDisplayAmount(result.targetAmount)} ${fromCode} = ${formatDisplayAmount(bigAmount)} ${toCode}`;
+          summarySubtext!.textContent = `1 ${fromCode} = ${formatUnitRate(result.inverseRate)} ${toCode} \u2022 Demo conversion using fictional development rates.`;
+        }
+      } finally {
+        isCalculating = false;
+      }
+    }
+
+    // Input event listeners for two-way reactivity
+    amountFrom.addEventListener('input', () => {
+      activeSide = 'from';
+      recalculate();
+    });
+
+    amountTo.addEventListener('input', () => {
+      activeSide = 'to';
+      recalculate();
+    });
+
+    // Formatting on blur
+    amountFrom.addEventListener('blur', () => {
+      const val = amountFrom.value.replace(/,/g, '').trim();
+      if (val.startsWith('-')) return;
+      if (val && val !== '.') {
+        try {
+          amountFrom.value = formatDisplayAmount(new Big(val));
+        } catch {}
+      }
+    });
+
+    amountTo.addEventListener('blur', () => {
+      const val = amountTo.value.replace(/,/g, '').trim();
+      if (val.startsWith('-')) return;
+      if (val && val !== '.') {
+        try {
+          amountTo.value = formatDisplayAmount(new Big(val));
+        } catch {}
+      }
+    });
+
+    // Select change listeners
+    assetFrom.addEventListener('change', () => {
+      recalculate();
+    });
+
+    assetTo.addEventListener('change', () => {
+      recalculate();
+    });
+
+    // Swap button listener
+    swapBtn.addEventListener('click', () => {
+      const prevFromCode = assetFrom.value;
+      const prevToCode = assetTo.value;
+      assetFrom.value = prevToCode;
+      assetTo.value = prevFromCode;
+
+      const prevFromVal = amountFrom.value;
+      const prevToVal = amountTo.value;
+      amountFrom.value = prevToVal;
+      amountTo.value = prevFromVal;
+
+      activeSide = 'from';
+      recalculate();
+    });
+
+    // Initial calculation run
+    updateCategoryBadges();
+    recalculate();
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initConverter);
+  } else {
+    initConverter();
+  }
+</script>

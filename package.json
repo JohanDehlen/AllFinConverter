@@ -11,10 +11,12 @@
     "check": "astro check"
   },
   "dependencies": {
-    "astro": "^7.3.5"
+    "astro": "^7.3.5",
+    "big.js": "^7.0.1"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@types/big.js": "^7.0.0",
     "typescript": "^5.9.3"
   }
 }
