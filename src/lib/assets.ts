@@ -21,7 +21,9 @@ export interface Asset {
   readonly category: AssetCategory;
   /** Optional standard display symbol */
   readonly symbol?: string;
-  /** Default reference unit (e.g., 'troy ounce' for precious metals; gram support planned for future) */
+  /** Default reference unit for the asset (e.g., 'troy-ounce' for precious metals) */
+  readonly defaultUnit?: string;
+  /** Unit alias for backward compatibility */
   readonly unit?: string;
   /** Whether the asset is currently active in the interface */
   readonly enabled: boolean;
@@ -40,24 +42,24 @@ export const ASSETS: readonly Asset[] = [
   { code: 'GBP', name: 'British Pound', category: 'fiat', symbol: '£', enabled: true },
   { code: 'JPY', name: 'Japanese Yen', category: 'fiat', symbol: '¥', enabled: true },
   { code: 'CHF', name: 'Swiss Franc', category: 'fiat', symbol: 'CHF', enabled: true },
-  { code: 'CAD', name: 'Canadian Dollar', category: 'fiat', symbol: 'CA$', enabled: true },
+  { code: 'CAD', name: 'Canadian Dollar', category: 'fiat', symbol: 'C$', enabled: true },
   { code: 'AUD', name: 'Australian Dollar', category: 'fiat', symbol: 'A$', enabled: true },
   { code: 'ZAR', name: 'South African Rand', category: 'fiat', symbol: 'R', enabled: true },
   { code: 'INR', name: 'Indian Rupee', category: 'fiat', symbol: '₹', enabled: true },
-  { code: 'AED', name: 'UAE Dirham', category: 'fiat', symbol: 'AED', enabled: true },
+  { code: 'AED', name: 'UAE Dirham', category: 'fiat', symbol: 'د.إ', enabled: true },
 
   // Cryptocurrencies
   { code: 'BTC', name: 'Bitcoin', category: 'crypto', symbol: '₿', enabled: true },
   { code: 'ETH', name: 'Ethereum', category: 'crypto', symbol: 'Ξ', enabled: true },
   { code: 'SOL', name: 'Solana', category: 'crypto', symbol: 'SOL', enabled: true },
   { code: 'XRP', name: 'XRP', category: 'crypto', symbol: 'XRP', enabled: true },
-  { code: 'DOGE', name: 'Dogecoin', category: 'crypto', symbol: 'Ð', enabled: true },
+  { code: 'DOGE', name: 'Dogecoin', category: 'crypto', symbol: 'DOGE', enabled: true },
 
-  // Precious Metals (Reference assets, default unit: troy ounce; gram support is a future capability)
-  { code: 'XAU', name: 'Gold', category: 'metal', unit: 'troy ounce', enabled: true },
-  { code: 'XAG', name: 'Silver', category: 'metal', unit: 'troy ounce', enabled: true },
-  { code: 'XPT', name: 'Platinum', category: 'metal', unit: 'troy ounce', enabled: true },
-  { code: 'XPD', name: 'Palladium', category: 'metal', unit: 'troy ounce', enabled: true },
+  // Precious Metals (Reference/spot-style assets, default unit: troy-ounce; gram support is a future capability)
+  { code: 'XAU', name: 'Gold', category: 'metal', symbol: 'Au', defaultUnit: 'troy-ounce', unit: 'troy-ounce', enabled: true },
+  { code: 'XAG', name: 'Silver', category: 'metal', symbol: 'Ag', defaultUnit: 'troy-ounce', unit: 'troy-ounce', enabled: true },
+  { code: 'XPT', name: 'Platinum', category: 'metal', symbol: 'Pt', defaultUnit: 'troy-ounce', unit: 'troy-ounce', enabled: true },
+  { code: 'XPD', name: 'Palladium', category: 'metal', symbol: 'Pd', defaultUnit: 'troy-ounce', unit: 'troy-ounce', enabled: true },
 ] as const;
 
 // Fast lookup map indexed by canonical uppercase asset code

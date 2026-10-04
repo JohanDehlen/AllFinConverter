@@ -1,4 +1,15 @@
 ---
+import { ASSET_CATEGORIES, getAssetsByCategory } from '../lib/assets';
+
+/**
+ * Category descriptions for the homepage cards.
+ * Derived from the authoritative ASSET_CATEGORIES in assets.ts.
+ */
+const categoryDescriptions: Record<string, string> = {
+  fiat: 'Convert major international currencies.',
+  crypto: 'Convert supported cryptocurrencies.',
+  metal: 'Convert gold, silver, platinum and palladium.',
+};
 ---
 
 <section class="asset-categories-section" aria-labelledby="categories-heading">
@@ -8,22 +19,16 @@
   </div>
 
   <div class="categories-grid">
-    <article class="category-card">
-      <div class="category-pill">FIAT</div>
-      <h3 class="category-title">Currencies</h3>
-      <p class="category-description">Convert major international currencies.</p>
-    </article>
-
-    <article class="category-card">
-      <div class="category-pill">DIGITAL</div>
-      <h3 class="category-title">Crypto</h3>
-      <p class="category-description">Convert supported cryptocurrencies.</p>
-    </article>
-
-    <article class="category-card">
-      <div class="category-pill">COMMODITY</div>
-      <h3 class="category-title">Precious Metals</h3>
-      <p class="category-description">Convert gold, silver, platinum and palladium.</p>
-    </article>
+    {ASSET_CATEGORIES.map((cat) => {
+      const assets = getAssetsByCategory(cat.id);
+      if (assets.length === 0) return null;
+      return (
+        <article class="category-card">
+          <div class="category-pill">{cat.pill}</div>
+          <h3 class="category-title">{cat.label}</h3>
+          <p class="category-description">{categoryDescriptions[cat.id] ?? ''}</p>
+        </article>
+      );
+    })}
   </div>
 </section>
