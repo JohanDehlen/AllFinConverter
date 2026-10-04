@@ -78,13 +78,28 @@ export function getUnitRate(fromAsset: string, toAsset: string): Big {
 /**
  * Sanitizes raw user text input:
  * - Retains leading minus sign so negative numbers can be identified and rejected by the validator
- * - Allows only digits, optional single decimal point, and optional commas
- * - Discards any secondary decimal points and non-numeric characters
+ * - Normalizes commas to decimal dots if standard decimal input
+ * - Discards secondary decimal points and non-numeric characters
  */
 export function sanitizeAmountInput(input: string): string {
   const trimmed = input.trim();
   const isNegative = trimmed.startsWith('-');
   let cleaned = trimmed.replace(/[^\d.,]/g, '');
+
+  // Normalize commas to dots if comma is used as decimal separator
+  // If input contains both comma and dot (e.g. 1,000.50), strip commas
+  if (cleaned.includes(',') && cleaned.includes('.')) {
+    cleaned = cleaned.replace(/,/g, '');
+  } else if (cleaned.includes(',') && !cleaned.includes('.')) {
+    // Single comma treated as thousands or decimal separator
+    // If followed by exactly 3 digits at the end and longer than 4 chars, treat as grouping comma
+    const commaParts = cleaned.split(',');
+    if (commaParts.length === 2 && commaParts[1].length !== 3) {
+      cleaned = cleaned.replace(',', '.');
+    } else if (commaParts.length > 2) {
+      cleaned = cleaned.replace(/,/g, '');
+    }
+  }
 
   // Handle multiple decimal points (keep only the first)
   const parts = cleaned.split('.');

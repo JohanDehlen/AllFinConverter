@@ -9,10 +9,10 @@ const defaultAmount = '100';
 <section class="converter-wrapper" aria-labelledby="converter-heading">
   <div class="converter-card">
     <div class="converter-card-header">
-      <span id="converter-heading" class="converter-title">Convert Financial Assets</span>
-      <span class="demo-badge" role="status">
+      <h2 id="converter-heading" class="converter-title">Convert Financial Assets</h2>
+      <span class="demo-badge" role="status" aria-label="Demo mode: fictional mock exchange rates">
         <span class="demo-dot" aria-hidden="true"></span>
-        Demo &mdash; mock rates
+        Demo rates
       </span>
     </div>
 
@@ -30,10 +30,12 @@ const defaultAmount = '100';
               type="text"
               class="amount-input"
               value={defaultAmount}
+              placeholder="0"
               inputmode="decimal"
               autocomplete="off"
               spellcheck="false"
               aria-label="Source amount"
+              aria-describedby="summary-headline"
             />
           </div>
           <div class="asset-field-wrapper">
@@ -61,7 +63,7 @@ const defaultAmount = '100';
           id="swap-button"
           type="button"
           class="swap-btn"
-          aria-label="Swap assets"
+          aria-label="Swap source and destination assets"
           title="Swap assets"
         >
           <svg class="swap-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -86,10 +88,12 @@ const defaultAmount = '100';
               type="text"
               class="amount-input"
               value="92"
+              placeholder="0"
               inputmode="decimal"
               autocomplete="off"
               spellcheck="false"
               aria-label="Converted amount"
+              aria-describedby="summary-headline"
             />
           </div>
           <div class="asset-field-wrapper">
@@ -184,7 +188,7 @@ const defaultAmount = '100';
         const activeInput = activeSide === 'from' ? amountFrom! : amountTo!;
         const targetInput = activeSide === 'from' ? amountTo! : amountFrom!;
 
-        // Clear any previous error indicators
+        // Clear previous error indicators
         amountFrom!.removeAttribute('aria-invalid');
         amountTo!.removeAttribute('aria-invalid');
 
@@ -195,7 +199,7 @@ const defaultAmount = '100';
 
         const unformatted = rawSanitized.replace(/,/g, '').trim();
 
-        // Reject negative numbers safely without calculation
+        // Reject negative numbers safely with clear non-technical feedback
         if (unformatted.startsWith('-')) {
           targetInput.value = '';
           activeInput.setAttribute('aria-invalid', 'true');
@@ -204,7 +208,7 @@ const defaultAmount = '100';
           return;
         }
 
-        // Handle empty or incomplete decimal input
+        // Handle empty or standalone decimal point input
         if (!unformatted || unformatted === '.') {
           targetInput.value = '';
           try {
@@ -219,9 +223,12 @@ const defaultAmount = '100';
           return;
         }
 
+        // Handle typing of trailing dot gracefully (e.g. "100.")
+        const calcInput = unformatted.endsWith('.') ? unformatted.slice(0, -1) : unformatted;
+
         let bigAmount: Big;
         try {
-          bigAmount = new Big(unformatted);
+          bigAmount = new Big(calcInput);
         } catch {
           return;
         }
@@ -290,8 +297,11 @@ const defaultAmount = '100';
       recalculate();
     });
 
-    // Swap button listener
+    // Swap button listener with subtle rotational animation feedback
     swapBtn.addEventListener('click', () => {
+      swapBtn.classList.add('swapping');
+      setTimeout(() => swapBtn.classList.remove('swapping'), 300);
+
       const prevFromCode = assetFrom.value;
       const prevToCode = assetTo.value;
       assetFrom.value = prevToCode;
