@@ -30,8 +30,8 @@ const {
 
 const fromMeta = getAsset(initialFrom);
 const toMeta = getAsset(initialTo);
-const initialBadgeFrom = fromMeta ? getCategoryPill(fromMeta.category) : 'FIAT';
-const initialBadgeTo = toMeta ? getCategoryPill(toMeta.category) : 'FIAT';
+const initialBadgeFrom = fromMeta ? getCategoryPill(fromMeta.category) : 'CURRENCY';
+const initialBadgeTo = toMeta ? getCategoryPill(toMeta.category) : 'CURRENCY';
 const isFromMetal = isPreciousMetal(initialFrom);
 const isToMetal = isPreciousMetal(initialTo);
 const isInitialMetal = isFromMetal || isToMetal;
@@ -73,188 +73,190 @@ try {
     </div>
 
     <div class="converter-card-body">
-      <!-- Source Asset Block -->
-      <div class="converter-unit">
-        <div class="unit-header">
-          <label for="amount-from" class="unit-label">Amount</label>
-          <div class="unit-header-meta">
-            <!-- Source Metal Unit Toggle -->
-            <div
-              id="unit-toggle-from"
-              class="unit-toggle"
-              style={isFromMetal ? "display: inline-flex;" : "display: none;"}
-              role="radiogroup"
-              aria-label="Source metal unit"
-            >
-              <button
-                type="button"
-                class="unit-toggle-btn active"
-                data-unit="troy-oz"
-                aria-checked="true"
-                role="radio"
+      <div class="converter-grid">
+        <!-- Source Asset Block -->
+        <div class="converter-unit">
+          <div class="unit-header">
+            <label for="amount-from" class="unit-label">Amount</label>
+            <div class="unit-header-meta">
+              <!-- Source Metal Unit Toggle -->
+              <div
+                id="unit-toggle-from"
+                class="unit-toggle"
+                style={isFromMetal ? "display: inline-flex;" : "display: none;"}
+                role="radiogroup"
+                aria-label="Source metal unit"
               >
-                troy oz
-              </button>
-              <button
-                type="button"
-                class="unit-toggle-btn"
-                data-unit="g"
-                aria-checked="false"
-                role="radio"
-              >
-                g
-              </button>
-            </div>
-            <span id="badge-from" class="unit-badge">{initialBadgeFrom}</span>
-          </div>
-        </div>
-        <div class="unit-inputs">
-          <div class="amount-field-wrapper">
-            <div class="amount-input-container">
-              <span
-                id="prefix-from"
-                class="amount-prefix"
-                style={initialPrefixFrom ? "display: inline-flex;" : "display: none;"}
-                aria-hidden="true"
-              >{initialPrefixFrom}</span>
-              <input
-                id="amount-from"
-                type="text"
-                class="amount-input"
-                value={initialAmount}
-                placeholder="0"
-                size={initialAmount ? initialAmount.length : 1}
-                inputmode="decimal"
-                autocomplete="off"
-                spellcheck="false"
-                aria-label="Source amount"
-                aria-describedby="summary-headline"
-              />
-              <span
-                id="suffix-from"
-                class="amount-suffix"
-                style={initialSuffixFrom ? "display: inline-flex;" : "display: none;"}
-                aria-hidden="true"
-              >{initialSuffixFrom}</span>
+                <button
+                  type="button"
+                  class="unit-toggle-btn active"
+                  data-unit="troy-oz"
+                  aria-checked="true"
+                  role="radio"
+                >
+                  troy oz
+                </button>
+                <button
+                  type="button"
+                  class="unit-toggle-btn"
+                  data-unit="g"
+                  aria-checked="false"
+                  role="radio"
+                >
+                  g
+                </button>
+              </div>
+              <span id="badge-from" class="unit-badge">{initialBadgeFrom}</span>
             </div>
           </div>
-          <div class="asset-field-wrapper">
-            <select id="asset-from" class="asset-select" aria-label="Source asset">
-              {ASSET_CATEGORIES.map((cat) => {
-                const categoryAssets = getAssetsByCategory(cat.id);
-                return (
-                  <optgroup label={cat.label}>
-                    {categoryAssets.map((asset) => (
-                      <option value={asset.code} selected={asset.code === initialFrom}>
-                        {asset.code} &mdash; {asset.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                );
-              })}
-            </select>
+          <div class="unit-inputs">
+            <div class="amount-field-wrapper">
+              <div class="amount-input-container">
+                <span
+                  id="prefix-from"
+                  class="amount-prefix"
+                  style={initialPrefixFrom ? "display: inline-flex;" : "display: none;"}
+                  aria-hidden="true"
+                >{initialPrefixFrom}</span>
+                <input
+                  id="amount-from"
+                  type="text"
+                  class="amount-input"
+                  value={initialAmount}
+                  placeholder="0"
+                  size={initialAmount ? initialAmount.length : 1}
+                  inputmode="decimal"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-label="Source amount"
+                  aria-describedby="summary-headline"
+                />
+                <span
+                  id="suffix-from"
+                  class="amount-suffix"
+                  style={initialSuffixFrom ? "display: inline-flex;" : "display: none;"}
+                  aria-hidden="true"
+                >{initialSuffixFrom}</span>
+              </div>
+            </div>
+            <div class="asset-field-wrapper">
+              <select id="asset-from" class="asset-select" aria-label="Source asset">
+                {ASSET_CATEGORIES.map((cat) => {
+                  const categoryAssets = getAssetsByCategory(cat.id);
+                  return (
+                    <optgroup label={cat.label}>
+                      {categoryAssets.map((asset) => (
+                        <option value={asset.code} selected={asset.code === initialFrom}>
+                          {asset.code} &mdash; {asset.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Swap Control -->
-      <div class="swap-divider">
-        <button
-          id="swap-button"
-          type="button"
-          class="swap-btn"
-          aria-label="Swap source and destination assets"
-          title="Swap assets"
-        >
-          <svg class="swap-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="7" y1="9" x2="17" y2="9"></line>
-            <polyline points="13 5 17 9 13 13"></polyline>
-            <line x1="17" y1="15" x2="7" y2="15"></line>
-            <polyline points="11 19 7 15 11 11"></polyline>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Destination Asset Block -->
-      <div class="converter-unit">
-        <div class="unit-header">
-          <label for="amount-to" class="unit-label">Converted to (estimate)</label>
-          <div class="unit-header-meta">
-            <!-- Destination Metal Unit Toggle -->
-            <div
-              id="unit-toggle-to"
-              class="unit-toggle"
-              style={isToMetal ? "display: inline-flex;" : "display: none;"}
-              role="radiogroup"
-              aria-label="Destination metal unit"
-            >
-              <button
-                type="button"
-                class="unit-toggle-btn active"
-                data-unit="troy-oz"
-                aria-checked="true"
-                role="radio"
-              >
-                troy oz
-              </button>
-              <button
-                type="button"
-                class="unit-toggle-btn"
-                data-unit="g"
-                aria-checked="false"
-                role="radio"
-              >
-                g
-              </button>
-            </div>
-            <span id="badge-to" class="unit-badge">{initialBadgeTo}</span>
-          </div>
+        <!-- Swap Control -->
+        <div class="swap-divider">
+          <button
+            id="swap-button"
+            type="button"
+            class="swap-btn"
+            aria-label="Swap source and destination assets"
+            title="Swap assets"
+          >
+            <svg class="swap-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="7" y1="9" x2="17" y2="9"></line>
+              <polyline points="13 5 17 9 13 13"></polyline>
+              <line x1="17" y1="15" x2="7" y2="15"></line>
+              <polyline points="11 19 7 15 11 11"></polyline>
+            </svg>
+          </button>
         </div>
-        <div class="unit-inputs">
-          <div class="amount-field-wrapper">
-            <div class="amount-input-container">
-              <span
-                id="prefix-to"
-                class="amount-prefix"
-                style={initialPrefixTo ? "display: inline-flex;" : "display: none;"}
-                aria-hidden="true"
-              >{initialPrefixTo}</span>
-              <input
-                id="amount-to"
-                type="text"
-                class="amount-input"
-                value={initialTargetAmount}
-                placeholder="0"
-                size={initialTargetAmount ? initialTargetAmount.length : 1}
-                inputmode="decimal"
-                autocomplete="off"
-                spellcheck="false"
-                aria-label="Converted amount"
-                aria-describedby="summary-headline"
-              />
-              <span
-                id="suffix-to"
-                class="amount-suffix"
-                style={initialSuffixTo ? "display: inline-flex;" : "display: none;"}
-                aria-hidden="true"
-              >{initialSuffixTo}</span>
+
+        <!-- Destination Asset Block -->
+        <div class="converter-unit">
+          <div class="unit-header">
+            <label for="amount-to" class="unit-label">Converted to (estimate)</label>
+            <div class="unit-header-meta">
+              <!-- Destination Metal Unit Toggle -->
+              <div
+                id="unit-toggle-to"
+                class="unit-toggle"
+                style={isToMetal ? "display: inline-flex;" : "display: none;"}
+                role="radiogroup"
+                aria-label="Destination metal unit"
+              >
+                <button
+                  type="button"
+                  class="unit-toggle-btn active"
+                  data-unit="troy-oz"
+                  aria-checked="true"
+                  role="radio"
+                >
+                  troy oz
+                </button>
+                <button
+                  type="button"
+                  class="unit-toggle-btn"
+                  data-unit="g"
+                  aria-checked="false"
+                  role="radio"
+                >
+                  g
+                </button>
+              </div>
+              <span id="badge-to" class="unit-badge">{initialBadgeTo}</span>
             </div>
           </div>
-          <div class="asset-field-wrapper">
-            <select id="asset-to" class="asset-select" aria-label="Destination asset">
-              {ASSET_CATEGORIES.map((cat) => {
-                const categoryAssets = getAssetsByCategory(cat.id);
-                return (
-                  <optgroup label={cat.label}>
-                    {categoryAssets.map((asset) => (
-                      <option value={asset.code} selected={asset.code === initialTo}>
-                        {asset.code} &mdash; {asset.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                );
-              })}
-            </select>
+          <div class="unit-inputs">
+            <div class="amount-field-wrapper">
+              <div class="amount-input-container">
+                <span
+                  id="prefix-to"
+                  class="amount-prefix"
+                  style={initialPrefixTo ? "display: inline-flex;" : "display: none;"}
+                  aria-hidden="true"
+                >{initialPrefixTo}</span>
+                <input
+                  id="amount-to"
+                  type="text"
+                  class="amount-input"
+                  value={initialTargetAmount}
+                  placeholder="0"
+                  size={initialTargetAmount ? initialTargetAmount.length : 1}
+                  inputmode="decimal"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-label="Converted amount"
+                  aria-describedby="summary-headline"
+                />
+                <span
+                  id="suffix-to"
+                  class="amount-suffix"
+                  style={initialSuffixTo ? "display: inline-flex;" : "display: none;"}
+                  aria-hidden="true"
+                >{initialSuffixTo}</span>
+              </div>
+            </div>
+            <div class="asset-field-wrapper">
+              <select id="asset-to" class="asset-select" aria-label="Destination asset">
+                {ASSET_CATEGORIES.map((cat) => {
+                  const categoryAssets = getAssetsByCategory(cat.id);
+                  return (
+                    <optgroup label={cat.label}>
+                      {categoryAssets.map((asset) => (
+                        <option value={asset.code} selected={asset.code === initialTo}>
+                          {asset.code} &mdash; {asset.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
+              </select>
+            </div>
           </div>
         </div>
       </div>

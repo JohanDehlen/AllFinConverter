@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { getFeaturedPairs } from '../lib/pairs';
 
 /**
- * WorthPair Sitemap Endpoint
+ * AllFinConverter Sitemap Endpoint
  *
  * Generates a valid sitemap.xml containing exclusively real, generated routes:
  * 1. Homepage ('/')
@@ -11,7 +11,7 @@ import { getFeaturedPairs } from '../lib/pairs';
  * Automatically stays synchronized with the pair engine to prevent 404s or stale entries.
  */
 export const GET: APIRoute = ({ site }) => {
-  const baseUrl = site ? site.toString().replace(/\/$/, '') : 'https://worthpair.com';
+  const baseUrl = site ? site.toString().replace(/\/$/, '') : 'https://allfinconverter.com';
 
   const featuredPairs = getFeaturedPairs();
 

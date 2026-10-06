@@ -1,5 +1,5 @@
 /**
- * WorthPair Rate Engine Service
+ * AllFinConverter Rate Engine Service
  *
  * Provider-neutral rate engine responsible for:
  * 1. Managing rate provider registration and active provider selection.

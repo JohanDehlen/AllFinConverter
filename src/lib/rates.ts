@@ -1,5 +1,5 @@
 /**
- * WorthPair Normalized Rate Data Model
+ * AllFinConverter Normalized Rate Data Model
  *
  * Provider-neutral data definitions for exchange rates, normalized market datasets,
  * freshness states, and reliability status.

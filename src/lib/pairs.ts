@@ -1,5 +1,5 @@
 /**
- * WorthPair Conversion Pair Model & Registry
+ * AllFinConverter Conversion Pair Model & Registry
  *
  * Authoritative module for conversion pair definitions, validation,
  * slug generation, and static route generation.
@@ -82,8 +82,8 @@ export function validatePair(fromInput: string, toInput: string): ConversionPair
 
   const slug = formatPairSlug(fromAsset.code, toAsset.code);
   const headline = formatPairHeadline(fromAsset, toAsset);
-  const title = `${headline} | WorthPair`;
-  const description = `Convert ${fromAsset.name} (${fromAsset.code}) to ${toAsset.name} (${toAsset.code}) with WorthPair's simple ${fromAsset.code} to ${toAsset.code} converter.`;
+  const title = `${headline} | AllFinConverter`;
+  const description = `Convert ${fromAsset.name} (${fromAsset.code}) to ${toAsset.name} (${toAsset.code}) with AllFinConverter's simple ${fromAsset.code} to ${toAsset.code} converter.`;
 
   return {
     fromCode: fromAsset.code,
@@ -148,7 +148,7 @@ export function getFeaturedPairs(): readonly ConversionPair[] {
     if (pair) {
       pairs.push(pair);
     } else {
-      console.warn(`[WorthPair] Configured featured pair '${from}' -> '${to}' is invalid.`);
+      console.warn(`[AllFinConverter] Configured featured pair '${from}' -> '${to}' is invalid.`);
     }
   }
 

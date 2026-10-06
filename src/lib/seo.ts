@@ -1,5 +1,5 @@
 /**
- * WorthPair SEO Architecture & Helpers
+ * AllFinConverter SEO Architecture & Helpers
  *
  * Provides reusable metadata schemas, canonical URL resolution,
  * JSON-LD structured data generators, and future pair-page slug conventions.
@@ -11,7 +11,7 @@ import { getAsset } from './assets.ts';
  * Standard page metadata interface for BaseLayout.
  */
 export interface PageMetadata {
-  /** Page title (e.g. 'WorthPair — Currency, Crypto & Precious Metals Converter') */
+  /** Page title (e.g. 'AllFinConverter — Currency, Crypto & Precious Metals Converter') */
   readonly title: string;
   /** Meta description for search engines */
   readonly description: string;
@@ -53,12 +53,12 @@ export function resolveCanonicalUrl(pathname: string, site?: URL | string): stri
 /**
  * Generates Schema.org WebSite structured data.
  */
-export function getWebSiteStructuredData(siteUrl = 'https://worthpair.com'): Record<string, unknown> {
+export function getWebSiteStructuredData(siteUrl = 'https://allfinconverter.com'): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'WorthPair',
-    alternateName: 'WorthPair Converter',
+    name: 'AllFinConverter',
+    alternateName: 'AllFinConverter Converter',
     url: siteUrl,
     description: 'Fast, high-precision currency, cryptocurrency, and precious metals converter.',
   };
@@ -67,11 +67,11 @@ export function getWebSiteStructuredData(siteUrl = 'https://worthpair.com'): Rec
 /**
  * Generates Schema.org WebApplication structured data for the converter utility.
  */
-export function getWebApplicationStructuredData(siteUrl = 'https://worthpair.com'): Record<string, unknown> {
+export function getWebApplicationStructuredData(siteUrl = 'https://allfinconverter.com'): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'WorthPair Financial Converter',
+    name: 'AllFinConverter Financial Converter',
     url: siteUrl,
     applicationCategory: 'FinanceApplication',
     operatingSystem: 'All',

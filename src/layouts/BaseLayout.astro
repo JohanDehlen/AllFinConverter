@@ -9,7 +9,7 @@ interface Props extends Partial<PageMetadata> {
 }
 
 const {
-  title = 'WorthPair — Currency, Crypto & Precious Metals Converter',
+  title = 'AllFinConverter — Currency, Crypto & Precious Metals Converter',
   description = 'Fast, high-precision currency, cryptocurrency, and precious metals converter. Convert between fiat, crypto, and commodity reference assets instantly.',
   canonicalUrl,
   ogImage = '/favicon.svg',
@@ -19,8 +19,8 @@ const {
   siteTitleSuffix = true,
 } = Astro.props;
 
-const pageTitle = siteTitleSuffix && !title.includes('WorthPair')
-  ? `${title} | WorthPair`
+const pageTitle = siteTitleSuffix && !title.includes('AllFinConverter')
+  ? `${title} | AllFinConverter`
   : title;
 
 const resolvedCanonical = canonicalUrl ?? resolveCanonicalUrl(Astro.url.pathname, Astro.site);
@@ -48,7 +48,7 @@ const jsonLdData = Array.isArray(structuredData)
 
     <!-- Open Graph Metadata -->
     <meta property="og:type" content={ogType} />
-    <meta property="og:site_name" content="WorthPair" />
+    <meta property="og:site_name" content="AllFinConverter" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={resolvedCanonical} />

@@ -1,5 +1,5 @@
 /**
- * Automated Test Suite for WorthPair M1.6 & M1.7
+ * Automated Test Suite for AllFinConverter M1.6 & M1.7
  *
  * Verifies:
  * 1. Pair validation rules (valid pairs, unknown assets, same-asset, disabled, etc.)
@@ -67,7 +67,7 @@ describe('M1.6 — Conversion Pair Validation', () => {
     assert.equal(usdToEur.toCode, 'EUR');
     assert.equal(usdToEur.slug, 'usd-to-eur');
     assert.equal(usdToEur.headline, 'USD to EUR Converter');
-    assert.equal(usdToEur.title, 'USD to EUR Converter | WorthPair');
+    assert.equal(usdToEur.title, 'USD to EUR Converter | AllFinConverter');
 
     const eurToUsd = validatePair('EUR', 'USD');
     assert.ok(eurToUsd, 'EUR -> USD should be valid');
@@ -419,14 +419,14 @@ describe('M1.6 — Rate Engine & Mock Isolation Invariants', () => {
 
 describe('M1.6 — SEO Metadata & Structured Data', () => {
   it('should generate canonical URLs properly', () => {
-    assert.equal(resolveCanonicalUrl('/usd-to-eur', 'https://worthpair.com'), 'https://worthpair.com/usd-to-eur');
-    assert.equal(resolveCanonicalUrl('/gold-to-usd', 'https://worthpair.com/'), 'https://worthpair.com/gold-to-usd');
+    assert.equal(resolveCanonicalUrl('/usd-to-eur', 'https://allfinconverter.com'), 'https://allfinconverter.com/usd-to-eur');
+    assert.equal(resolveCanonicalUrl('/gold-to-usd', 'https://allfinconverter.com/'), 'https://allfinconverter.com/gold-to-usd');
   });
 
   it('should generate valid BreadcrumbList structured data', () => {
     const breadcrumbs = getBreadcrumbStructuredData([
-      { name: 'Home', url: 'https://worthpair.com/' },
-      { name: 'USD to EUR', url: 'https://worthpair.com/usd-to-eur' },
+      { name: 'Home', url: 'https://allfinconverter.com/' },
+      { name: 'USD to EUR', url: 'https://allfinconverter.com/usd-to-eur' },
     ]);
     assert.equal(breadcrumbs['@type'], 'BreadcrumbList');
     assert.equal(Array.isArray(breadcrumbs.itemListElement), true);

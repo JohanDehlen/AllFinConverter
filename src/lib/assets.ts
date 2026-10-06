@@ -1,5 +1,5 @@
 /**
- * WorthPair Asset Metadata Model
+ * AllFinConverter Asset Metadata Model
  *
  * Dedicated module for canonical asset definitions across all supported asset classes:
  * - Fiat Currencies
@@ -37,7 +37,7 @@ export interface Asset {
 }
 
 export const ASSET_CATEGORIES: readonly { id: AssetCategory; label: string; pill: string }[] = [
-  { id: 'fiat', label: 'Currencies', pill: 'FIAT' },
+  { id: 'fiat', label: 'Currencies', pill: 'CURRENCY' },
   { id: 'crypto', label: 'Cryptocurrencies', pill: 'CRYPTO' },
   { id: 'metal', label: 'Precious Metals', pill: 'METAL' },
 ] as const;

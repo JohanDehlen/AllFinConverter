@@ -1,5 +1,5 @@
 /**
- * WorthPair Rate Provider Abstraction
+ * AllFinConverter Rate Provider Abstraction
  *
  * Generic, provider-neutral contract for rate suppliers.
  * Rate providers are responsible solely for supplying raw rate payloads.

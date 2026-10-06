@@ -1,5 +1,5 @@
 /**
- * WorthPair Local Mock Rate Provider
+ * AllFinConverter Local Mock Rate Provider
  *
  * Implements the RateProvider interface using static fictional demo data.
  * Contains ZERO network calls, zero external dependencies, and zero API keys.
