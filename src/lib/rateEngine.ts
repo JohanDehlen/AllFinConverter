@@ -263,6 +263,48 @@ export class RateEngine {
   }
 
   /**
+   * Loads rates asynchronously from a provider.
+   * On failure, catches error and retains last-known-good dataset.
+   */
+  async loadFromProviderAsync(provider: RateProvider): Promise<DatasetValidationResult> {
+    let raw: RawRatePayload;
+    try {
+      raw = await provider.getRates();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.lastError = `Failed to load rates from '${provider.id}': ${message}`;
+
+      if (this.lastKnownGoodDataset) {
+        this.currentDataset = this.lastKnownGoodDataset;
+        this.isFallbackToLkg = true;
+      } else {
+        this.currentDataset = null;
+        this.isFallbackToLkg = false;
+      }
+
+      return {
+        valid: false,
+        errors: [this.lastError],
+        warnings: [],
+      };
+    }
+
+    return this.ingestPayload(raw);
+  }
+
+  /**
+   * Sets the active provider and ingests its rates asynchronously.
+   */
+  async setActiveProviderAsync(providerId: string): Promise<DatasetValidationResult> {
+    const provider = this.providers.get(providerId);
+    if (!provider) {
+      throw new RateEngineError(`Rate provider '${providerId}' is not registered.`);
+    }
+    this.activeProviderId = providerId;
+    return this.loadFromProviderAsync(provider);
+  }
+
+  /**
    * Ingests an external validated dataset directly.
    */
   setDataset(dataset: NormalizedRateDataset): void {
