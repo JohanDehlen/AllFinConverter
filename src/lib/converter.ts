@@ -4,7 +4,7 @@
  */
 
 import Big from 'big.js';
-import { getRate } from './rateEngine.ts';
+import { getRate, type RateEngine } from './rateEngine.ts';
 import { isPreciousMetal, type MetalUnit } from './assets.ts';
 
 export type { MetalUnit };
@@ -36,6 +36,7 @@ export function convertGramsToTroyOz(grams: Big | string): Big {
 export interface ConversionOptions {
   fromUnit?: MetalUnit | string;
   toUnit?: MetalUnit | string;
+  rateEngine?: RateEngine;
 }
 
 export interface ConversionResult {
@@ -74,8 +75,9 @@ export function calculateConversion(
     throw new Error('Financial conversion amount cannot be negative.');
   }
 
-  const fromRate = getRate(fromAsset);
-  const toRate = getRate(toAsset);
+  const engine = options?.rateEngine;
+  const fromRate = engine ? engine.getRate(fromAsset) : getRate(fromAsset);
+  const toRate = engine ? engine.getRate(toAsset) : getRate(toAsset);
 
   const isFromMetal = isPreciousMetal(fromAsset);
   const isToMetal = isPreciousMetal(toAsset);

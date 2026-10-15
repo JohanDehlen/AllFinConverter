@@ -28,6 +28,18 @@ import {
   type SourceDataset,
   type CompositeAssemblyResult,
 } from './compositeRates.ts';
+import {
+  FrankfurterRateProvider,
+  type FrankfurterProviderOptions,
+} from './providers/frankfurterProvider.ts';
+import {
+  GoldApiRateProvider,
+  type GoldApiProviderOptions,
+} from './providers/goldApiProvider.ts';
+import {
+  CoinGeckoRateProvider,
+  type CoinGeckoProviderOptions,
+} from './providers/coingeckoProvider.ts';
 
 /**
  * Configuration options for registering a rate provider with the orchestrator.
@@ -379,4 +391,102 @@ export class RateOrchestrator {
     }
     this.latestComposite = null;
   }
+}
+
+/**
+ * Configuration options for assembling the standard AllFinConverter multi-provider orchestrator.
+ */
+export interface AllFinOrchestratorOptions {
+  /** Optional custom options for FrankfurterRateProvider (fiat) */
+  readonly frankfurterOptions?: FrankfurterProviderOptions;
+  /** Optional custom options for GoldApiRateProvider (metals) */
+  readonly goldApiOptions?: GoldApiProviderOptions;
+  /** Optional custom options for CoinGeckoRateProvider (crypto) */
+  readonly coinGeckoOptions?: CoinGeckoProviderOptions;
+  /** Optional priority overrides per provider for conflict resolution */
+  readonly priorities?: {
+    readonly frankfurter?: number;
+    readonly goldApi?: number;
+    readonly coinGecko?: number;
+  };
+  /**
+   * Global custom fetch implementation applied as default to all three providers.
+   * Explicit provider-specific fetch overrides take precedence.
+   */
+  readonly fetch?: typeof globalThis.fetch;
+  /**
+   * Global request timeout in milliseconds applied as default to all three providers.
+   * Explicit provider-specific timeout overrides take precedence.
+   */
+  readonly timeoutMs?: number;
+  /** Optional RateEngine to synchronize with composite results */
+  readonly rateEngine?: RateEngine;
+  /** Optional composite dataset ID */
+  readonly compositeId?: string;
+  /** Optional composite dataset display name */
+  readonly compositeName?: string;
+}
+
+/**
+ * Factory function assembling Frankfurter, Gold-API, and CoinGecko providers
+ * into a pre-configured RateOrchestrator.
+ *
+ * Rules:
+ * - Explicit per-provider options take precedence over global options (fetch, timeoutMs).
+ * - Providers are registered with default priority 10 unless overridden.
+ * - If rateEngine is provided, it is attached and synchronized upon composite updates.
+ * - Does NOT make any live network requests upon instantiation.
+ * - Does NOT alter or register with defaultRateEngine.
+ */
+export function createAllFinRateOrchestrator(
+  options?: AllFinOrchestratorOptions
+): RateOrchestrator {
+  const globalFetch = options?.fetch;
+  const globalTimeout = options?.timeoutMs;
+
+  // 1. Build merged options for Frankfurter
+  const frankfurterOpts: FrankfurterProviderOptions = {
+    ...(globalFetch !== undefined ? { fetch: globalFetch } : {}),
+    ...(globalTimeout !== undefined ? { timeoutMs: globalTimeout } : {}),
+    ...options?.frankfurterOptions,
+  };
+
+  // 2. Build merged options for Gold-API
+  const goldApiOpts: GoldApiProviderOptions = {
+    ...(globalFetch !== undefined ? { fetch: globalFetch } : {}),
+    ...(globalTimeout !== undefined ? { timeoutMs: globalTimeout } : {}),
+    ...options?.goldApiOptions,
+  };
+
+  // 3. Build merged options for CoinGecko
+  const coinGeckoOpts: CoinGeckoProviderOptions = {
+    ...(globalFetch !== undefined ? { fetch: globalFetch } : {}),
+    ...(globalTimeout !== undefined ? { timeoutMs: globalTimeout } : {}),
+    ...options?.coinGeckoOptions,
+  };
+
+  // Instantiate provider adapters
+  const frankfurter = new FrankfurterRateProvider(frankfurterOpts);
+  const goldApi = new GoldApiRateProvider(goldApiOpts);
+  const coinGecko = new CoinGeckoRateProvider(coinGeckoOpts);
+
+  // Instantiate orchestrator
+  const orchestrator = new RateOrchestrator({
+    compositeId: options?.compositeId ?? 'allfin-composite',
+    compositeName: options?.compositeName ?? 'AllFin Composite Rates',
+    rateEngine: options?.rateEngine,
+  });
+
+  // Register providers with priority (default: 10)
+  orchestrator.registerProvider(frankfurter, {
+    priority: options?.priorities?.frankfurter ?? 10,
+  });
+  orchestrator.registerProvider(goldApi, {
+    priority: options?.priorities?.goldApi ?? 10,
+  });
+  orchestrator.registerProvider(coinGecko, {
+    priority: options?.priorities?.coinGecko ?? 10,
+  });
+
+  return orchestrator;
 }
