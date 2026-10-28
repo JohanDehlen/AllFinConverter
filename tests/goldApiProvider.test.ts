@@ -27,6 +27,7 @@ import {
   normalizeGoldApiResponses,
   GOLD_API_SUPPORTED_METALS,
   DEFAULT_GOLD_API_BASE_URL,
+  DEFAULT_GOLD_API_TIMEOUT_MS,
 } from '../src/lib/providers/goldApiProvider.ts';
 
 import { validateRatePayload, RateEngine, defaultRateEngine } from '../src/lib/rateEngine.ts';
@@ -433,6 +434,116 @@ describe('M2.3 — HTTP Errors, Network Failures, and Timeouts', () => {
     const successResult = await goodProvider.getRatesSafe();
     assert.equal(successResult.error, null);
     assert.ok(successResult.payload);
+  });
+
+  it('should export DEFAULT_GOLD_API_TIMEOUT_MS as 30,000ms', () => {
+    assert.equal(DEFAULT_GOLD_API_TIMEOUT_MS, 30_000);
+  });
+
+  it('should reject and prevent partial snapshot when some metals time out (requireAll=true)', async () => {
+    const provider = new GoldApiRateProvider({
+      timeoutMs: 25,
+      fetch: async (url, init) => {
+        const urlStr = String(url);
+        // XAU and XAG respond quickly
+        if (urlStr.includes('/XAU')) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            json: async () => SAMPLE_GOLD_RESPONSE,
+          } as unknown as Response;
+        }
+        if (urlStr.includes('/XAG')) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            json: async () => SAMPLE_SILVER_RESPONSE,
+          } as unknown as Response;
+        }
+
+        // XPT and XPD simulate slow/unresponsive requests that trigger timeout
+        return new Promise((resolve, reject) => {
+          const timer = setTimeout(() => {
+            resolve({
+              ok: true,
+              status: 200,
+              statusText: 'OK',
+              json: async () => SAMPLE_PLATINUM_RESPONSE,
+            } as unknown as Response);
+          }, 200);
+
+          init?.signal?.addEventListener('abort', () => {
+            clearTimeout(timer);
+            const abortErr = new Error('The operation was aborted');
+            abortErr.name = 'AbortError';
+            reject(abortErr);
+          });
+        });
+      },
+    });
+
+    await assert.rejects(
+      async () => await provider.getRates(),
+      (err: unknown) => {
+        assert.ok(err instanceof GoldApiProviderError);
+        assert.match(err.message, /requireAll=true/);
+        assert.match(err.message, /timed out after 25ms/);
+        return true;
+      }
+    );
+  });
+
+  it('should accept partial rates when some metals time out if requireAll=false', async () => {
+    const provider = new GoldApiRateProvider({
+      requireAll: false,
+      timeoutMs: 25,
+      fetch: async (url, init) => {
+        const urlStr = String(url);
+        if (urlStr.includes('/XAU')) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            json: async () => SAMPLE_GOLD_RESPONSE,
+          } as unknown as Response;
+        }
+        if (urlStr.includes('/XAG')) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            json: async () => SAMPLE_SILVER_RESPONSE,
+          } as unknown as Response;
+        }
+
+        return new Promise((resolve, reject) => {
+          const timer = setTimeout(() => {
+            resolve({
+              ok: true,
+              status: 200,
+              statusText: 'OK',
+              json: async () => SAMPLE_PLATINUM_RESPONSE,
+            } as unknown as Response);
+          }, 200);
+
+          init?.signal?.addEventListener('abort', () => {
+            clearTimeout(timer);
+            const abortErr = new Error('The operation was aborted');
+            abortErr.name = 'AbortError';
+            reject(abortErr);
+          });
+        });
+      },
+    });
+
+    const payload = await provider.getRates();
+    const rates = payload.rates as Record<string, string>;
+    assert.ok(rates['XAU']);
+    assert.ok(rates['XAG']);
+    assert.equal(rates['XPT'], undefined);
+    assert.equal(rates['XPD'], undefined);
   });
 });
 

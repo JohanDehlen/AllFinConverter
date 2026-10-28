@@ -37,6 +37,11 @@ import type { RawRatePayload } from '../rates.ts';
 export const DEFAULT_GOLD_API_BASE_URL = 'https://api.gold-api.com';
 
 /**
+ * Default request timeout in milliseconds for Gold-API requests (30 seconds).
+ */
+export const DEFAULT_GOLD_API_TIMEOUT_MS = 30_000;
+
+/**
  * Canonical precious metal asset codes supported by AllFinConverter and Gold-API.
  */
 export const GOLD_API_SUPPORTED_METALS = ['XAU', 'XAG', 'XPT', 'XPD'] as const;
@@ -66,7 +71,7 @@ export interface GoldApiProviderOptions {
   readonly baseUrl?: string;
   /** Custom fetch implementation for testing or non-standard runtimes. Defaults to globalThis.fetch. */
   readonly fetch?: typeof globalThis.fetch;
-  /** Request timeout in milliseconds. Defaults to 10,000ms. */
+  /** Request timeout in milliseconds per request. Defaults to 30,000ms (DEFAULT_GOLD_API_TIMEOUT_MS). */
   readonly timeoutMs?: number;
   /** Metal symbols to retrieve. Defaults to GOLD_API_SUPPORTED_METALS. */
   readonly symbols?: readonly SupportedMetalCode[];
@@ -238,7 +243,7 @@ export class GoldApiRateProvider implements RateProvider {
   constructor(options?: GoldApiProviderOptions) {
     this.baseUrl = (options?.baseUrl ?? DEFAULT_GOLD_API_BASE_URL).replace(/\/+$/, '');
     this.fetchFn = options?.fetch ?? ((url, init) => globalThis.fetch(url, init));
-    this.timeoutMs = options?.timeoutMs ?? 10_000;
+    this.timeoutMs = options?.timeoutMs ?? DEFAULT_GOLD_API_TIMEOUT_MS;
     this.symbols = options?.symbols ?? GOLD_API_SUPPORTED_METALS;
     this.requireAll = options?.requireAll ?? true;
   }
@@ -248,15 +253,20 @@ export class GoldApiRateProvider implements RateProvider {
    * Throws GoldApiProviderError on network failure, timeout, HTTP error, or if no valid rates are returned.
    */
   async getRates(): Promise<RawRatePayload> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+    const fetchPromises = this.symbols.map(async (symbol) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+      const url = `${this.baseUrl}/price/${encodeURIComponent(symbol)}`;
 
-    try {
-      const fetchPromises = this.symbols.map(async (symbol) => {
-        const url = `${this.baseUrl}/price/${encodeURIComponent(symbol)}`;
+      try {
         let response: Response;
         try {
-          response = await this.fetchFn(url, { signal: controller.signal });
+          response = await this.fetchFn(url, {
+            signal: controller.signal,
+            headers: {
+              Accept: 'application/json',
+            },
+          });
         } catch (err) {
           if (err instanceof Error && err.name === 'AbortError') {
             throw new GoldApiProviderError(
@@ -287,48 +297,48 @@ export class GoldApiRateProvider implements RateProvider {
         }
 
         return json;
-      });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    });
 
-      const settledResults = await Promise.allSettled(fetchPromises);
-      const successfulResponses: unknown[] = [];
-      const errors: string[] = [];
-      let timeoutError: GoldApiProviderError | null = null;
+    const settledResults = await Promise.allSettled(fetchPromises);
+    const successfulResponses: unknown[] = [];
+    const errors: string[] = [];
+    let timeoutError: GoldApiProviderError | null = null;
 
-      for (const res of settledResults) {
-        if (res.status === 'fulfilled') {
-          successfulResponses.push(res.value);
-        } else {
-          const reason = res.reason;
-          if (reason instanceof GoldApiProviderError && reason.message.includes('timed out')) {
-            timeoutError = reason;
-          }
-          errors.push(reason instanceof Error ? reason.message : String(reason));
+    for (const res of settledResults) {
+      if (res.status === 'fulfilled') {
+        successfulResponses.push(res.value);
+      } else {
+        const reason = res.reason;
+        if (reason instanceof GoldApiProviderError && reason.message.includes('timed out')) {
+          timeoutError = reason;
         }
+        errors.push(reason instanceof Error ? reason.message : String(reason));
       }
-
-      // If all requests timed out, propagate the timeout error
-      if (successfulResponses.length === 0 && timeoutError) {
-        throw timeoutError;
-      }
-
-      // If all requests failed, throw an aggregated error
-      if (successfulResponses.length === 0) {
-        throw new GoldApiProviderError(
-          `All Gold-API metal requests failed: ${errors.join('; ')}`
-        );
-      }
-
-      // If requireAll is true (default) and any metal request failed, throw to protect LKG retention
-      if (this.requireAll && errors.length > 0) {
-        throw new GoldApiProviderError(
-          `Gold-API metal request failed (requireAll=true): ${errors.join('; ')}`
-        );
-      }
-
-      return normalizeGoldApiResponses(successfulResponses, this.id, this.name);
-    } finally {
-      clearTimeout(timeoutId);
     }
+
+    // If all requests timed out, propagate the timeout error
+    if (successfulResponses.length === 0 && timeoutError) {
+      throw timeoutError;
+    }
+
+    // If all requests failed, throw an aggregated error
+    if (successfulResponses.length === 0) {
+      throw new GoldApiProviderError(
+        `All Gold-API metal requests failed: ${errors.join('; ')}`
+      );
+    }
+
+    // If requireAll is true (default) and any metal request failed, throw to protect LKG retention
+    if (this.requireAll && errors.length > 0) {
+      throw new GoldApiProviderError(
+        `Gold-API metal request failed (requireAll=true): ${errors.join('; ')}`
+      );
+    }
+
+    return normalizeGoldApiResponses(successfulResponses, this.id, this.name);
   }
 
   /**

@@ -314,6 +314,7 @@ try {
   } from '../lib/assets.ts';
   import { RateEngine } from '../lib/rateEngine.ts';
   import { SnapshotRateProvider } from '../lib/providers/snapshotProvider.ts';
+  import { isLiveSnapshotAcceptable } from '../lib/rateSnapshot.ts';
 
   function initConverter() {
     const amountFrom = document.getElementById('amount-from') as HTMLInputElement | null;
@@ -680,21 +681,29 @@ try {
         await engine.setActiveProviderAsync(provider.id);
 
         const snapshot = provider.getLatestSnapshot();
-        if (snapshot && typeof snapshot.timestamp === 'number') {
-          const now = Date.now();
-          const age = now - snapshot.timestamp;
-          if (age >= -300_000 && age <= 24 * 60 * 60 * 1000) {
-            clientEngine = engine;
-            activeSnapshotTimestamp = snapshot.timestamp;
-            updateRateBadge(true, snapshot.timestamp);
-            recalculate();
-          }
+        if (
+          snapshot &&
+          typeof snapshot.timestamp === 'number' &&
+          isLiveSnapshotAcceptable(snapshot)
+        ) {
+          clientEngine = engine;
+          activeSnapshotTimestamp = snapshot.timestamp;
+          updateRateBadge(true, snapshot.timestamp);
+          recalculate();
+          return;
         }
+
+        // If snapshot is missing, mock data, or stale: remain in Demo mode
+        clientEngine = undefined;
+        activeSnapshotTimestamp = null;
+        updateRateBadge(false);
+        recalculate();
       } catch {
         // Fallback: retain mock-local defaultRateEngine and "Demo rates" badge
         clientEngine = undefined;
         activeSnapshotTimestamp = null;
         updateRateBadge(false);
+        recalculate();
       }
     }
 

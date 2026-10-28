@@ -275,6 +275,26 @@ export function validateRateSnapshot(
 }
 
 /**
+ * Evaluates whether a snapshot payload is acceptable for activating client live snapshot mode.
+ *
+ * Validation rules:
+ * 1. Must be non-null and pass validateRateSnapshot.
+ * 2. isMock must be strictly false (never activate live snapshot mode for mock/demo data).
+ * 3. Timestamp must be valid and within [-5 minutes, +24 hours] of reference time.
+ */
+export function isLiveSnapshotAcceptable(
+  raw: unknown,
+  options?: SnapshotValidationOptions
+): boolean {
+  try {
+    const validated = validateRateSnapshot(raw, options);
+    return validated.isMock === false;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Serializes a validated NormalizedRateDataset into a canonical RateSnapshotPayload.
  *
  * Preserves Big.js rate precision by converting each rate to a string via Big.toString().

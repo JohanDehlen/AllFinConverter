@@ -26,3 +26,8 @@ Thumbs.db
 # IDE and Editor directories
 .vscode/
 .idea/
+
+# Generated rate snapshot data and temporary atomic write swap files
+src/data/
+*.tmp
+
