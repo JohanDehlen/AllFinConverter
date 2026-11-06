@@ -18,7 +18,7 @@ export const MOCK_DATASET_TIMESTAMP = 1767225600000;
 
 /**
  * Fictional mock rate dataset for local development and testing.
- * Covers all 19 supported assets across Fiat, Crypto, and Precious Metals.
+ * Covers all supported assets across Fiat, Crypto, and Precious Metals.
  */
 export const FICTIONAL_MOCK_RATES: Readonly<Record<string, string>> = {
   // Fiat Currencies (units per 1 USD)
@@ -32,6 +32,17 @@ export const FICTIONAL_MOCK_RATES: Readonly<Record<string, string>> = {
   ZAR: '18.25',
   INR: '83.50',
   AED: '3.67',
+  CNY: '7.25',
+  HKD: '7.80',
+  SGD: '1.35',
+  NZD: '1.65',
+  KRW: '1350.0',
+  MXN: '18.00',
+  BRL: '5.20',
+  SEK: '10.50',
+  NOK: '10.80',
+  DKK: '6.90',
+  PLN: '4.00',
 
   // Cryptocurrencies (units per 1 USD) - Fictional development values
   BTC: '0.000015',

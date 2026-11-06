@@ -373,6 +373,17 @@ describe('M1.7 — Precious Metal Unit Toggle & Big.js Conversions', () => {
     assert.equal(getAssetAmountPrefix('AUD'), 'A$');
     assert.equal(getAssetAmountPrefix('INR'), '₹');
     assert.equal(getAssetAmountPrefix('AED'), 'د.إ');
+    assert.equal(getAssetAmountPrefix('CNY'), '¥');
+    assert.equal(getAssetAmountPrefix('HKD'), 'HK$');
+    assert.equal(getAssetAmountPrefix('SGD'), 'S$');
+    assert.equal(getAssetAmountPrefix('NZD'), 'NZ$');
+    assert.equal(getAssetAmountPrefix('KRW'), '₩');
+    assert.equal(getAssetAmountPrefix('MXN'), 'Mex$');
+    assert.equal(getAssetAmountPrefix('BRL'), 'R$');
+    assert.equal(getAssetAmountPrefix('SEK'), 'kr');
+    assert.equal(getAssetAmountPrefix('NOK'), 'kr');
+    assert.equal(getAssetAmountPrefix('DKK'), 'kr');
+    assert.equal(getAssetAmountPrefix('PLN'), 'zł');
 
     // Crypto prefixes (uses existing symbol or ticker)
     assert.equal(getAssetAmountPrefix('BTC'), '₿');
@@ -406,9 +417,9 @@ describe('M1.6 — Rate Engine & Mock Isolation Invariants', () => {
     assert.equal(getRate('USD').toFixed(), '1');
   });
 
-  it('should verify all 19 supported assets have valid rates', () => {
+  it('should verify all supported assets have valid rates', () => {
     const assets = getSupportedAssets();
-    assert.equal(assets.length, 19);
+    assert.equal(assets.length, 30);
     for (const asset of assets) {
       assert.ok(hasRate(asset.code), `Asset ${asset.code} must have a rate`);
       const r = getRate(asset.code);

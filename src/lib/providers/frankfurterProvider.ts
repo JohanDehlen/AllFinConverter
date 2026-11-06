@@ -23,7 +23,7 @@ import type { RawRatePayload } from '../rates.ts';
 export const DEFAULT_FRANKFURTER_BASE_URL = 'https://api.frankfurter.dev/v1';
 
 /**
- * The ten canonical fiat currency codes configured in AllFinConverter.
+ * The canonical fiat currency codes configured in AllFinConverter.
  */
 export const FRANKFURTER_SUPPORTED_FIAT_CODES = [
   'USD',
@@ -36,6 +36,17 @@ export const FRANKFURTER_SUPPORTED_FIAT_CODES = [
   'ZAR',
   'INR',
   'AED',
+  'CNY',
+  'HKD',
+  'SGD',
+  'NZD',
+  'KRW',
+  'MXN',
+  'BRL',
+  'SEK',
+  'NOK',
+  'DKK',
+  'PLN',
 ] as const;
 
 export type SupportedFiatCode = (typeof FRANKFURTER_SUPPORTED_FIAT_CODES)[number];

@@ -5,7 +5,7 @@
  *
  * Verifies:
  * 1. createAllFinRateOrchestrator factory assembling Frankfurter, Gold-API, and CoinGecko
- * 2. Complete 19 canonical asset coverage in a single coordinated refresh
+ * 2. Complete 30 canonical asset coverage in a single coordinated refresh
  * 3. Exact reciprocal rate normalization across fiat, metals, and crypto
  * 4. Per-asset provenance tracking (sourceId, sourceName, timestamp)
  * 5. Independent provider failure handling and Last-Known-Good (LKG) retention
@@ -50,7 +50,7 @@ import { ASSETS, getSupportedAssets } from '../src/lib/assets.ts';
 // Mock Response Fixtures
 // ---------------------------------------------------------------------------
 
-/** Frankfurter response providing 9 fiat currencies against USD (base = USD) */
+/** Frankfurter response providing fiat currencies against USD (base = USD) */
 const MOCK_FRANKFURTER_RESPONSE = {
   amount: 1,
   base: 'USD',
@@ -65,6 +65,17 @@ const MOCK_FRANKFURTER_RESPONSE = {
     ZAR: 18.25,
     INR: 83.5,
     AED: 3.67,
+    CNY: 7.25,
+    HKD: 7.8,
+    SGD: 1.35,
+    NZD: 1.65,
+    KRW: 1350.0,
+    MXN: 18.0,
+    BRL: 5.2,
+    SEK: 10.5,
+    NOK: 10.8,
+    DKK: 6.9,
+    PLN: 4.0,
   },
 };
 
@@ -262,8 +273,8 @@ describe('M2.5 — Factory Assembly & Configurable Precedence', () => {
   });
 });
 
-describe('M2.5 — Full 19-Asset Coordinated Refresh & Provenance Tracking', () => {
-  it('should refresh all three providers and assemble a composite containing all 19 supported assets', async () => {
+describe('M2.5 — Full 30-Asset Coordinated Refresh & Provenance Tracking', () => {
+  it('should refresh all three providers and assemble a composite containing all 30 supported assets', async () => {
     const orchestrator = createAllFinRateOrchestrator({
       fetch: createMockFetchRouter(),
     });
@@ -280,9 +291,9 @@ describe('M2.5 — Full 19-Asset Coordinated Refresh & Provenance Tracking', () 
     assert.equal(composite.dataset!.baseAsset, 'USD');
     assert.ok(composite.dataset!.rates.get('USD')!.eq(1));
 
-    // 2. Verify all 19 canonical supported assets are present
+    // 2. Verify all canonical supported assets are present
     const supportedAssets = getSupportedAssets();
-    assert.equal(supportedAssets.length, 19);
+    assert.equal(supportedAssets.length, 30);
 
     for (const asset of supportedAssets) {
       assert.ok(
@@ -293,8 +304,8 @@ describe('M2.5 — Full 19-Asset Coordinated Refresh & Provenance Tracking', () 
       assert.ok(rate.gt(0), `Rate for ${asset.code} must be strictly positive`);
     }
 
-    // 3. Verify total rate count (19 assets + USD base = 19 unique codes because USD is in supportedAssets)
-    assert.equal(composite.dataset!.rates.size, 19);
+    // 3. Verify total rate count (30 assets + USD base = 30 unique codes because USD is in supportedAssets)
+    assert.equal(composite.dataset!.rates.size, 30);
   });
 
   it('should preserve distinct per-asset source and timestamp provenance', async () => {
@@ -377,7 +388,7 @@ describe('M2.5 — Multi-Source Failure Isolation & LKG Resilience', () => {
     // 1. Initial full refresh succeeds, establishing LKG for all 3 providers
     const initialResult = await orchestrator.refreshAll();
     assert.equal(initialResult.success, true);
-    assert.equal(initialResult.composite.dataset!.rates.size, 19);
+    assert.equal(initialResult.composite.dataset!.rates.size, 30);
 
     // 2. CoinGecko encounters an outage (e.g. rate limit 429)
     coinGeckoOutage = true;
@@ -389,8 +400,8 @@ describe('M2.5 — Multi-Source Failure Isolation & LKG Resilience', () => {
     assert.equal(secondResult.failedRefreshes, 1);
     assert.ok(secondResult.providerErrors.has('coingecko'));
 
-    // Crucial: Composite still retains all 19 assets because CoinGecko LKG was preserved!
-    assert.equal(secondResult.composite.dataset!.rates.size, 19);
+    // Crucial: Composite still retains all 30 assets because CoinGecko LKG was preserved!
+    assert.equal(secondResult.composite.dataset!.rates.size, 30);
     assert.ok(secondResult.composite.dataset!.rates.has('BTC'));
     assert.ok(secondResult.composite.dataset!.rates.has('EUR'));
     assert.ok(secondResult.composite.dataset!.rates.has('XAU'));
@@ -403,8 +414,8 @@ describe('M2.5 — Multi-Source Failure Isolation & LKG Resilience', () => {
     assert.equal(thirdResult.successfulRefreshes, 1);
     assert.equal(thirdResult.failedRefreshes, 2);
 
-    // Composite still has all 19 assets from LKG!
-    assert.equal(thirdResult.composite.dataset!.rates.size, 19);
+    // Composite still has all 30 assets from LKG!
+    assert.equal(thirdResult.composite.dataset!.rates.size, 30);
     assert.ok(thirdResult.composite.dataset!.rates.has('ETH'));
     assert.ok(thirdResult.composite.dataset!.rates.has('XAG'));
   });

@@ -131,10 +131,13 @@ describe('M2.1 — Frankfurter Response Normalization & Provenance', () => {
   });
 });
 
-describe('M2.1 — Ten Supported Fiat Assets & Missing Rates', () => {
-  it('should support all ten configured fiat asset codes', () => {
-    assert.equal(FRANKFURTER_SUPPORTED_FIAT_CODES.length, 10);
-    const expected = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'ZAR', 'INR', 'AED'];
+describe('M2.1 — Supported Fiat Assets & Missing Rates', () => {
+  it('should support all twenty-one configured fiat asset codes', () => {
+    assert.equal(FRANKFURTER_SUPPORTED_FIAT_CODES.length, 21);
+    const expected = [
+      'USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'ZAR', 'INR', 'AED',
+      'CNY', 'HKD', 'SGD', 'NZD', 'KRW', 'MXN', 'BRL', 'SEK', 'NOK', 'DKK', 'PLN',
+    ];
     for (const code of expected) {
       assert.ok(
         FRANKFURTER_SUPPORTED_FIAT_CODES.includes(code as (typeof FRANKFURTER_SUPPORTED_FIAT_CODES)[number]),
@@ -167,16 +170,22 @@ describe('M2.1 — Ten Supported Fiat Assets & Missing Rates', () => {
     assert.equal(rates['AED'], '3.6725');
   });
 
+  it('should extract newly configured fiat currencies (DKK, PLN, SEK) from Frankfurter response', () => {
+    const payload = normalizeFrankfurterResponse(SAMPLE_FRANKFURTER_JSON);
+    const rates = payload.rates as Record<string, string>;
+
+    assert.equal(rates['DKK'], '6.897');
+    assert.equal(rates['PLN'], '4.012');
+    assert.equal(rates['SEK'], '10.85');
+  });
+
   it('should discard unsupported currencies returned by Frankfurter', () => {
     const payload = normalizeFrankfurterResponse(SAMPLE_FRANKFURTER_JSON);
     const rates = payload.rates as Record<string, string>;
 
     assert.equal(rates['BGN'], undefined, 'BGN is not in configured assets and should be ignored');
     assert.equal(rates['CZK'], undefined, 'CZK is not in configured assets and should be ignored');
-    assert.equal(rates['DKK'], undefined, 'DKK is not in configured assets and should be ignored');
     assert.equal(rates['HUF'], undefined, 'HUF is not in configured assets and should be ignored');
-    assert.equal(rates['PLN'], undefined, 'PLN is not in configured assets and should be ignored');
-    assert.equal(rates['SEK'], undefined, 'SEK is not in configured assets and should be ignored');
   });
 });
 

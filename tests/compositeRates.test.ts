@@ -67,6 +67,17 @@ function makeFiatDataset(timestamp: number): NormalizedRateDataset {
       ZAR: '18.50',
       INR: '84.00',
       AED: '3.67',
+      CNY: '7.25',
+      HKD: '7.80',
+      SGD: '1.35',
+      NZD: '1.65',
+      KRW: '1350.0',
+      MXN: '18.00',
+      BRL: '5.20',
+      SEK: '10.50',
+      NOK: '10.80',
+      DKK: '6.90',
+      PLN: '4.00',
     },
   });
 }
@@ -127,19 +138,23 @@ describe('M2.0 — Composite Assembly: Combining Multiple Sources', () => {
     const ds = result.dataset!;
 
     // Should contain all rates from all three sources (unique codes merged)
-    // fiat: USD EUR GBP JPY CHF CAD AUD ZAR INR AED = 10
+    // fiat: USD EUR GBP JPY CHF CAD AUD ZAR INR AED + 11 new = 21
     // crypto: USD BTC ETH SOL XRP DOGE = 6 (USD already in fiat, so +5 new)
     // metals: USD XAU XAG XPT XPD = 5 (USD already present, so +4 new)
-    // Total unique: 10 + 5 + 4 = 19
-    assert.equal(ds.rates.size, 19, 'Should have 19 unique asset rates');
+    // Total unique: 21 + 5 + 4 = 30
+    assert.equal(ds.rates.size, 30, 'Should have 30 unique asset rates');
 
     // USD base is correct
     assert.ok(ds.rates.get('USD')!.eq(1), 'USD must be exactly 1');
     assert.equal(ds.baseAsset, 'USD');
 
-    // Fiat rates present
+    // Fiat rates present (including newly added fiat currencies)
     assert.ok(ds.rates.get('EUR')!.eq(new Big('0.91')));
     assert.ok(ds.rates.get('GBP')!.eq(new Big('0.78')));
+    assert.ok(ds.rates.get('CNY')!.eq(new Big('7.25')));
+    assert.ok(ds.rates.get('DKK')!.eq(new Big('6.90')));
+    assert.ok(ds.rates.get('PLN')!.eq(new Big('4.00')));
+    assert.ok(ds.rates.get('SEK')!.eq(new Big('10.50')));
 
     // Crypto rates present
     assert.ok(ds.rates.get('BTC')!.eq(new Big('0.000014')));
@@ -170,7 +185,7 @@ describe('M2.0 — Composite Assembly: Combining Multiple Sources', () => {
     const result = mergeSourceDatasets([{ dataset: makeFiatDataset(ts) }]);
 
     assert.ok(result.dataset);
-    assert.equal(result.dataset!.rates.size, 10);
+    assert.equal(result.dataset!.rates.size, 21);
     assert.equal(result.contributingSources.length, 1);
     assert.ok(result.contributingSources.includes('frankfurter'));
   });
@@ -192,6 +207,16 @@ describe('M2.0 — Per-Rate Provenance and Timestamp Tracking', () => {
     assert.equal(eurProv.sourceId, 'frankfurter');
     assert.equal(eurProv.sourceName, 'Frankfurter FX');
     assert.equal(eurProv.timestamp, ts);
+
+    const cnyProv = result.provenance.get('CNY')!;
+    assert.equal(cnyProv.sourceId, 'frankfurter');
+    assert.equal(cnyProv.sourceName, 'Frankfurter FX');
+    assert.equal(cnyProv.timestamp, ts);
+
+    const sekProv = result.provenance.get('SEK')!;
+    assert.equal(sekProv.sourceId, 'frankfurter');
+    assert.equal(sekProv.sourceName, 'Frankfurter FX');
+    assert.equal(sekProv.timestamp, ts);
 
     // Crypto rates should trace to coingecko
     const btcProv = result.provenance.get('BTC')!;
@@ -321,7 +346,7 @@ describe('M2.0 — Source Failure Resilience', () => {
       { dataset: makeMetalsDataset(tsOld) },
     ]);
     assert.ok(first.dataset);
-    assert.equal(first.dataset!.rates.size, 19);
+    assert.equal(first.dataset!.rates.size, 30);
 
     // Second assembly: crypto failed, fiat updated, metals retained from old dataset
     // Simulate by using old metals + new fiat, no crypto
@@ -540,6 +565,8 @@ describe('M2.0 — Integration with RateEngine', () => {
     // Verify rates are accessible through the engine
     assert.ok(engine.getRate('USD').eq(1));
     assert.ok(engine.getRate('EUR').eq(new Big('0.91')));
+    assert.ok(engine.getRate('CNY').eq(new Big('7.25')));
+    assert.ok(engine.getRate('DKK').eq(new Big('6.90')));
     assert.ok(engine.getRate('BTC').eq(new Big('0.000014')));
     assert.ok(engine.getRate('XAU').eq(new Big('0.000410')));
     assert.equal(engine.isAvailable(), true);

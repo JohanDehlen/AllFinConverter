@@ -4,7 +4,7 @@
  * Core service for generating, validating, and atomically persisting production rate snapshots.
  *
  * Safety Invariants:
- * 1. Must satisfy canonical RateSnapshotPayload schema and include all 19 canonical assets.
+ * 1. Must satisfy canonical RateSnapshotPayload schema and include all canonical assets.
  * 2. All 4 providers (Frankfurter, Fixed Peg AED, CoinMarketCap, Gold-API) must succeed.
  * 3. Never publishes an incomplete snapshot.
  * 4. Never silently substitutes mock rates for failed live providers.
@@ -87,7 +87,7 @@ export async function generateProductionSnapshot(
     throw new SnapshotGenerationError('Snapshot generation failed: Composite dataset assembly produced null.');
   }
 
-  // Verify all 19 canonical assets are present in the composite dataset
+  // Verify all canonical assets are present in the composite dataset
   const supported = getSupportedAssets();
   const missingAssets: string[] = [];
   for (const asset of supported) {

@@ -98,8 +98,8 @@ export interface SnapshotValidationOptions {
  * 2. baseAsset must be 'USD' and rates['USD'] must equal '1'.
  * 3. timestamp must be a positive finite number.
  * 4. Snapshot timestamp must not exceed maxAgeMs (default: 24h) and must not be from the future (> 5m clock skew).
- * 5. rates must contain all 19 canonical assets with positive, finite decimal values.
- * 6. provenance must contain valid metadata entries for all 19 canonical assets.
+ * 5. rates must contain all canonical assets with positive, finite decimal values.
+ * 6. provenance must contain valid metadata entries for all canonical assets.
  */
 export function validateRateSnapshot(
   raw: unknown,
@@ -173,7 +173,7 @@ export function validateRateSnapshot(
   const supported = getSupportedAssets();
   const ratesRecord = payload.rates as Record<string, unknown>;
 
-  // Check that all 19 canonical assets are present and valid
+  // Check that all canonical assets are present and valid
   for (const asset of supported) {
     const val = ratesRecord[asset.code];
     if (val === undefined || val === null) {
@@ -361,7 +361,7 @@ export function serializeRateSnapshot(
 }
 
 /**
- * Generates a deterministic mock snapshot covering all 19 canonical assets.
+ * Generates a deterministic mock snapshot covering all canonical assets.
  *
  * Used for build-time static endpoints and offline development fallback.
  */

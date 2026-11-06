@@ -5,7 +5,7 @@
  *
  * Verifies:
  * 1. Snapshot serialization and round-trip precision (Big.js string encoding)
- * 2. All 19 canonical assets, USD = 1, per-asset provenance
+ * 2. All 30 canonical assets, USD = 1, per-asset provenance
  * 3. Snapshot schema validation (version, baseAsset, timestamps, rates, provenance)
  * 4. Stale snapshot rejection (24-hour threshold), future timestamp rejection
  * 5. Invalid / malformed / incomplete payloads
@@ -158,9 +158,9 @@ describe('M3.0 — Snapshot Serialization & Round-Trip Precision', () => {
     assert.equal(snapshot.isMock, true);
     assert.equal(snapshot.providerId, 'mock-local');
 
-    // Verify all 19 supported assets present
+    // Verify all canonical supported assets present
     const supported = getSupportedAssets();
-    assert.equal(supported.length, 19);
+    assert.equal(supported.length, 30);
     for (const asset of supported) {
       assert.ok(
         snapshot.rates[asset.code] !== undefined,
@@ -626,7 +626,7 @@ describe('M3.0 — RateEngine Integration & Fallback', () => {
 });
 
 describe('M3.0 — createDefaultMockSnapshot & Endpoint', () => {
-  it('should generate a valid mock snapshot covering all 19 canonical assets', () => {
+  it('should generate a valid mock snapshot covering all 30 canonical assets', () => {
     const now = Date.now();
     const snapshot = createDefaultMockSnapshot(now);
 
@@ -668,7 +668,7 @@ describe('M3.0 — createDefaultMockSnapshot & Endpoint', () => {
 
     assert.equal(validated.version, 1);
     assert.equal(validated.baseAsset, 'USD');
-    assert.equal(Object.keys(validated.rates).length, 19);
+    assert.equal(Object.keys(validated.rates).length, 30);
   });
 });
 

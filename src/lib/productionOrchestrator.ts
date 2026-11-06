@@ -9,7 +9,7 @@
  *
  * Invariants:
  * - Does NOT use CoinGecko in production.
- * - Requires all 19 canonical assets to be supplied across the registered sources.
+ * - Requires all canonical assets to be supplied across the registered sources.
  * - Per-asset provenance is strictly preserved.
  * - Does NOT perform network calls upon instantiation.
  */

@@ -3,7 +3,7 @@
  *
  * Verifies:
  * 1. Successful snapshot generation using mocked provider responses (Frankfurter, Fixed Peg AED, CMC, Gold-API)
- * 2. All 19 canonical assets present in output snapshot
+ * 2. All 30 canonical assets present in output snapshot
  * 3. Exact AED fixed peg integration (1 USD = 3.6725 AED) with correct provenance
  * 4. Correct provenance / source identification across all 4 asset source categories
  * 5. Missing CoinMarketCap API key throws and prevents snapshot generation
@@ -49,6 +49,17 @@ const MOCK_FRANKFURTER_FIAT = {
     AUD: 1.52,
     ZAR: 18.25,
     INR: 83.5,
+    CNY: 7.25,
+    HKD: 7.8,
+    SGD: 1.35,
+    NZD: 1.65,
+    KRW: 1350.0,
+    MXN: 18.0,
+    BRL: 5.2,
+    SEK: 10.5,
+    NOK: 10.8,
+    DKK: 6.9,
+    PLN: 4.0,
     // Note: AED intentionally absent from Frankfurter, supplied by FixedPegRateProvider
   },
 };
@@ -119,7 +130,7 @@ function createMockFetch(overrides?: {
 }
 
 describe('Production Rate Snapshot Generator Pipeline', () => {
-  it('should generate a valid production snapshot covering all 19 canonical assets with correct provenance', async () => {
+  it('should generate a valid production snapshot covering all 30 canonical assets with correct provenance', async () => {
     const mockFetch = createMockFetch();
 
     const snapshot = await generateProductionSnapshot({
@@ -137,9 +148,9 @@ describe('Production Rate Snapshot Generator Pipeline', () => {
     assert.equal(snapshot.isMock, false);
     assert.equal(typeof snapshot.timestamp, 'number');
 
-    // 2. All 19 canonical assets present
+    // 2. All canonical assets present
     const supported = getSupportedAssets();
-    assert.equal(supported.length, 19);
+    assert.equal(supported.length, 30);
     for (const asset of supported) {
       assert.ok(snapshot.rates[asset.code], `Missing canonical rate for ${asset.code}`);
       assert.ok(snapshot.provenance[asset.code], `Missing provenance for ${asset.code}`);

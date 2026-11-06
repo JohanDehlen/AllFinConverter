@@ -6,7 +6,7 @@
  * Verifies:
  * 1. Environment variable COINMARKETCAP_API_KEY presence (masked, secret never exposed).
  * 2. Filesystem write permissions for target directories (src/data/ and dist/api/).
- * 3. Provider configurations and 19 canonical asset mapping across sources.
+ * 3. Provider configurations and 30 canonical asset mapping across sources.
  * 4. Output target paths and overwrite safety guarantees.
  *
  * Guarantees:
@@ -57,7 +57,10 @@ export function runPreflightChecks(): PreflightResult {
   // 2. Check Canonical Assets Coverage across the 4 providers
   const allSupported = getSupportedAssets();
   const canonicalCodes = allSupported.map((a) => a.code);
-  const fiatCodes = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'ZAR', 'INR'];
+  const fiatCodes = [
+    'USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'ZAR', 'INR',
+    'CNY', 'HKD', 'SGD', 'NZD', 'KRW', 'MXN', 'BRL', 'SEK', 'NOK', 'DKK', 'PLN',
+  ];
   const pegCode = 'AED';
   const cryptoCodes = [...CMC_SUPPORTED_CRYPTO];
   const metalCodes = [...GOLD_API_SUPPORTED_METALS];
@@ -65,11 +68,11 @@ export function runPreflightChecks(): PreflightResult {
   const coveredCodes = new Set([...fiatCodes, pegCode, ...cryptoCodes, ...metalCodes]);
   const missing = canonicalCodes.filter((code) => !coveredCodes.has(code));
 
-  if (canonicalCodes.length === 19 && missing.length === 0) {
+  if (canonicalCodes.length === 30 && missing.length === 0) {
     checks.push({
-      name: 'Canonical Assets Coverage (19/19)',
+      name: 'Canonical Assets Coverage (30/30)',
       status: 'PASS',
-      detail: `10 Fiat (Frankfurter + AED peg ${AED_USD_PEG_RATE_STR}), 5 Crypto (CoinMarketCap), 4 Metals (Gold-API).`,
+      detail: `21 Fiat (Frankfurter + AED peg ${AED_USD_PEG_RATE_STR}), 5 Crypto (CoinMarketCap), 4 Metals (Gold-API).`,
     });
   } else {
     passed = false;

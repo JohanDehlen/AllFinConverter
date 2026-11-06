@@ -20,7 +20,7 @@ export const prerender = true;
  * Invariants:
  * - Does NOT invoke live network providers at build time.
  * - Makes ZERO external network requests.
- * - Complies strictly with RateSnapshotPayload schema across all 19 canonical assets.
+ * - Complies strictly with RateSnapshotPayload schema across all canonical assets.
  */
 export const GET: APIRoute = async () => {
   let snapshot: RateSnapshotPayload;

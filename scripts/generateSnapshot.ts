@@ -2,7 +2,7 @@
  * AllFinConverter Production Rate Snapshot Generator CLI Script
  *
  * Standalone script to explicitly query real rate providers (Frankfurter, Fixed Peg AED,
- * CoinMarketCap, Gold-API), assemble the 19-asset canonical composite dataset, validate it,
+ * CoinMarketCap, Gold-API), assemble the canonical composite dataset, validate it,
  * and atomically update the application's latest rate snapshot.
  *
  * Usage:

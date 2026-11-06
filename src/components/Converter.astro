@@ -362,8 +362,8 @@ try {
       if (isSnapshot && timestamp) {
         const d = new Date(timestamp);
         const timeStr = d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
-        rateBadgeText.textContent = 'Snapshot rates';
-        rateBadge.setAttribute('aria-label', `Snapshot rates updated ${timeStr}`);
+        rateBadgeText.textContent = 'Live rates';
+        rateBadge.setAttribute('aria-label', `Live rates updated ${timeStr}`);
         rateBadge.setAttribute('data-mode', 'snapshot');
       } else {
         rateBadgeText.textContent = 'Demo rates';
@@ -481,7 +481,7 @@ try {
 
         const subtextSuffix =
           clientEngine && activeSnapshotTimestamp
-            ? ` \u2022 Snapshot rates as of ${new Date(activeSnapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC.`
+            ? ` \u2022 Live rates as of ${new Date(activeSnapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC.`
             : ' \u2022 Demo conversion using fictional development rates.';
 
         // Handle empty or standalone decimal point input
@@ -559,14 +559,39 @@ try {
       if (e.target !== amountTo) amountTo.focus();
     });
 
+    // Amount field click behavior: clear both fields to '0', focus clicked field, allow typing
+    function handleAmountInputClick(clickedInput: HTMLInputElement, side: 'from' | 'to') {
+      amountFrom!.value = '0';
+      amountTo!.value = '0';
+      activeSide = side;
+      clickedInput.focus();
+      clickedInput.select();
+      syncInputSizes();
+      recalculate();
+    }
+
+    amountFrom.addEventListener('click', () => {
+      handleAmountInputClick(amountFrom, 'from');
+    });
+
+    amountTo.addEventListener('click', () => {
+      handleAmountInputClick(amountTo, 'to');
+    });
+
     // Input event listeners for two-way reactivity
     amountFrom.addEventListener('input', () => {
       activeSide = 'from';
+      if (/^0[0-9]/.test(amountFrom.value)) {
+        amountFrom.value = amountFrom.value.replace(/^0+/, '');
+      }
       recalculate();
     });
 
     amountTo.addEventListener('input', () => {
       activeSide = 'to';
+      if (/^0[0-9]/.test(amountTo.value)) {
+        amountTo.value = amountTo.value.replace(/^0+/, '');
+      }
       recalculate();
     });
 
@@ -677,11 +702,13 @@ try {
           timeoutMs: 5000,
         });
 
-        const engine = new RateEngine(provider);
-        await engine.setActiveProviderAsync(provider.id);
+        const engine = new RateEngine();
+        engine.registerProvider(provider);
+        const activation = await engine.setActiveProviderAsync(provider.id);
 
         const snapshot = provider.getLatestSnapshot();
         if (
+          activation.valid &&
           snapshot &&
           typeof snapshot.timestamp === 'number' &&
           isLiveSnapshotAcceptable(snapshot)

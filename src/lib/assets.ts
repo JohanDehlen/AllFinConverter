@@ -54,6 +54,17 @@ export const ASSETS: readonly Asset[] = [
   { code: 'ZAR', name: 'South African Rand', category: 'fiat', symbol: 'R', enabled: true },
   { code: 'INR', name: 'Indian Rupee', category: 'fiat', symbol: '₹', enabled: true },
   { code: 'AED', name: 'UAE Dirham', category: 'fiat', symbol: 'د.إ', enabled: true },
+  { code: 'CNY', name: 'Chinese Yuan', category: 'fiat', symbol: '¥', enabled: true },
+  { code: 'HKD', name: 'Hong Kong Dollar', category: 'fiat', symbol: 'HK$', enabled: true },
+  { code: 'SGD', name: 'Singapore Dollar', category: 'fiat', symbol: 'S$', enabled: true },
+  { code: 'NZD', name: 'New Zealand Dollar', category: 'fiat', symbol: 'NZ$', enabled: true },
+  { code: 'KRW', name: 'South Korean Won', category: 'fiat', symbol: '₩', enabled: true },
+  { code: 'MXN', name: 'Mexican Peso', category: 'fiat', symbol: 'Mex$', enabled: true },
+  { code: 'BRL', name: 'Brazilian Real', category: 'fiat', symbol: 'R$', enabled: true },
+  { code: 'SEK', name: 'Swedish Krona', category: 'fiat', symbol: 'kr', enabled: true },
+  { code: 'NOK', name: 'Norwegian Krone', category: 'fiat', symbol: 'kr', enabled: true },
+  { code: 'DKK', name: 'Danish Krone', category: 'fiat', symbol: 'kr', enabled: true },
+  { code: 'PLN', name: 'Polish Złoty', category: 'fiat', symbol: 'zł', enabled: true },
 
   // Cryptocurrencies
   { code: 'BTC', name: 'Bitcoin', category: 'crypto', symbol: '₿', enabled: true },

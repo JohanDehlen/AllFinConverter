@@ -192,7 +192,45 @@ export class RateEngine {
     this.freshnessThresholdMs = freshnessThresholdMs;
     this.registerProvider(defaultProvider);
     this.activeProviderId = defaultProvider.id;
-    this.loadFromProvider(defaultProvider);
+
+    const applyMockFallback = () => {
+      // Ingest default mock rates to ensure the engine always has a valid fallback dataset
+      const mockRaw = defaultMockProvider.getRates();
+      if (!(mockRaw instanceof Promise)) {
+        this.ingestPayload(mockRaw);
+      }
+      if (defaultProvider.id !== defaultMockProvider.id) {
+        this.registerProvider(defaultMockProvider);
+        this.activeProviderId = defaultMockProvider.id;
+      }
+    };
+
+    // Detect async providers without invoking getRates(). This avoids firing an
+    // unnecessary network fetch whose result would be discarded (the caller must
+    // still use setActiveProviderAsync).
+    const isAsyncProvider =
+      defaultProvider.getRates.constructor.name === 'AsyncFunction' ||
+      (defaultProvider.getRates as unknown as Record<symbol, unknown>)[Symbol.toStringTag] === 'AsyncFunction';
+
+    if (isAsyncProvider) {
+      // Asynchronous provider cannot be loaded synchronously in constructor.
+      // Fall back to mock dataset for safe initial state while keeping provider
+      // registered for subsequent activation via setActiveProviderAsync / loadFromProviderAsync.
+      applyMockFallback();
+    } else {
+      const raw = defaultProvider.getRates();
+      if (raw instanceof Promise) {
+        // Safety net: non-async function returning a Promise
+        applyMockFallback();
+      } else {
+        const validation = this.ingestPayload(raw);
+        if (!validation.valid && !this.lastKnownGoodDataset) {
+          throw new RateEngineError(
+            `Failed to load rates from '${defaultProvider.id}': ${validation.errors.join(', ')}`
+          );
+        }
+      }
+    }
   }
 
   /**
