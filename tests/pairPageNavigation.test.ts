@@ -122,7 +122,33 @@ class SimulatedConverterClient {
       } catch {}
     }
 
+    // Ensure designated pair is restored if browser restored form state on an SEO pair page
+    this.restoreDesignatedPair();
+
     this.recalculate();
+  }
+
+  restoreDesignatedPair(): boolean {
+    if (!this.isPairPage || !this.expectedFrom || !this.expectedTo) return false;
+    if (this.assetFrom !== this.expectedFrom || this.assetTo !== this.expectedTo) {
+      this.assetFrom = this.expectedFrom;
+      this.assetTo = this.expectedTo;
+      this.fromUnit = 'troy-oz';
+      this.toUnit = 'troy-oz';
+      this.activeSide = 'from';
+      this.amountFrom = '100';
+      this.amountTo = '';
+      this.recalculate();
+      return true;
+    }
+    return false;
+  }
+
+  handlePageShow(persisted: boolean): void {
+    if (!this.isPairPage || !this.expectedFrom || !this.expectedTo) return;
+    if (persisted || this.assetFrom !== this.expectedFrom || this.assetTo !== this.expectedTo) {
+      this.restoreDesignatedPair();
+    }
   }
 
   checkPairPageNavigation(): boolean {
@@ -411,5 +437,148 @@ describe('SEO Pair Page Converter Navigation & State Preservation', () => {
 
     assert.equal(homeClient.assetFrom, 'USD');
     assert.equal(homeClient.assetTo, 'EUR');
+  });
+
+  it('should restore designated pair and recalculate when browser Back returns to pair page via bfcache', () => {
+    // Given: visitor is on the PLN to USD pair page (/pln-to-usd/)
+    const pairClient = new SimulatedConverterClient({
+      isPairPage: true,
+      initialFrom: 'PLN',
+      initialTo: 'USD',
+      initialAmount: '100',
+      storage: sharedStorage,
+    });
+
+    const initialUsdTarget = pairClient.amountTo;
+    assert.ok(Number(initialUsdTarget) > 0, 'Target amount must be calculated for USD initially');
+
+    // When: visitor changes destination currency from USD to EUR
+    pairClient.changeAssetTo('EUR');
+
+    // Then: redirects to homepage
+    assert.equal(pairClient.navigatedTo, '/');
+
+    // Simulated bfcache state before pageshow: assetTo is EUR, but amountTo is still old USD conversion
+    assert.equal(pairClient.assetFrom, 'PLN');
+    assert.equal(pairClient.assetTo, 'EUR');
+    assert.equal(pairClient.amountTo, initialUsdTarget, 'amountTo retained stale USD value prior to restoration');
+
+    // When: homepage loads and consumes saved state
+    const homeClient = new SimulatedConverterClient({
+      isPairPage: false,
+      storage: sharedStorage,
+    });
+    assert.equal(homeClient.assetFrom, 'PLN');
+    assert.equal(homeClient.assetTo, 'EUR');
+
+    // When: visitor clicks browser Back button returning to /pln-to-usd/ (bfcache pageshow fires)
+    pairClient.handlePageShow(true);
+
+    // Then: designated pair PLN -> USD is fully restored
+    assert.equal(pairClient.assetFrom, 'PLN', 'assetFrom must be PLN');
+    assert.equal(pairClient.assetTo, 'USD', 'assetTo must be USD');
+    assert.equal(pairClient.amountFrom, '100', 'amountFrom must be reset to default 100');
+    assert.equal(pairClient.activeSide, 'from', 'activeSide must be from');
+
+    // And: calculated result agrees with displayed currencies
+    const expectedConversion = calculateConversion('100', 'PLN', 'USD');
+    const expectedTarget = formatDisplayAmount(expectedConversion.targetAmount, 'USD');
+    assert.equal(pairClient.amountTo, expectedTarget, 'Calculated result must agree with PLN -> USD');
+  });
+
+  it('should restore designated pair when user swapped on pair page and then navigated back via bfcache', () => {
+    // Given: visitor is on the PLN to USD pair page (/pln-to-usd/)
+    const pairClient = new SimulatedConverterClient({
+      isPairPage: true,
+      initialFrom: 'PLN',
+      initialTo: 'USD',
+      initialAmount: '100',
+      storage: sharedStorage,
+    });
+
+    // When: visitor clicks swap button
+    pairClient.swap();
+    assert.equal(pairClient.navigatedTo, '/');
+
+    // Simulated bfcache state has swapped values (USD -> PLN)
+    assert.equal(pairClient.assetFrom, 'USD');
+    assert.equal(pairClient.assetTo, 'PLN');
+
+    // When: visitor clicks browser Back button returning to /pln-to-usd/
+    pairClient.handlePageShow(true);
+
+    // Then: designated pair PLN -> USD is restored
+    assert.equal(pairClient.assetFrom, 'PLN');
+    assert.equal(pairClient.assetTo, 'USD');
+    assert.equal(pairClient.amountFrom, '100');
+
+    const expectedConversion = calculateConversion('100', 'PLN', 'USD');
+    assert.equal(pairClient.amountTo, formatDisplayAmount(expectedConversion.targetAmount, 'USD'));
+  });
+
+  it('should restore designated pair on non-bfcache navigation when browser restored stale form state', () => {
+    // Simulating browser form autofill restoring modified select value on page reload / history navigation
+    const pairClient = new SimulatedConverterClient({
+      isPairPage: true,
+      expectedFrom: 'PLN',
+      expectedTo: 'USD',
+      initialFrom: 'PLN',
+      initialTo: 'EUR', // Stale restored form value
+      initialAmount: '100',
+      storage: sharedStorage,
+    });
+
+    // Upon initialization, designated pair must be enforced
+    assert.equal(pairClient.assetFrom, 'PLN');
+    assert.equal(pairClient.assetTo, 'USD');
+    assert.equal(pairClient.amountFrom, '100');
+
+    const expectedConversion = calculateConversion('100', 'PLN', 'USD');
+    assert.equal(pairClient.amountTo, formatDisplayAmount(expectedConversion.targetAmount, 'USD'));
+  });
+
+  it('should preserve entered amount when browser Back returns to pair page and pair was NOT changed', () => {
+    // Given: visitor on /pln-to-usd/ enters custom amount 500 without changing pair
+    const pairClient = new SimulatedConverterClient({
+      isPairPage: true,
+      initialFrom: 'PLN',
+      initialTo: 'USD',
+      initialAmount: '100',
+      storage: sharedStorage,
+    });
+
+    pairClient.amountFrom = '500';
+    pairClient.recalculate();
+    const expectedTarget500 = pairClient.amountTo;
+
+    // When: visitor navigates away to another page (not converter-triggered) and clicks Back
+    pairClient.handlePageShow(true);
+
+    // Then: amount is preserved because the pair was never changed away from designated pair
+    assert.equal(pairClient.assetFrom, 'PLN');
+    assert.equal(pairClient.assetTo, 'USD');
+    assert.equal(pairClient.amountFrom, '500');
+    assert.equal(pairClient.amountTo, expectedTarget500);
+  });
+
+  it('should not alter homepage state when pageshow fires on homepage', () => {
+    const homeClient = new SimulatedConverterClient({
+      isPairPage: false,
+      initialFrom: 'GBP',
+      initialTo: 'JPY',
+      initialAmount: '75',
+      storage: sharedStorage,
+    });
+
+    const originalTarget = homeClient.amountTo;
+
+    // When: pageshow fires on homepage
+    homeClient.handlePageShow(true);
+
+    // Then: homepage state is unchanged
+    assert.equal(homeClient.assetFrom, 'GBP');
+    assert.equal(homeClient.assetTo, 'JPY');
+    assert.equal(homeClient.amountFrom, '75');
+    assert.equal(homeClient.amountTo, originalTarget);
   });
 });

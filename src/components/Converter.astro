@@ -794,11 +794,40 @@ try {
       recalculate();
     });
 
+    // Restore designated pair on SEO pair pages if modified (e.g. browser back/forward or bfcache)
+    function restoreDesignatedPair(): boolean {
+      if (!isPairPage || !expectedFrom || !expectedTo) return false;
+      if (assetFrom!.value !== expectedFrom || assetTo!.value !== expectedTo) {
+        assetFrom!.value = expectedFrom;
+        assetTo!.value = expectedTo;
+        fromUnit = 'troy-oz';
+        toUnit = 'troy-oz';
+        activeSide = 'from';
+        amountFrom!.value = '100';
+        amountTo!.value = '';
+        recalculate();
+        return true;
+      }
+      return false;
+    }
+
+    // Ensure designated pair is restored if browser restored form state on an SEO pair page
+    restoreDesignatedPair();
+
     // Initial calculation run (synchronous mock rendering)
     updateCategoryBadges();
     updateUnitToggleUI();
     updateAmountAffixes();
     recalculate();
+
+    // Restore designated pair when browser navigates back to an SEO pair page (including bfcache)
+    if (isPairPage && expectedFrom && expectedTo) {
+      window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+        if (event.persisted || assetFrom!.value !== expectedFrom || assetTo!.value !== expectedTo) {
+          restoreDesignatedPair();
+        }
+      });
+    }
 
     // Asynchronous snapshot hydration (non-blocking, client-isolated)
     async function loadClientSnapshot() {
