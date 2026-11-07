@@ -192,7 +192,7 @@ describe('M1.6 — URL Slug Handling & Metal Aliases', () => {
   });
 });
 
-describe('M1.6 + SEO Batch 1 — Static Route Generation & Featured Pair Registry', () => {
+describe('M1.6 + SEO Batches 1 & 2 — Static Route Generation & Featured Pair Registry', () => {
   // ── Original 16 slugs that must never change ──
   const ORIGINAL_16_SLUGS = [
     'usd-to-eur', 'eur-to-usd',
@@ -205,7 +205,7 @@ describe('M1.6 + SEO Batch 1 — Static Route Generation & Featured Pair Registr
     'silver-to-usd', 'usd-to-silver',
   ];
 
-  // ── SEO Batch 1: 20 new directional slugs ──
+  // ── SEO Batch 1: 20 directional slugs ──
   const BATCH1_20_SLUGS = [
     'usd-to-jpy', 'jpy-to-usd',
     'usd-to-cad', 'cad-to-usd',
@@ -219,13 +219,22 @@ describe('M1.6 + SEO Batch 1 — Static Route Generation & Featured Pair Registr
     'usd-to-mxn', 'mxn-to-usd',
   ];
 
-  it('should contain exactly 36 pairs in FEATURED_PAIR_DEFINITIONS', () => {
-    assert.equal(FEATURED_PAIR_DEFINITIONS.length, 36);
+  // ── SEO Batch 2: 10 directional slugs ──
+  const BATCH2_10_SLUGS = [
+    'usd-to-pln', 'pln-to-usd',
+    'usd-to-sek', 'sek-to-usd',
+    'usd-to-nok', 'nok-to-usd',
+    'usd-to-dkk', 'dkk-to-usd',
+    'usd-to-brl', 'brl-to-usd',
+  ];
+
+  it('should contain exactly 46 pairs in FEATURED_PAIR_DEFINITIONS', () => {
+    assert.equal(FEATURED_PAIR_DEFINITIONS.length, 46);
   });
 
   it('should validate every configured featured pair successfully', () => {
     const featuredPairs = getFeaturedPairs();
-    assert.equal(featuredPairs.length, 36);
+    assert.equal(featuredPairs.length, 46);
 
     for (const pair of featuredPairs) {
       assert.ok(pair.fromCode, 'Must have fromCode');
@@ -257,7 +266,24 @@ describe('M1.6 + SEO Batch 1 — Static Route Generation & Featured Pair Registr
     }
   });
 
-  it('should contain zero duplicate slugs among all 36 pairs', () => {
+  it('should include all 10 SEO Batch 2 directional slugs', () => {
+    const featuredPairs = getFeaturedPairs();
+    const slugs = featuredPairs.map((p) => p.slug);
+    for (const slug of BATCH2_10_SLUGS) {
+      assert.ok(slugs.includes(slug), `Batch 2 slug '${slug}' must be present`);
+    }
+  });
+
+  it('should preserve all 36 pre-Batch-2 slugs unchanged', () => {
+    const featuredPairs = getFeaturedPairs();
+    const slugs = featuredPairs.map((p) => p.slug);
+    const prior36 = [...ORIGINAL_16_SLUGS, ...BATCH1_20_SLUGS];
+    for (const slug of prior36) {
+      assert.ok(slugs.includes(slug), `Prior slug '${slug}' must still be present`);
+    }
+  });
+
+  it('should contain zero duplicate slugs among all 46 pairs', () => {
     const featuredPairs = getFeaturedPairs();
     const slugs = featuredPairs.map((p) => p.slug);
     const uniqueSlugs = new Set(slugs);
@@ -271,10 +297,16 @@ describe('M1.6 + SEO Batch 1 — Static Route Generation & Featured Pair Registr
     assert.ok(related.every((p) => p.slug !== 'usd-to-eur'));
   });
 
-  it('should provide inverse pair as top related for new Batch 1 pairs', () => {
+  it('should provide inverse pair as top related for Batch 1 pairs', () => {
     const related = getRelatedPairs('usd-to-jpy', 4);
     assert.ok(related.length > 0, 'Must have related pairs for usd-to-jpy');
     assert.equal(related[0].slug, 'jpy-to-usd', 'Inverse pair must be ranked first');
+  });
+
+  it('should provide inverse pair as top related for Batch 2 pairs', () => {
+    const related = getRelatedPairs('usd-to-pln', 4);
+    assert.ok(related.length > 0, 'Must have related pairs for usd-to-pln');
+    assert.equal(related[0].slug, 'pln-to-usd', 'Inverse pair must be ranked first');
   });
 });
 
