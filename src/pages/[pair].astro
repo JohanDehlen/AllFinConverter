@@ -9,6 +9,8 @@ import {
   resolveCanonicalUrl,
 } from '../lib/seo';
 import { calculateConversion, formatUnitRateWithUnit } from '../lib/converter.ts';
+import { defaultRateEngine } from '../lib/rateEngine.ts';
+import { loadBuildSnapshot } from '../lib/buildSnapshot.ts';
 
 export async function getStaticPaths() {
   const pairs = getFeaturedPairs();
@@ -26,10 +28,24 @@ const { pair } = Astro.props;
 
 const relatedPairs = getRelatedPairs(pair.slug, 4);
 
-// Calculate initial unit rates via rate engine and Big.js
-const unitConversion = calculateConversion('1', pair.fromCode, pair.toCode);
+// Load validated production snapshot (same source as the interactive Converter)
+const buildSnapshot = loadBuildSnapshot();
+const activeEngine = buildSnapshot.engine ?? defaultRateEngine;
+const isLiveRate = buildSnapshot.isLive;
+const snapshotTimestamp = buildSnapshot.timestamp;
+
+// Calculate unit rates using the best available rate engine
+const unitConversion = calculateConversion('1', pair.fromCode, pair.toCode, { rateEngine: activeEngine });
 const formattedUnitRate = formatUnitRateWithUnit(unitConversion.unitRate, pair.fromCode, pair.toCode);
 const formattedInverseRate = formatUnitRateWithUnit(unitConversion.inverseRate, pair.toCode, pair.fromCode);
+
+// Pair Overview labels — honest about the rate source
+const overviewBadgeLabel = isLiveRate && snapshotTimestamp
+  ? `Live rates as of ${new Date(snapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC`
+  : 'Demo mode: fictional mock exchange rates';
+const overviewBadgeText = isLiveRate ? 'Live rates' : 'Demo rates \u2022 Offline preview';
+const directRateLabel = isLiveRate ? 'Direct Rate' : 'Direct Rate (Demo)';
+const inverseRateLabel = isLiveRate ? 'Inverse Rate' : 'Inverse Rate (Demo)';
 
 // Friendly category labels
 function getCategoryDisplay(cat: string): string {
@@ -88,24 +104,24 @@ const structuredData = [
       <!-- Pre-configured Interactive Converter Component -->
       <Converter initialFrom={pair.fromCode} initialTo={pair.toCode} />
 
-      <!-- Pair Overview & Mock Rate Summary -->
+      <!-- Pair Overview & Rate Summary -->
       <section class="pair-details-section" aria-label="Pair conversion details">
         <div class="pair-details-card">
           <div class="pair-details-header">
             <h2 class="pair-details-title">{pair.fromAsset.code} / {pair.toAsset.code} Conversion Overview</h2>
-            <span class="demo-badge" role="status" aria-label="Demo mode: fictional mock exchange rates">
-              <span class="demo-dot" aria-hidden="true"></span>
-              Demo rates &bull; Offline preview
+            <span class={isLiveRate ? "live-badge" : "demo-badge"} role="status" aria-label={overviewBadgeLabel}>
+              <span class={isLiveRate ? "live-dot" : "demo-dot"} aria-hidden="true"></span>
+              {overviewBadgeText}
             </span>
           </div>
 
           <div class="pair-rate-grid">
             <div class="pair-rate-box">
-              <span class="pair-rate-label">Direct Rate (Mock)</span>
+              <span class="pair-rate-label">{directRateLabel}</span>
               <span class="pair-rate-value">{formattedUnitRate}</span>
             </div>
             <div class="pair-rate-box">
-              <span class="pair-rate-label">Inverse Rate (Mock)</span>
+              <span class="pair-rate-label">{inverseRateLabel}</span>
               <span class="pair-rate-value">{formattedInverseRate}</span>
             </div>
           </div>

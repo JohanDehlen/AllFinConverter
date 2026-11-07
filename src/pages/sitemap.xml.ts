@@ -9,6 +9,9 @@ import { getFeaturedPairs } from '../lib/pairs';
  * 2. Generated conversion pair pages (from getFeaturedPairs())
  *
  * Automatically stays synchronized with the pair engine to prevent 404s or stale entries.
+ *
+ * lastmod is intentionally omitted — genuine per-page modification dates cannot be
+ * reliably maintained, and invented dates violate the Sitemaps protocol specification.
  */
 export const GET: APIRoute = ({ site }) => {
   const baseUrl = site ? site.toString().replace(/\/$/, '') : 'https://allfinconverter.com';
@@ -18,13 +21,11 @@ export const GET: APIRoute = ({ site }) => {
   const routes = [
     {
       path: '/',
-      lastmod: '2026-01-01',
       changefreq: 'daily',
       priority: '1.0',
     },
     ...featuredPairs.map((pair) => ({
       path: `/${pair.slug}`,
-      lastmod: '2026-01-01',
       changefreq: 'daily',
       priority: '0.8',
     })),
@@ -37,7 +38,6 @@ ${routes
     const loc = baseUrl ? `${baseUrl}${r.path}` : r.path;
     return `  <url>
     <loc>${loc}</loc>
-    <lastmod>${r.lastmod}</lastmod>
     <changefreq>${r.changefreq}</changefreq>
     <priority>${r.priority}</priority>
   </url>`;

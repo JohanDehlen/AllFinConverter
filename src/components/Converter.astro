@@ -1,6 +1,4 @@
 ---
-import fs from 'node:fs';
-import path from 'node:path';
 import {
   ASSET_CATEGORIES,
   getDropdownAssetsByCategory,
@@ -17,8 +15,8 @@ import {
   formatUnitRateWithUnit,
   type MetalUnit,
 } from '../lib/converter.ts';
-import { RateEngine, defaultRateEngine } from '../lib/rateEngine.ts';
-import { validateRateSnapshot, type RateSnapshotPayload } from '../lib/rateSnapshot.ts';
+import { defaultRateEngine } from '../lib/rateEngine.ts';
+import { loadBuildSnapshot } from '../lib/buildSnapshot.ts';
 
 interface Props {
   initialFrom?: string;
@@ -49,34 +47,11 @@ const initialSuffixFrom = getAssetAmountSuffix(initialFrom, initialFromUnit);
 const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
 
 // Load validated production rate snapshot if available on disk (src/data/latestSnapshot.json)
-let serverEngine: RateEngine | undefined;
-let isInitialLive = false;
-let initialSnapshotTimestamp: number | null = null;
-let initialSnapshotPayload: RateSnapshotPayload | null = null;
-
-const snapshotStoragePath = path.resolve(process.cwd(), 'src/data/latestSnapshot.json');
-if (fs.existsSync(snapshotStoragePath)) {
-  try {
-    const rawContent = fs.readFileSync(snapshotStoragePath, 'utf8');
-    const parsed = JSON.parse(rawContent);
-    const validated = validateRateSnapshot(parsed, { maxAgeMs: 0 });
-    const engine = new RateEngine();
-    const result = engine.ingestPayload({
-      providerId: validated.providerId,
-      providerName: validated.providerName,
-      timestamp: validated.timestamp,
-      rates: validated.rates,
-    });
-    if (result.valid) {
-      serverEngine = engine;
-      isInitialLive = !validated.isMock;
-      initialSnapshotTimestamp = validated.timestamp;
-      initialSnapshotPayload = validated;
-    }
-  } catch {
-    // If snapshot loading or validation fails, remain on fallback
-  }
-}
+const buildSnapshot = loadBuildSnapshot();
+const serverEngine = buildSnapshot.engine;
+const isInitialLive = buildSnapshot.isLive;
+const initialSnapshotTimestamp = buildSnapshot.timestamp;
+const initialSnapshotPayload = buildSnapshot.payload;
 
 // Compute initial server-side values for instant rendering reflecting the actual active rate data
 const activeEngine = serverEngine ?? defaultRateEngine;
@@ -113,7 +88,6 @@ try {
         class={isInitialLive ? "live-badge" : "demo-badge"}
         role="status"
         aria-label={isInitialLive && initialSnapshotTimestamp ? `Live rates as of ${new Date(initialSnapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC` : "Demo mode: fictional mock exchange rates"}
-        data-mode={isInitialLive ? "snapshot" : undefined}
       >
         <span id="rate-badge-dot" class={isInitialLive ? "live-dot" : "demo-dot"} aria-hidden="true"></span>
         <span id="rate-badge-text">{isInitialLive ? "Live rates" : "Demo rates"}</span>
@@ -325,22 +299,6 @@ try {
   </div>
 </section>
 
-<style>
-  .demo-badge[data-mode="snapshot"] {
-    background-color: #ecfdf5;
-    border-color: #a7f3d0;
-    color: #065f46;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .demo-badge[data-mode="snapshot"] {
-      background-color: #064e3b;
-      border-color: #047857;
-      color: #6ee7b7;
-    }
-  }
-</style>
-
 <script>
   import Big from 'big.js';
   import {
@@ -433,16 +391,19 @@ try {
 
     function updateRateBadge(isSnapshot: boolean, timestamp?: number) {
       if (!rateBadge || !rateBadgeText) return;
+      const rateBadgeDot = document.getElementById('rate-badge-dot');
       if (isSnapshot && timestamp) {
         const d = new Date(timestamp);
         const timeStr = d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         rateBadgeText.textContent = 'Live rates';
         rateBadge.setAttribute('aria-label', `Live rates updated ${timeStr}`);
-        rateBadge.setAttribute('data-mode', 'snapshot');
+        rateBadge.className = 'live-badge';
+        if (rateBadgeDot) rateBadgeDot.className = 'live-dot';
       } else {
         rateBadgeText.textContent = 'Demo rates';
         rateBadge.setAttribute('aria-label', 'Demo mode: fictional mock exchange rates');
-        rateBadge.removeAttribute('data-mode');
+        rateBadge.className = 'demo-badge';
+        if (rateBadgeDot) rateBadgeDot.className = 'demo-dot';
       }
     }
 

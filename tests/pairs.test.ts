@@ -192,14 +192,40 @@ describe('M1.6 — URL Slug Handling & Metal Aliases', () => {
   });
 });
 
-describe('M1.6 — Static Route Generation & Featured Pair Registry', () => {
-  it('should contain exactly 16 representative pairs in FEATURED_PAIR_DEFINITIONS', () => {
-    assert.equal(FEATURED_PAIR_DEFINITIONS.length, 16);
+describe('M1.6 + SEO Batch 1 — Static Route Generation & Featured Pair Registry', () => {
+  // ── Original 16 slugs that must never change ──
+  const ORIGINAL_16_SLUGS = [
+    'usd-to-eur', 'eur-to-usd',
+    'usd-to-gbp', 'gbp-to-usd',
+    'usd-to-zar', 'zar-to-usd',
+    'usd-to-inr', 'usd-to-aed',
+    'btc-to-usd', 'usd-to-btc',
+    'eth-to-usd', 'usd-to-eth',
+    'gold-to-usd', 'usd-to-gold',
+    'silver-to-usd', 'usd-to-silver',
+  ];
+
+  // ── SEO Batch 1: 20 new directional slugs ──
+  const BATCH1_20_SLUGS = [
+    'usd-to-jpy', 'jpy-to-usd',
+    'usd-to-cad', 'cad-to-usd',
+    'usd-to-aud', 'aud-to-usd',
+    'usd-to-chf', 'chf-to-usd',
+    'usd-to-cny', 'cny-to-usd',
+    'usd-to-sgd', 'sgd-to-usd',
+    'usd-to-nzd', 'nzd-to-usd',
+    'usd-to-hkd', 'hkd-to-usd',
+    'usd-to-krw', 'krw-to-usd',
+    'usd-to-mxn', 'mxn-to-usd',
+  ];
+
+  it('should contain exactly 36 pairs in FEATURED_PAIR_DEFINITIONS', () => {
+    assert.equal(FEATURED_PAIR_DEFINITIONS.length, 36);
   });
 
   it('should validate every configured featured pair successfully', () => {
     const featuredPairs = getFeaturedPairs();
-    assert.equal(featuredPairs.length, 16);
+    assert.equal(featuredPairs.length, 36);
 
     for (const pair of featuredPairs) {
       assert.ok(pair.fromCode, 'Must have fromCode');
@@ -215,11 +241,40 @@ describe('M1.6 — Static Route Generation & Featured Pair Registry', () => {
     }
   });
 
+  it('should preserve all 16 original slugs unchanged', () => {
+    const featuredPairs = getFeaturedPairs();
+    const slugs = featuredPairs.map((p) => p.slug);
+    for (const slug of ORIGINAL_16_SLUGS) {
+      assert.ok(slugs.includes(slug), `Original slug '${slug}' must still be present`);
+    }
+  });
+
+  it('should include all 20 SEO Batch 1 directional slugs', () => {
+    const featuredPairs = getFeaturedPairs();
+    const slugs = featuredPairs.map((p) => p.slug);
+    for (const slug of BATCH1_20_SLUGS) {
+      assert.ok(slugs.includes(slug), `Batch 1 slug '${slug}' must be present`);
+    }
+  });
+
+  it('should contain zero duplicate slugs among all 36 pairs', () => {
+    const featuredPairs = getFeaturedPairs();
+    const slugs = featuredPairs.map((p) => p.slug);
+    const uniqueSlugs = new Set(slugs);
+    assert.equal(uniqueSlugs.size, slugs.length, `Found duplicate slugs: ${slugs.filter((s, i) => slugs.indexOf(s) !== i)}`);
+  });
+
   it('should provide sensible related pairs for crawlable internal linking', () => {
     const related = getRelatedPairs('usd-to-eur', 4);
     assert.ok(related.length > 0 && related.length <= 4);
     assert.equal(related[0].slug, 'eur-to-usd');
     assert.ok(related.every((p) => p.slug !== 'usd-to-eur'));
+  });
+
+  it('should provide inverse pair as top related for new Batch 1 pairs', () => {
+    const related = getRelatedPairs('usd-to-jpy', 4);
+    assert.ok(related.length > 0, 'Must have related pairs for usd-to-jpy');
+    assert.equal(related[0].slug, 'jpy-to-usd', 'Inverse pair must be ranked first');
   });
 });
 

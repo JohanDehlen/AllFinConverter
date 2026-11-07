@@ -110,11 +110,11 @@ export function getPairFromSlug(slug: string): ConversionPair | null {
 }
 
 /**
- * Initial curated list of featured representative conversion pairs for static generation.
- * Limited to 16 representative pairs across Fiat, Crypto, and Metals (M1.6 scope).
+ * Curated list of featured conversion pairs for static page generation.
+ * Original 16 representative pairs (M1.6) + 20 SEO expansion Batch 1 pairs.
  */
 export const FEATURED_PAIR_DEFINITIONS: readonly [string, string][] = [
-  // Fiat Pairs (8)
+  // ── Original Fiat Pairs (8) ──
   ['USD', 'EUR'],
   ['EUR', 'USD'],
   ['USD', 'GBP'],
@@ -124,17 +124,39 @@ export const FEATURED_PAIR_DEFINITIONS: readonly [string, string][] = [
   ['USD', 'INR'],
   ['USD', 'AED'],
 
-  // Crypto Pairs (4)
+  // ── Crypto Pairs (4) ──
   ['BTC', 'USD'],
   ['USD', 'BTC'],
   ['ETH', 'USD'],
   ['USD', 'ETH'],
 
-  // Precious Metals Pairs (4)
+  // ── Precious Metals Pairs (4) ──
   ['XAU', 'USD'],
   ['USD', 'XAU'],
   ['XAG', 'USD'],
   ['USD', 'XAG'],
+
+  // ── SEO Expansion Batch 1 — USD Fiat Pairs (20) ──
+  ['USD', 'JPY'],
+  ['JPY', 'USD'],
+  ['USD', 'CAD'],
+  ['CAD', 'USD'],
+  ['USD', 'AUD'],
+  ['AUD', 'USD'],
+  ['USD', 'CHF'],
+  ['CHF', 'USD'],
+  ['USD', 'CNY'],
+  ['CNY', 'USD'],
+  ['USD', 'SGD'],
+  ['SGD', 'USD'],
+  ['USD', 'NZD'],
+  ['NZD', 'USD'],
+  ['USD', 'HKD'],
+  ['HKD', 'USD'],
+  ['USD', 'KRW'],
+  ['KRW', 'USD'],
+  ['USD', 'MXN'],
+  ['MXN', 'USD'],
 ] as const;
 
 /**
