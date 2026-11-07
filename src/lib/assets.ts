@@ -111,13 +111,13 @@ export function getAssetsByCategory(category: AssetCategory): readonly Asset[] {
 
 /**
  * Returns all enabled assets within a specific category, sorted for dropdown display.
- * Fiat currencies are sorted alphabetically by full currency name (ascending).
+ * Fiat currencies are sorted alphabetically by three-letter ISO currency code (ascending).
  * Cryptocurrencies and precious metals preserve their canonical display ordering.
  */
 export function getDropdownAssetsByCategory(category: AssetCategory): readonly Asset[] {
   const assets = getAssetsByCategory(category);
   if (category === 'fiat') {
-    return [...assets].sort((a, b) => a.name.localeCompare(b.name, 'en'));
+    return [...assets].sort((a, b) => a.code.localeCompare(b.code, 'en'));
   }
   return assets;
 }

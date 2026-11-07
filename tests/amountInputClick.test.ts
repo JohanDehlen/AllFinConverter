@@ -79,7 +79,7 @@ class MockInputElement {
  */
 function setupConverterAmountController() {
   const amountFrom = new MockInputElement('100');
-  const amountTo = new MockInputElement('92');
+  const amountTo = new MockInputElement('92.00');
   let activeSide: 'from' | 'to' = 'from';
   let summaryHeadline = '';
   let summarySubtext = '';
@@ -125,11 +125,11 @@ function setupConverterAmountController() {
     try {
       if (activeSide === 'from') {
         const result = calculateConversion(bigAmount, fromCode, toCode);
-        targetInput.value = formatDisplayAmount(result.targetAmount);
+        targetInput.value = formatDisplayAmount(result.targetAmount, toCode);
         summaryHeadline = `${bigAmount.toString()} USD = ${result.targetAmount.toString()} EUR`;
       } else {
         const result = calculateConversion(bigAmount, toCode, fromCode);
-        targetInput.value = formatDisplayAmount(result.targetAmount);
+        targetInput.value = formatDisplayAmount(result.targetAmount, fromCode);
         summaryHeadline = `${result.targetAmount.toString()} USD = ${bigAmount.toString()} EUR`;
       }
     } catch {
@@ -194,13 +194,13 @@ describe('Amount Input Click Behaviour (Requirement 2)', () => {
     const { amountFrom, amountTo, getActiveSide } = setupConverterAmountController();
 
     assert.equal(amountFrom.value, '100');
-    assert.equal(amountTo.value, '92');
+    assert.equal(amountTo.value, '92.00');
 
     // User clicks amountFrom
     amountFrom.dispatchEvent('click');
 
     assert.equal(amountFrom.value, '0', 'amountFrom must be reset to 0');
-    assert.equal(amountTo.value, '0', 'amountTo must be reset to 0');
+    assert.equal(amountTo.value, '0.00', 'amountTo target conversion must be 0.00');
     assert.equal(amountFrom.isFocused, true, 'amountFrom must be focused');
     assert.equal(amountFrom.isSelected, true, 'amountFrom text must be selected');
     assert.equal(getActiveSide(), 'from', 'activeSide must be from');
@@ -210,12 +210,12 @@ describe('Amount Input Click Behaviour (Requirement 2)', () => {
     const { amountFrom, amountTo, getActiveSide } = setupConverterAmountController();
 
     assert.equal(amountFrom.value, '100');
-    assert.equal(amountTo.value, '92');
+    assert.equal(amountTo.value, '92.00');
 
     // User clicks amountTo
     amountTo.dispatchEvent('click');
 
-    assert.equal(amountFrom.value, '0', 'amountFrom must be reset to 0');
+    assert.equal(amountFrom.value, '0.00', 'amountFrom target conversion must be 0.00');
     assert.equal(amountTo.value, '0', 'amountTo must be reset to 0');
     assert.equal(amountTo.isFocused, true, 'amountTo must be focused');
     assert.equal(amountTo.isSelected, true, 'amountTo text must be selected');
@@ -228,7 +228,7 @@ describe('Amount Input Click Behaviour (Requirement 2)', () => {
     // User clicks amountFrom
     amountFrom.dispatchEvent('click');
     assert.equal(amountFrom.value, '0');
-    assert.equal(amountTo.value, '0');
+    assert.equal(amountTo.value, '0.00');
 
     // User types '250' (replaces selected '0')
     amountFrom.value = '250';
@@ -236,7 +236,7 @@ describe('Amount Input Click Behaviour (Requirement 2)', () => {
 
     assert.equal(amountFrom.value, '250');
     // 250 USD * 0.92 = 230 EUR
-    assert.equal(amountTo.value, '230');
+    assert.equal(amountTo.value, '230.00');
   });
 
   it('should handle unselected leading zero cleanly when typing immediately after click', () => {
@@ -274,7 +274,7 @@ describe('Amount Input Click Behaviour (Requirement 2)', () => {
 
     // User clicks amountTo
     amountTo.dispatchEvent('click');
-    assert.equal(amountFrom.value, '0');
+    assert.equal(amountFrom.value, '0.00');
     assert.equal(amountTo.value, '0');
 
     // User types '92' in amountTo
@@ -283,7 +283,7 @@ describe('Amount Input Click Behaviour (Requirement 2)', () => {
 
     assert.equal(amountTo.value, '92');
     // 92 EUR / 0.92 = 100 USD
-    assert.equal(amountFrom.value, '100');
+    assert.equal(amountFrom.value, '100.00');
   });
 
   it('should NOT clear the fields repeatedly while typing consecutive keystrokes', () => {
@@ -314,14 +314,14 @@ describe('Amount Input Click Behaviour (Requirement 2)', () => {
     const { amountFrom, amountTo } = setupConverterAmountController();
 
     assert.equal(amountFrom.value, '100');
-    assert.equal(amountTo.value, '92');
+    assert.equal(amountTo.value, '92.00');
 
     // User tabs into amountFrom (focus event without click event)
     amountFrom.dispatchEvent('focus');
 
     // Values remain untouched!
     assert.equal(amountFrom.value, '100');
-    assert.equal(amountTo.value, '92');
+    assert.equal(amountTo.value, '92.00');
   });
 
   it('should NOT reset fields to 0 when swap button is clicked', () => {

@@ -1,15 +1,17 @@
 /**
- * Automated Test Suite for Alphabetical Fiat Currency Dropdown & Homepage Section
+ * Automated Test Suite for Fiat Currency Dropdown, Homepage Section & Result Precision
  *
  * Verifies:
  * 1. All 21 fiat currencies remain available in getDropdownAssetsByCategory('fiat').
- * 2. The fiat currency list is alphabetically sorted by full currency name (ascending).
+ * 2. The fiat currency list is alphabetically sorted by currency code (ascending).
  * 3. Canonical asset definitions (ASSETS, getSupportedAssets, getAssetsByCategory) are preserved untouched.
  * 4. Cryptocurrency and precious-metal ordering is NOT altered.
  * 5. Default selections ('USD' source, 'EUR' destination) and selection behavior remain intact.
  * 6. RateEngine lookups and conversion calculations work identically.
  * 7. No duplicate entries exist in dropdown assets.
  * 8. Homepage "Supported Asset Classes" section wording matches requirements exactly.
+ * 9. Decimal precision rules across fiat (2 fixed decimals), crypto (up to 8, trailing trimmed, small preserved),
+ *    and metal (up to 4, trailing trimmed, small preserved).
  */
 
 // @ts-ignore
@@ -18,6 +20,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import Big from 'big.js';
 
 import {
   ASSETS,
@@ -27,10 +30,10 @@ import {
   getAsset,
 } from '../src/lib/assets.ts';
 
-import { calculateConversion } from '../src/lib/converter.ts';
+import { calculateConversion, formatDisplayAmount } from '../src/lib/converter.ts';
 import { defaultRateEngine } from '../src/lib/rateEngine.ts';
 
-describe('Alphabetical Fiat Currency Dropdown (Improvement A)', () => {
+describe('Alphabetical Fiat Currency Dropdown by Currency Code (Improvement 1)', () => {
   it('should preserve all 21 supported fiat currencies in dropdown', () => {
     const dropdownFiats = getDropdownAssetsByCategory('fiat');
     assert.equal(dropdownFiats.length, 21, 'Must have exactly 21 fiat currencies');
@@ -59,36 +62,36 @@ describe('Alphabetical Fiat Currency Dropdown (Improvement A)', () => {
     assert.equal(seen.size, 21);
   });
 
-  it('should sort fiat currencies strictly alphabetically by full currency name in ascending order', () => {
+  it('should sort fiat currencies strictly alphabetically by currency code in ascending order', () => {
     const dropdownFiats = getDropdownAssetsByCategory('fiat');
-    const names = dropdownFiats.map((a) => a.name);
+    const codes = dropdownFiats.map((a) => a.code);
 
-    const sortedNames = [...names].sort((a, b) => a.localeCompare(b, 'en'));
-    assert.deepEqual(names, sortedNames, 'Fiat names must be sorted alphabetically ascending');
+    const sortedCodes = [...codes].sort((a, b) => a.localeCompare(b, 'en'));
+    assert.deepEqual(codes, sortedCodes, 'Fiat codes must be sorted alphabetically ascending');
 
-    // Expected exact full name and code sequence
+    // Expected exact code and full name sequence (all 21 fiats)
     const expectedSequence = [
+      { code: 'AED', name: 'UAE Dirham' },
       { code: 'AUD', name: 'Australian Dollar' },
       { code: 'BRL', name: 'Brazilian Real' },
-      { code: 'GBP', name: 'British Pound' },
       { code: 'CAD', name: 'Canadian Dollar' },
+      { code: 'CHF', name: 'Swiss Franc' },
       { code: 'CNY', name: 'Chinese Yuan' },
       { code: 'DKK', name: 'Danish Krone' },
       { code: 'EUR', name: 'Euro' },
+      { code: 'GBP', name: 'British Pound' },
       { code: 'HKD', name: 'Hong Kong Dollar' },
       { code: 'INR', name: 'Indian Rupee' },
       { code: 'JPY', name: 'Japanese Yen' },
-      { code: 'MXN', name: 'Mexican Peso' },
-      { code: 'NZD', name: 'New Zealand Dollar' },
-      { code: 'NOK', name: 'Norwegian Krone' },
-      { code: 'PLN', name: 'Polish Złoty' },
-      { code: 'SGD', name: 'Singapore Dollar' },
-      { code: 'ZAR', name: 'South African Rand' },
       { code: 'KRW', name: 'South Korean Won' },
+      { code: 'MXN', name: 'Mexican Peso' },
+      { code: 'NOK', name: 'Norwegian Krone' },
+      { code: 'NZD', name: 'New Zealand Dollar' },
+      { code: 'PLN', name: 'Polish Złoty' },
       { code: 'SEK', name: 'Swedish Krona' },
-      { code: 'CHF', name: 'Swiss Franc' },
-      { code: 'AED', name: 'UAE Dirham' },
+      { code: 'SGD', name: 'Singapore Dollar' },
       { code: 'USD', name: 'US Dollar' },
+      { code: 'ZAR', name: 'South African Rand' },
     ];
 
     assert.equal(dropdownFiats.length, expectedSequence.length);
@@ -226,5 +229,135 @@ describe('Homepage Supported Asset Classes Wording (Improvement B)', () => {
       content.includes('getAssetsByCategory'),
       'Must retain dynamic check via getAssetsByCategory'
     );
+  });
+});
+
+describe('Conversion Result Decimal Precision (Improvement 2)', () => {
+  describe('Fiat Currencies', () => {
+    it('should always display exactly 2 decimal places for fiat amounts', () => {
+      // Basic values
+      assert.equal(formatDisplayAmount('123.4', 'USD'), '123.40');
+      assert.equal(formatDisplayAmount('123.40', 'EUR'), '123.40');
+      assert.equal(formatDisplayAmount('123', 'GBP'), '123.00');
+      assert.equal(formatDisplayAmount('92', 'EUR'), '92.00');
+      assert.equal(formatDisplayAmount('0', 'USD'), '0.00');
+      assert.equal(formatDisplayAmount('0.0', 'JPY'), '0.00');
+      assert.equal(formatDisplayAmount(new Big(0), 'GBP'), '0.00');
+      assert.equal(formatDisplayAmount('0', 'fiat'), '0.00');
+
+      // Comma thousand-separators with 2 decimal places
+      assert.equal(formatDisplayAmount('1234.5', 'USD'), '1,234.50');
+      assert.equal(formatDisplayAmount('1000000', 'EUR'), '1,000,000.00');
+      assert.equal(formatDisplayAmount('1234567.891', 'fiat'), '1,234,567.89');
+
+      // Works with Big instance
+      assert.equal(formatDisplayAmount(new Big('45.6'), 'CAD'), '45.60');
+      assert.equal(formatDisplayAmount(new Big('100'), 'AUD'), '100.00');
+    });
+
+    it('should format all 21 fiat currencies with exactly 2 decimal places', () => {
+      const fiats = getDropdownAssetsByCategory('fiat');
+      for (const fiat of fiats) {
+        const formatted = formatDisplayAmount('100', fiat.code);
+        assert.equal(formatted, '100.00', `Fiat ${fiat.code} must format to 100.00`);
+      }
+    });
+  });
+
+  describe('Cryptocurrencies', () => {
+    it('should display up to 8 decimal places and remove unnecessary trailing zeros', () => {
+      assert.equal(formatDisplayAmount('1.50000000', 'BTC'), '1.5');
+      assert.equal(formatDisplayAmount('100.00000000', 'ETH'), '100');
+      assert.equal(formatDisplayAmount('0.12345678', 'SOL'), '0.12345678');
+      assert.equal(formatDisplayAmount('0.12345000', 'crypto'), '0.12345');
+      assert.equal(formatDisplayAmount('1234.5678', 'XRP'), '1,234.5678');
+      assert.equal(formatDisplayAmount('0', 'BTC'), '0');
+      assert.equal(formatDisplayAmount('0.0', 'ETH'), '0');
+      assert.equal(formatDisplayAmount(new Big(0), 'SOL'), '0');
+      assert.equal(formatDisplayAmount('0', 'crypto'), '0');
+    });
+
+    it('should never round small non-zero values to zero merely to shorten display', () => {
+      // Extremely small amount (< 1e-8)
+      const smallAmount = '0.0000000012345';
+      const formatted = formatDisplayAmount(smallAmount, 'BTC');
+      assert.notEqual(formatted, '0', 'Small crypto value must not round to zero');
+      assert.ok(formatted.startsWith('0.00000000123'), 'Small crypto precision must be preserved');
+
+      const tinyAmount = '0.00000000000045';
+      const tinyFormatted = formatDisplayAmount(tinyAmount, 'DOGE');
+      assert.notEqual(tinyFormatted, '0', 'Tiny crypto value must not round to zero');
+      assert.ok(tinyFormatted.includes('45'), 'Significant digits must be retained');
+    });
+  });
+
+  describe('Precious Metals', () => {
+    it('should display up to 4 decimal places and remove unnecessary trailing zeros', () => {
+      assert.equal(formatDisplayAmount('25.5000', 'XAU'), '25.5');
+      assert.equal(formatDisplayAmount('100.0000', 'XAG'), '100');
+      assert.equal(formatDisplayAmount('0.0416', 'XAU'), '0.0416');
+      assert.equal(formatDisplayAmount('1.2939', 'XPT'), '1.2939');
+      assert.equal(formatDisplayAmount('1234.5678', 'metal'), '1,234.5678');
+      assert.equal(formatDisplayAmount('0', 'XPD'), '0');
+      assert.equal(formatDisplayAmount('0.0', 'XAG'), '0');
+      assert.equal(formatDisplayAmount(new Big(0), 'XPT'), '0');
+      assert.equal(formatDisplayAmount('0', 'metal'), '0');
+    });
+
+    it('should truncate metal beyond 4 decimals while preserving precision for small amounts', () => {
+      // 5 decimals with non-zero 5th decimal
+      assert.equal(formatDisplayAmount('1.23456', 'XAU'), '1.2346');
+
+      // Small metal value
+      const smallMetal = '0.000012';
+      const formattedSmall = formatDisplayAmount(smallMetal, 'XAU');
+      assert.notEqual(formattedSmall, '0', 'Small metal value must not round to zero');
+    });
+  });
+
+  describe('Underlying Calculation Precision', () => {
+    it('should preserve full Big.js precision in conversion calculations', () => {
+      const conv = calculateConversion('100', 'USD', 'EUR');
+      assert.equal(conv.targetAmount.toString(), '92');
+      // Verify Big instance methods remain fully accurate
+      assert.equal(conv.targetAmount instanceof Big, true);
+
+      // Metal conversion precision
+      const metalConv = calculateConversion('100', 'USD', 'XAU');
+      assert.ok(metalConv.targetAmount.gt(0));
+      // Display formatted value applies metal 4 decimals:
+      const displayed = formatDisplayAmount(metalConv.targetAmount, 'XAU');
+      assert.equal(displayed, '0.0416');
+      // But raw calculation retains more digits:
+      assert.ok(metalConv.targetAmount.toString().length > 5);
+    });
+  });
+
+  describe('Initial Active Rate Display & Snapshot Consistency', () => {
+    it('should reflect live snapshot rates when a valid production snapshot is active', () => {
+      // Simulate live snapshot where EUR is 0.89823 (as in latestSnapshot.json)
+      const liveSnapshot = {
+        version: 1,
+        providerId: 'allfin-live',
+        providerName: 'AllFinConverter Live Composite',
+        baseAsset: 'USD',
+        timestamp: 1793219424781,
+        isMock: false,
+        rates: {
+          USD: '1',
+          EUR: '0.89823',
+        },
+      };
+
+      const engine = new defaultRateEngine.constructor();
+      engine.ingestPayload(liveSnapshot);
+
+      const conv = calculateConversion('100', 'USD', 'EUR', { rateEngine: engine });
+      const targetDisplay = formatDisplayAmount(conv.targetAmount, 'EUR');
+
+      // Live rate: 100 USD * 0.89823 = 89.823 EUR -> 89.82 EUR
+      assert.equal(targetDisplay, '89.82');
+      assert.notEqual(targetDisplay, '92.00', 'Must not present fixed 92.00 when live rates differ');
+    });
   });
 });

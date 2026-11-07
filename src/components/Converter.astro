@@ -1,4 +1,6 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   ASSET_CATEGORIES,
   getDropdownAssetsByCategory,
@@ -15,6 +17,8 @@ import {
   formatUnitRateWithUnit,
   type MetalUnit,
 } from '../lib/converter.ts';
+import { RateEngine, defaultRateEngine } from '../lib/rateEngine.ts';
+import { validateRateSnapshot, type RateSnapshotPayload } from '../lib/rateSnapshot.ts';
 
 interface Props {
   initialFrom?: string;
@@ -44,31 +48,75 @@ const initialPrefixTo = getAssetAmountPrefix(initialTo);
 const initialSuffixFrom = getAssetAmountSuffix(initialFrom, initialFromUnit);
 const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
 
-// Compute initial server-side values for instant rendering
-let initialTargetAmount = '92';
-let initialSummaryHeadline = `${initialAmount} ${initialFrom} = 92 ${initialTo}`;
-let initialSummarySubtext = `1 ${initialFrom} = 0.92 ${initialTo} \u2022 Demo conversion using fictional development rates.`;
+// Load validated production rate snapshot if available on disk (src/data/latestSnapshot.json)
+let serverEngine: RateEngine | undefined;
+let isInitialLive = false;
+let initialSnapshotTimestamp: number | null = null;
+let initialSnapshotPayload: RateSnapshotPayload | null = null;
+
+const snapshotStoragePath = path.resolve(process.cwd(), 'src/data/latestSnapshot.json');
+if (fs.existsSync(snapshotStoragePath)) {
+  try {
+    const rawContent = fs.readFileSync(snapshotStoragePath, 'utf8');
+    const parsed = JSON.parse(rawContent);
+    const validated = validateRateSnapshot(parsed, { maxAgeMs: 0 });
+    const engine = new RateEngine();
+    const result = engine.ingestPayload({
+      providerId: validated.providerId,
+      providerName: validated.providerName,
+      timestamp: validated.timestamp,
+      rates: validated.rates,
+    });
+    if (result.valid) {
+      serverEngine = engine;
+      isInitialLive = !validated.isMock;
+      initialSnapshotTimestamp = validated.timestamp;
+      initialSnapshotPayload = validated;
+    }
+  } catch {
+    // If snapshot loading or validation fails, remain on fallback
+  }
+}
+
+// Compute initial server-side values for instant rendering reflecting the actual active rate data
+const activeEngine = serverEngine ?? defaultRateEngine;
+let initialTargetAmount = '';
+let initialSummaryHeadline = '';
+let initialSummarySubtext = '';
 
 try {
   const initResult = calculateConversion(initialAmount, initialFrom, initialTo, {
     fromUnit: initialFromUnit,
     toUnit: initialToUnit,
+    rateEngine: activeEngine,
   });
-  initialTargetAmount = formatDisplayAmount(initResult.targetAmount);
+  initialTargetAmount = formatDisplayAmount(initResult.targetAmount, initialTo);
   initialSummaryHeadline = `${formatQuantityWithUnit(initialAmount, initialFrom, initialFromUnit)} = ${formatQuantityWithUnit(initResult.targetAmount, initialTo, initialToUnit)}`;
-  initialSummarySubtext = `${formatUnitRateWithUnit(initResult.unitRate, initialFrom, initialTo, initialFromUnit, initialToUnit)} \u2022 Demo conversion using fictional development rates.`;
+  initialSummarySubtext = isInitialLive && initialSnapshotTimestamp
+    ? `${formatUnitRateWithUnit(initResult.unitRate, initialFrom, initialTo, initialFromUnit, initialToUnit)} \u2022 Live rates as of ${new Date(initialSnapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC.`
+    : `${formatUnitRateWithUnit(initResult.unitRate, initialFrom, initialTo, initialFromUnit, initialToUnit)} \u2022 Demo conversion using fictional development rates.`;
 } catch {
   // Graceful fallback if calculation fails at render time
 }
 ---
 
-<section class="converter-wrapper" aria-labelledby="converter-heading">
+<section
+  class="converter-wrapper"
+  aria-labelledby="converter-heading"
+  data-initial-snapshot={initialSnapshotPayload ? JSON.stringify(initialSnapshotPayload) : undefined}
+>
   <div class="converter-card">
     <div class="converter-card-header">
       <h2 id="converter-heading" class="converter-title">Convert Financial Assets</h2>
-      <span id="rate-badge" class="demo-badge" role="status" aria-label="Demo mode: fictional mock exchange rates">
-        <span id="rate-badge-dot" class="demo-dot" aria-hidden="true"></span>
-        <span id="rate-badge-text">Demo rates</span>
+      <span
+        id="rate-badge"
+        class={isInitialLive ? "live-badge" : "demo-badge"}
+        role="status"
+        aria-label={isInitialLive && initialSnapshotTimestamp ? `Live rates as of ${new Date(initialSnapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC` : "Demo mode: fictional mock exchange rates"}
+        data-mode={isInitialLive ? "snapshot" : undefined}
+      >
+        <span id="rate-badge-dot" class={isInitialLive ? "live-dot" : "demo-dot"} aria-hidden="true"></span>
+        <span id="rate-badge-text">{isInitialLive ? "Live rates" : "Demo rates"}</span>
       </span>
     </div>
 
@@ -357,6 +405,32 @@ try {
     let clientEngine: RateEngine | undefined = undefined;
     let activeSnapshotTimestamp: number | null = null;
 
+    // Initialize clientEngine immediately from pre-rendered active snapshot if present
+    const wrapperEl = document.querySelector<HTMLElement>('.converter-wrapper');
+    const rawInitialSnapshot = wrapperEl?.getAttribute('data-initial-snapshot');
+    if (rawInitialSnapshot) {
+      try {
+        const parsedSnapshot = JSON.parse(rawInitialSnapshot);
+        if (
+          parsedSnapshot &&
+          typeof parsedSnapshot.timestamp === 'number' &&
+          isLiveSnapshotAcceptable(parsedSnapshot)
+        ) {
+          const initEngine = new RateEngine();
+          const initRes = initEngine.ingestPayload({
+            providerId: parsedSnapshot.providerId,
+            providerName: parsedSnapshot.providerName,
+            timestamp: parsedSnapshot.timestamp,
+            rates: parsedSnapshot.rates,
+          });
+          if (initRes.valid) {
+            clientEngine = initEngine;
+            activeSnapshotTimestamp = parsedSnapshot.timestamp;
+          }
+        }
+      } catch {}
+    }
+
     function updateRateBadge(isSnapshot: boolean, timestamp?: number) {
       if (!rateBadge || !rateBadgeText) return;
       if (isSnapshot && timestamp) {
@@ -512,7 +586,7 @@ try {
         try {
           if (activeSide === 'from') {
             const result = calculateConversion(bigAmount, fromCode, toCode, convOptions);
-            targetInput.value = formatDisplayAmount(result.targetAmount);
+            targetInput.value = formatDisplayAmount(result.targetAmount, toCode);
             summaryHeadline!.textContent = `${formatQuantityWithUnit(bigAmount, fromCode, fromUnit)} = ${formatQuantityWithUnit(result.targetAmount, toCode, toUnit)}`;
             summarySubtext!.textContent = `${formatUnitRateWithUnit(result.unitRate, fromCode, toCode, fromUnit, toUnit)}${subtextSuffix}`;
           } else {
@@ -521,7 +595,7 @@ try {
               toUnit: fromUnit,
               rateEngine: clientEngine,
             });
-            targetInput.value = formatDisplayAmount(result.targetAmount);
+            targetInput.value = formatDisplayAmount(result.targetAmount, fromCode);
             summaryHeadline!.textContent = `${formatQuantityWithUnit(result.targetAmount, fromCode, fromUnit)} = ${formatQuantityWithUnit(bigAmount, toCode, toUnit)}`;
             summarySubtext!.textContent = `${formatUnitRateWithUnit(result.inverseRate, fromCode, toCode, fromUnit, toUnit)}${subtextSuffix}`;
           }
@@ -601,7 +675,7 @@ try {
       if (val.startsWith('-')) return;
       if (val && val !== '.') {
         try {
-          amountFrom.value = formatDisplayAmount(new Big(val));
+          amountFrom.value = formatDisplayAmount(new Big(val), assetFrom.value);
           syncInputSizes();
         } catch {}
       }
@@ -612,7 +686,7 @@ try {
       if (val.startsWith('-')) return;
       if (val && val !== '.') {
         try {
-          amountTo.value = formatDisplayAmount(new Big(val));
+          amountTo.value = formatDisplayAmount(new Big(val), assetTo.value);
           syncInputSizes();
         } catch {}
       }
@@ -643,7 +717,7 @@ try {
             const converted = fromUnit === 'troy-oz' && newUnit === 'g'
               ? convertTroyOzToGrams(currentBig)
               : convertGramsToTroyOz(currentBig);
-            amountFrom.value = formatDisplayAmount(converted);
+            amountFrom.value = formatDisplayAmount(converted, assetFrom.value);
           } catch {}
         }
 
@@ -720,17 +794,19 @@ try {
           return;
         }
 
-        // If snapshot is missing, mock data, or stale: remain in Demo mode
-        clientEngine = undefined;
-        activeSnapshotTimestamp = null;
-        updateRateBadge(false);
-        recalculate();
+        // If snapshot is missing, mock data, or stale: fall back only if no active clientEngine
+        if (!clientEngine) {
+          activeSnapshotTimestamp = null;
+          updateRateBadge(false);
+          recalculate();
+        }
       } catch {
-        // Fallback: retain mock-local defaultRateEngine and "Demo rates" badge
-        clientEngine = undefined;
-        activeSnapshotTimestamp = null;
-        updateRateBadge(false);
-        recalculate();
+        // Fallback: fall back only if no active clientEngine
+        if (!clientEngine) {
+          activeSnapshotTimestamp = null;
+          updateRateBadge(false);
+          recalculate();
+        }
       }
     }
 

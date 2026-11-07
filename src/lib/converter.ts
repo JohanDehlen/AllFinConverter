@@ -5,7 +5,12 @@
 
 import Big from 'big.js';
 import { getRate, type RateEngine } from './rateEngine.ts';
-import { isPreciousMetal, type MetalUnit } from './assets.ts';
+import {
+  isPreciousMetal,
+  getAsset,
+  type MetalUnit,
+  type AssetCategory,
+} from './assets.ts';
 
 export type { MetalUnit };
 
@@ -177,7 +182,7 @@ export function formatQuantityWithUnit(
   assetCode: string,
   unit?: MetalUnit | string
 ): string {
-  const formattedAmount = formatDisplayAmount(amount);
+  const formattedAmount = typeof amount === 'string' ? amount : formatDisplayAmount(amount, assetCode);
   if (isPreciousMetal(assetCode)) {
     const unitLabel = unit === 'g' ? 'g' : 'troy oz';
     return `${formattedAmount} ${unitLabel} ${assetCode}`;
@@ -242,15 +247,119 @@ export function sanitizeAmountInput(input: string): string {
 }
 
 /**
- * Formats a Big.js or string numeric value for clean financial display:
- * - Groups integer part with commas (e.g. 1000 -> 1,000)
- * - Retains sensible 2 decimal places for standard amounts (e.g. 1234.5 -> 1,234.50)
- * - Preserves meaningful digits for very small decimals (e.g. 0.000123) without rounding to 0
- * - Avoids scientific notation on large and small numbers
- * - Trims excessive trailing zeros where appropriate
+ * Resolves the AssetCategory ('fiat' | 'crypto' | 'metal') from an asset code or category string.
  */
-export function formatDisplayAmount(val: Big | string): string {
+function resolveCategory(assetCodeOrCategory?: string | AssetCategory): AssetCategory | undefined {
+  if (!assetCodeOrCategory) return undefined;
+  if (assetCodeOrCategory === 'fiat' || assetCodeOrCategory === 'crypto' || assetCodeOrCategory === 'metal') {
+    return assetCodeOrCategory;
+  }
+  return getAsset(assetCodeOrCategory)?.category;
+}
+
+/**
+ * Formats a fiat currency amount:
+ * Always displays exactly 2 decimal places with comma grouping for the integer part.
+ * Example: "123.40", not "123.4" or "123.400".
+ */
+function formatFiatAmount(bigVal: Big): string {
+  const fixed = bigVal.toFixed(2);
+  const [intPart, decPart] = fixed.split('.');
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return `${formattedInt}.${decPart}`;
+}
+
+/**
+ * Formats a cryptocurrency amount:
+ * - Displays up to 8 decimal places.
+ * - Preserves useful precision for small amounts.
+ * - Removes unnecessary trailing zeros.
+ * - Never rounds small non-zero values to zero merely to shorten the display.
+ */
+function formatCryptoAmount(bigVal: Big): string {
+  if (bigVal.eq(0)) {
+    return '0';
+  }
+
+  const fixed8 = bigVal.toFixed(8);
+  if (new Big(fixed8).eq(0)) {
+    // Value is positive but so small that 8 decimal places would round it to zero.
+    // Preserve useful precision beyond leading zeros.
+    const rawStr = bigVal.toFixed();
+    const match = rawStr.match(/^0\.(0*)([1-9]\d*)/);
+    if (match) {
+      const leadingZeros = match[1].length;
+      const sigDigits = match[2];
+      const targetDecimals = leadingZeros + Math.min(sigDigits.length, 6);
+      const fixed = bigVal.toFixed(targetDecimals);
+      return fixed.replace(/0+$/, '');
+    }
+    return fixed8;
+  }
+
+  const [intPart, decPart] = fixed8.split('.');
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const trimmedDec = decPart ? decPart.replace(/0+$/, '') : '';
+  return trimmedDec ? `${formattedInt}.${trimmedDec}` : formattedInt;
+}
+
+/**
+ * Formats a precious metal amount:
+ * - Displays up to 4 decimal places.
+ * - Removes unnecessary trailing zeros.
+ */
+function formatMetalAmount(bigVal: Big): string {
+  if (bigVal.eq(0)) {
+    return '0';
+  }
+
+  const fixed4 = bigVal.toFixed(4);
+  if (new Big(fixed4).eq(0)) {
+    const rawStr = bigVal.toFixed();
+    const match = rawStr.match(/^0\.(0*)([1-9]\d*)/);
+    if (match) {
+      const leadingZeros = match[1].length;
+      const sigDigits = match[2];
+      const targetDecimals = leadingZeros + Math.min(sigDigits.length, 4);
+      const fixed = bigVal.toFixed(targetDecimals);
+      return fixed.replace(/0+$/, '');
+    }
+    return fixed4;
+  }
+
+  const [intPart, decPart] = fixed4.split('.');
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const trimmedDec = decPart ? decPart.replace(/0+$/, '') : '';
+  return trimmedDec ? `${formattedInt}.${trimmedDec}` : formattedInt;
+}
+
+/**
+ * Formats a Big.js or string numeric value for clean financial display:
+ * - Fiat currencies: Always displays exactly 2 decimal places (e.g. "123.40").
+ * - Cryptocurrencies: Displays up to 8 decimal places, removing unnecessary trailing zeros,
+ *   never rounding small non-zero values to zero.
+ * - Precious metals: Displays up to 4 decimal places, removing unnecessary trailing zeros.
+ * If asset code/category is omitted, applies generic financial formatting preserving legacy behavior.
+ */
+export function formatDisplayAmount(
+  val: Big | string,
+  assetCodeOrCategory?: string | AssetCategory
+): string {
   const bigVal = typeof val === 'string' ? new Big(val) : val;
+
+  const category = resolveCategory(assetCodeOrCategory);
+
+  if (category === 'fiat') {
+    return formatFiatAmount(bigVal);
+  }
+
+  if (category === 'crypto') {
+    return formatCryptoAmount(bigVal);
+  }
+
+  if (category === 'metal') {
+    return formatMetalAmount(bigVal);
+  }
 
   if (bigVal.eq(0)) {
     return '0';
