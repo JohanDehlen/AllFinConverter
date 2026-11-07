@@ -22,12 +22,14 @@ interface Props {
   initialFrom?: string;
   initialTo?: string;
   initialAmount?: string;
+  isPairPage?: boolean;
 }
 
 const {
   initialFrom = 'USD',
   initialTo = 'EUR',
   initialAmount = '100',
+  isPairPage = false,
 } = Astro.props;
 
 const fromMeta = getAsset(initialFrom);
@@ -79,6 +81,9 @@ try {
   class="converter-wrapper"
   aria-labelledby="converter-heading"
   data-initial-snapshot={initialSnapshotPayload ? JSON.stringify(initialSnapshotPayload) : undefined}
+  data-is-pair-page={isPairPage ? "true" : undefined}
+  data-page-from={isPairPage ? initialFrom : undefined}
+  data-page-to={isPairPage ? initialTo : undefined}
 >
   <div class="converter-card">
     <div class="converter-card-header">
@@ -389,6 +394,68 @@ try {
       } catch {}
     }
 
+    const isPairPage = wrapperEl?.getAttribute('data-is-pair-page') === 'true';
+    const expectedFrom = wrapperEl?.getAttribute('data-page-from') || '';
+    const expectedTo = wrapperEl?.getAttribute('data-page-to') || '';
+    const STORAGE_KEY = 'allfin_nav_state';
+
+    // On the homepage, restore state if visitor navigated from an SEO pair page
+    if (!isPairPage) {
+      try {
+        const rawNav = sessionStorage.getItem(STORAGE_KEY);
+        if (rawNav) {
+          sessionStorage.removeItem(STORAGE_KEY);
+          const navState = JSON.parse(rawNav);
+          if (navState && typeof navState === 'object') {
+            if (typeof navState.from === 'string' && getAsset(navState.from)) {
+              assetFrom.value = navState.from;
+            }
+            if (typeof navState.to === 'string' && getAsset(navState.to)) {
+              assetTo.value = navState.to;
+            }
+            if (navState.fromUnit === 'troy-oz' || navState.fromUnit === 'g') {
+              fromUnit = navState.fromUnit;
+            }
+            if (navState.toUnit === 'troy-oz' || navState.toUnit === 'g') {
+              toUnit = navState.toUnit;
+            }
+            if (typeof navState.amount === 'string' && navState.amount.trim() !== '') {
+              if (navState.activeSide === 'to') {
+                amountTo.value = navState.amount;
+                activeSide = 'to';
+              } else {
+                amountFrom.value = navState.amount;
+                activeSide = 'from';
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
+    function checkPairPageNavigation(): boolean {
+      if (!isPairPage || !expectedFrom || !expectedTo) return false;
+      const currentFrom = assetFrom!.value;
+      const currentTo = assetTo!.value;
+      if (currentFrom !== expectedFrom || currentTo !== expectedTo) {
+        try {
+          const activeInput = activeSide === 'to' ? amountTo! : amountFrom!;
+          const state = {
+            from: currentFrom,
+            to: currentTo,
+            amount: activeInput.value,
+            activeSide: activeSide,
+            fromUnit: fromUnit,
+            toUnit: toUnit,
+          };
+          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch {}
+        window.location.href = '/';
+        return true;
+      }
+      return false;
+    }
+
     function updateRateBadge(isSnapshot: boolean, timestamp?: number) {
       if (!rateBadge || !rateBadgeText) return;
       const rateBadgeDot = document.getElementById('rate-badge-dot');
@@ -656,11 +723,13 @@ try {
     // Select change listeners
     assetFrom.addEventListener('change', () => {
       fromUnit = 'troy-oz';
+      if (checkPairPageNavigation()) return;
       recalculate();
     });
 
     assetTo.addEventListener('change', () => {
       toUnit = 'troy-oz';
+      if (checkPairPageNavigation()) return;
       recalculate();
     });
 
@@ -719,6 +788,9 @@ try {
       toUnit = prevFromUnit;
 
       activeSide = 'from';
+
+      if (checkPairPageNavigation()) return;
+
       recalculate();
     });
 
