@@ -1,0 +1,51 @@
+---
+interface Props {
+  slotId: string;
+  variant: 'side-rail' | 'banner';
+  label?: string;
+  class?: string;
+}
+
+const {
+  slotId,
+  variant,
+  label = 'Advertisement',
+  class: className = '',
+} = Astro.props;
+---
+
+<aside
+  class={`ad-placeholder-wrapper ad-${variant} ${className}`.trim()}
+  data-ad-slot={slotId}
+  aria-label={label}
+>
+  <div class="ad-placeholder-container">
+    <div class="ad-placeholder-header">
+      <span class="ad-placeholder-badge">{label}</span>
+    </div>
+    <div class="ad-placeholder-body">
+      <!-- Future Google AdSense unit placement: data-ad-slot={slotId} -->
+      <div class="ad-placeholder-indicator" aria-hidden="true">
+        <svg
+          class="ad-placeholder-icon"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <span class="ad-placeholder-text">Responsive Ad Space</span>
+        <span class="ad-placeholder-subtext">
+          {variant === 'side-rail' ? '160\u00D7600 Skyscraper' : 'Responsive Banner'}
+        </span>
+      </div>
+    </div>
+  </div>
+</aside>

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Converter from '../components/Converter.astro';
+import AdPlaceholder from '../components/AdPlaceholder.astro';
 import { getFeaturedPairs, getRelatedPairs, type ConversionPair } from '../lib/pairs';
 import {
   getWebSiteStructuredData,
@@ -79,32 +80,47 @@ const structuredData = [
   structuredData={structuredData}
 >
   <main class="page-main">
-    <div class="content-container">
-      <!-- Breadcrumb Navigation -->
-      <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-        <ol class="breadcrumb-list">
-          <li class="breadcrumb-item">
-            <a href="/" class="breadcrumb-link">Home</a>
-          </li>
-          <li class="breadcrumb-separator" aria-hidden="true">/</li>
-          <li class="breadcrumb-item breadcrumb-current" aria-current="page">
-            {pair.fromAsset.code} to {pair.toAsset.code}
-          </li>
-        </ol>
-      </nav>
+    <div class="page-layout-shell">
+      <!-- Desktop Side Rail: Left -->
+      <AdPlaceholder
+        slotId="pair-desktop-left"
+        variant="side-rail"
+        class="ad-rail-left"
+      />
 
-      <!-- Pair Hero Header -->
-      <section class="pair-hero-section" aria-label="Conversion pair header">
-        <h1 class="hero-title">{pair.headline}</h1>
-        <p class="hero-tagline">
-          Convert {pair.fromAsset.name} ({pair.fromAsset.code}) to {pair.toAsset.name} ({pair.toAsset.code}) with AllFinConverter's high-precision converter.
-        </p>
-      </section>
+      <div class="content-container">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+          <ol class="breadcrumb-list">
+            <li class="breadcrumb-item">
+              <a href="/" class="breadcrumb-link">Home</a>
+            </li>
+            <li class="breadcrumb-separator" aria-hidden="true">/</li>
+            <li class="breadcrumb-item breadcrumb-current" aria-current="page">
+              {pair.fromAsset.code} to {pair.toAsset.code}
+            </li>
+          </ol>
+        </nav>
 
-      <!-- Pre-configured Interactive Converter Component -->
-      <Converter initialFrom={pair.fromCode} initialTo={pair.toCode} isPairPage={true} />
+        <!-- Pair Hero Header -->
+        <section class="pair-hero-section" aria-label="Conversion pair header">
+          <h1 class="hero-title">{pair.headline}</h1>
+          <p class="hero-tagline">
+            Convert {pair.fromAsset.name} ({pair.fromAsset.code}) to {pair.toAsset.name} ({pair.toAsset.code}) with AllFinConverter's high-precision converter.
+          </p>
+        </section>
 
-      <!-- Pair Overview & Rate Summary -->
+        <!-- Pre-configured Interactive Converter Component -->
+        <Converter initialFrom={pair.fromCode} initialTo={pair.toCode} isPairPage={true} />
+
+        <!-- Responsive Ad Placement: Sub-Converter -->
+        <AdPlaceholder
+          slotId="pair-sub-converter"
+          variant="banner"
+          class="ad-banner-converter"
+        />
+
+        <!-- Pair Overview & Rate Summary -->
       <section class="pair-details-section" aria-label="Pair conversion details">
         <div class="pair-details-card">
           <div class="pair-details-header">
@@ -218,6 +234,21 @@ const structuredData = [
           <span aria-hidden="true">&larr;</span> All Currencies & Assets
         </a>
       </div>
+
+      <!-- Responsive Ad Placement: Pre-Footer -->
+      <AdPlaceholder
+        slotId="pair-pre-footer"
+        variant="banner"
+        class="ad-banner-footer"
+      />
     </div>
-  </main>
+
+    <!-- Desktop Side Rail: Right -->
+    <AdPlaceholder
+      slotId="pair-desktop-right"
+      variant="side-rail"
+      class="ad-rail-right"
+    />
+  </div>
+</main>
 </BaseLayout>

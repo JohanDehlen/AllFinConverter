@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Converter from '../components/Converter.astro';
 import AssetCategories from '../components/AssetCategories.astro';
+import AdPlaceholder from '../components/AdPlaceholder.astro';
 import { getWebSiteStructuredData, getWebApplicationStructuredData } from '../lib/seo';
 
 const pageTitle = 'AllFinConverter — Currency, Crypto & Precious Metals Converter';
@@ -20,17 +21,48 @@ const structuredData = [
   structuredData={structuredData}
 >
   <main class="page-main">
-    <div class="content-container">
-      <section class="hero-section" aria-label="Introduction">
-        <h1 class="hero-title">Currency, Crypto & Precious Metals Converter</h1>
-        <p class="hero-tagline">
-          The fastest way to convert anything financial into anything else.
-        </p>
-      </section>
+    <div class="page-layout-shell">
+      <!-- Desktop Side Rail: Left -->
+      <AdPlaceholder
+        slotId="home-desktop-left"
+        variant="side-rail"
+        class="ad-rail-left"
+      />
 
-      <Converter />
+      <!-- Centered Main Content -->
+      <div class="content-container">
+        <section class="hero-section" aria-label="Introduction">
+          <h1 class="hero-title">Currency, Crypto & Precious Metals Converter</h1>
+          <p class="hero-tagline">
+            The fastest way to convert anything financial into anything else.
+          </p>
+        </section>
 
-      <AssetCategories />
+        <Converter />
+
+        <!-- Responsive Ad Placement: Sub-Converter -->
+        <AdPlaceholder
+          slotId="home-sub-converter"
+          variant="banner"
+          class="ad-banner-converter"
+        />
+
+        <AssetCategories />
+
+        <!-- Responsive Ad Placement: Pre-Footer -->
+        <AdPlaceholder
+          slotId="home-pre-footer"
+          variant="banner"
+          class="ad-banner-footer"
+        />
+      </div>
+
+      <!-- Desktop Side Rail: Right -->
+      <AdPlaceholder
+        slotId="home-desktop-right"
+        variant="side-rail"
+        class="ad-rail-right"
+      />
     </div>
   </main>
 </BaseLayout>

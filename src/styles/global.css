@@ -151,7 +151,7 @@ body {
 
 /* Converter Card */
 .converter-wrapper {
-  margin-bottom: 3.5rem;
+  margin-bottom: 2rem;
 }
 
 .converter-card {
@@ -992,6 +992,159 @@ body {
   .converter-card-body,
   .pair-details-card {
     padding: 1rem;
+  }
+}
+
+/* ==========================================================================
+   Responsive Ad Placement Placeholders (Google AdSense Readiness)
+   ========================================================================== */
+
+/* Layout Shell: Mobile/tablet single-column, 3-column centered on desktop >= 1200px */
+.page-layout-shell {
+  width: 100%;
+}
+
+@media (min-width: 1200px) {
+  .page-layout-shell {
+    display: grid;
+    grid-template-columns: 160px minmax(0, var(--max-content-width)) 160px;
+    justify-content: center;
+    align-items: start;
+    gap: 1.5rem;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+}
+
+/* Base Ad Placeholder Wrapper */
+.ad-placeholder-wrapper {
+  user-select: none;
+  pointer-events: none;
+}
+
+.ad-placeholder-container {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-unit-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+}
+
+.ad-placeholder-header {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px dashed var(--color-border);
+  background-color: rgba(100, 116, 139, 0.05);
+}
+
+.ad-placeholder-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.ad-placeholder-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 1rem;
+}
+
+.ad-placeholder-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+}
+
+.ad-placeholder-icon {
+  opacity: 0.45;
+  margin-bottom: 0.125rem;
+}
+
+.ad-placeholder-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.ad-placeholder-subtext {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  opacity: 0.75;
+}
+
+/* Side Rail Placeholders (Desktop Skyscrapers: 160x600) */
+.ad-rail-left,
+.ad-rail-right {
+  display: none; /* Hidden by default on mobile, tablet, and screens < 1200px */
+}
+
+@media (min-width: 1200px) {
+  .ad-rail-left,
+  .ad-rail-right {
+    display: block;
+    width: 160px;
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    z-index: 10;
+  }
+
+  .ad-rail-left .ad-placeholder-container,
+  .ad-rail-right .ad-placeholder-container {
+    min-height: 600px;
+  }
+}
+
+/* Banner Placeholders (In-Content: Sub-Converter & Pre-Footer) */
+.ad-banner {
+  width: 100%;
+}
+
+.ad-banner .ad-placeholder-container {
+  min-height: 100px;
+}
+
+/* Banner Spacing */
+.ad-banner-converter {
+  margin-bottom: 2.5rem;
+}
+
+.ad-banner-footer {
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .converter-wrapper {
+    margin-bottom: 1.5rem;
+  }
+
+  .ad-banner-converter {
+    margin-bottom: 2rem;
+  }
+
+  .ad-banner-footer {
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .ad-banner .ad-placeholder-container {
+    min-height: 90px;
+  }
+
+  .ad-banner .ad-placeholder-body {
+    padding: 0.625rem 0.5rem;
   }
 }
 
