@@ -1,32 +1,51 @@
 ---
-import { ASSET_CATEGORIES, getAssetsByCategory } from '../lib/assets';
+import { ASSET_CATEGORIES, getAssetsByCategory, type AssetCategory } from '../lib/assets';
 
 /**
- * Category descriptions for the homepage cards.
- * Derived from the authoritative ASSET_CATEGORIES in assets.ts.
+ * Editorial content for the homepage cards, mapped dynamically to canonical asset categories.
  */
-const categoryDescriptions: Record<string, string> = {
-  fiat: 'Convert major international currencies.',
-  crypto: 'Convert supported cryptocurrencies.',
-  metal: 'Convert gold, silver, platinum and palladium.',
+interface CategoryContent {
+  pill: string;
+  title: string;
+  description: string;
+}
+
+const categoryDisplayContent: Record<AssetCategory, CategoryContent> = {
+  fiat: {
+    pill: 'CURRENCIES',
+    title: 'International Currencies',
+    description: 'Convert major currencies from around the world.',
+  },
+  crypto: {
+    pill: 'CRYPTOCURRENCIES',
+    title: 'Digital Currencies',
+    description: 'Convert supported cryptocurrencies, including Bitcoin and Ethereum.',
+  },
+  metal: {
+    pill: 'PRECIOUS METALS',
+    title: 'Gold, Silver & Platinum Group Metals',
+    description: 'Convert gold, silver, platinum and palladium.',
+  },
 };
 ---
 
 <section class="asset-categories-section" aria-labelledby="categories-heading">
   <div class="categories-intro">
     <h2 id="categories-heading" class="categories-heading">Supported Asset Classes</h2>
-    <p class="categories-subtitle">Planned coverage across global financial instruments</p>
+    <p class="categories-subtitle">Convert between three types of financial assets.</p>
   </div>
 
   <div class="categories-grid">
     {ASSET_CATEGORIES.map((cat) => {
       const assets = getAssetsByCategory(cat.id);
       if (assets.length === 0) return null;
+      const content = categoryDisplayContent[cat.id];
+      if (!content) return null;
       return (
         <article class="category-card">
-          <div class="category-pill">{cat.pill}</div>
-          <h3 class="category-title">{cat.label}</h3>
-          <p class="category-description">{categoryDescriptions[cat.id] ?? ''}</p>
+          <div class="category-pill">{content.pill}</div>
+          <h3 class="category-title">{content.title}</h3>
+          <p class="category-description">{content.description}</p>
         </article>
       );
     })}

@@ -1,7 +1,7 @@
 ---
 import {
   ASSET_CATEGORIES,
-  getAssetsByCategory,
+  getDropdownAssetsByCategory,
   getAsset,
   getCategoryPill,
   isPreciousMetal,
@@ -142,7 +142,7 @@ try {
             <div class="asset-field-wrapper">
               <select id="asset-from" class="asset-select" aria-label="Source asset">
                 {ASSET_CATEGORIES.map((cat) => {
-                  const categoryAssets = getAssetsByCategory(cat.id);
+                  const categoryAssets = getDropdownAssetsByCategory(cat.id);
                   return (
                     <optgroup label={cat.label}>
                       {categoryAssets.map((asset) => (
@@ -244,7 +244,7 @@ try {
             <div class="asset-field-wrapper">
               <select id="asset-to" class="asset-select" aria-label="Destination asset">
                 {ASSET_CATEGORIES.map((cat) => {
-                  const categoryAssets = getAssetsByCategory(cat.id);
+                  const categoryAssets = getDropdownAssetsByCategory(cat.id);
                   return (
                     <optgroup label={cat.label}>
                       {categoryAssets.map((asset) => (
