@@ -413,7 +413,10 @@ const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
         const d = new Date(timestamp);
         const timeStr = d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         rateBadgeText.textContent = 'Live rates';
-        rateBadge.setAttribute('aria-label', `Live rates updated ${timeStr}`);
+        rateBadge.setAttribute(
+          'aria-label',
+          `Live rates available. Latest provider update ${timeStr}. Individual asset update times may differ.`
+        );
         rateBadge.className = 'live-badge';
         if (rateBadgeDot) rateBadgeDot.className = 'live-dot';
       } else {
@@ -551,7 +554,7 @@ const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
 
         const subtextSuffix =
           clientEngine && activeSnapshotTimestamp
-            ? ` \u2022 Live rates as of ${new Date(activeSnapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC.`
+            ? ` \u2022 Live reference rates. Latest provider update: ${new Date(activeSnapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC. Individual asset update times may differ.`
             : ' \u2022 Demo conversion using fictional development rates.';
 
         // Handle empty or standalone decimal point input

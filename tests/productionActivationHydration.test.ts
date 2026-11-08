@@ -340,14 +340,15 @@ describe('CRITICAL: Production Snapshot Hydration & Activation', () => {
       clientEngine = engine;
       activeSnapshotTimestamp = snapshot.timestamp;
       badgeText = 'Live rates';
-      subtextSuffix = ` • Live rates as of ${new Date(snapshot.timestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC.`;
+      subtextSuffix = ` • Live reference rates. Latest provider update: ${new Date(snapshot.timestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC. Individual asset update times may differ.`;
     }
 
     assert.ok(clientEngine !== undefined, 'clientEngine must be activated');
     assert.equal(activeSnapshotTimestamp, now);
     assert.equal(badgeText, 'Live rates');
     assert.ok(!subtextSuffix.includes('fictional development rates'));
-    assert.ok(subtextSuffix.includes('Live rates as of'));
+    assert.ok(subtextSuffix.includes('Latest provider update:'));
+    assert.ok(subtextSuffix.includes('Individual asset update times may differ.'));
   });
 
   it('should switch from checking to demo when a fetched snapshot fails live validation', async () => {
