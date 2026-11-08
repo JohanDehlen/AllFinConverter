@@ -22,6 +22,7 @@ import {
   validatePair,
   getPairFromSlug,
   getFeaturedPairs,
+  getHomepagePairGroups,
   getRelatedPairs,
   FEATURED_PAIR_DEFINITIONS,
   isGoldOrSilverPair,
@@ -281,6 +282,40 @@ describe('M1.6 + SEO Batches 1, 2 & 3 — Static Route Generation & Featured Pai
       assert.ok(hasRate(pair.fromCode), `Rate engine must have rate for ${pair.fromCode}`);
       assert.ok(hasRate(pair.toCode), `Rate engine must have rate for ${pair.toCode}`);
     }
+  });
+
+  it('should select only unique existing routes for homepage conversion groups', () => {
+    const groups = getHomepagePairGroups();
+    const featuredSlugs = new Set(getFeaturedPairs().map((pair) => pair.slug));
+    const allSlugs = groups.flatMap((group) => group.pairs.map((pair) => pair.slug));
+
+    assert.deepEqual(groups.map((group) => group.title), [
+      'Currency conversions',
+      'Cryptocurrency conversions',
+      'Precious-metal conversions',
+    ]);
+    assert.equal(new Set(allSlugs).size, allSlugs.length, 'Homepage links must not be duplicated');
+
+    for (const group of groups) {
+      for (const pair of group.pairs) {
+        assert.ok(featuredSlugs.has(pair.slug), `${pair.slug} must have a generated pair route`);
+        const category = [pair.fromAsset.category, pair.toAsset.category].includes('metal')
+          ? 'metal'
+          : [pair.fromAsset.category, pair.toAsset.category].includes('crypto')
+            ? 'crypto'
+            : 'fiat';
+        assert.equal(
+          category,
+          group.title === 'Currency conversions'
+            ? 'fiat'
+            : group.title === 'Cryptocurrency conversions'
+              ? 'crypto'
+              : 'metal'
+        );
+      }
+    }
+
+    assert.deepEqual(groups.map((group) => group.pairs.length), [8, 8, 4]);
   });
 
   it('should preserve all 16 original slugs unchanged', () => {

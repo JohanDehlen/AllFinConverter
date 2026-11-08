@@ -208,6 +208,65 @@ export function getFeaturedPairs(): readonly ConversionPair[] {
   return Object.freeze(pairs);
 }
 
+export interface HomepagePairGroup {
+  readonly title: string;
+  readonly pairs: readonly ConversionPair[];
+}
+
+const HOMEPAGE_PAIR_SELECTIONS = [
+  {
+    title: 'Currency conversions',
+    pairs: [
+      ['USD', 'EUR'],
+      ['EUR', 'USD'],
+      ['USD', 'GBP'],
+      ['GBP', 'USD'],
+      ['USD', 'JPY'],
+      ['JPY', 'USD'],
+      ['USD', 'CAD'],
+      ['CAD', 'USD'],
+    ],
+  },
+  {
+    title: 'Cryptocurrency conversions',
+    pairs: [
+      ['BTC', 'USD'],
+      ['USD', 'BTC'],
+      ['ETH', 'USD'],
+      ['USD', 'ETH'],
+      ['SOL', 'USD'],
+      ['USD', 'SOL'],
+      ['XRP', 'USD'],
+      ['USD', 'XRP'],
+    ],
+  },
+  {
+    title: 'Precious-metal conversions',
+    pairs: [
+      ['XAU', 'USD'],
+      ['USD', 'XAU'],
+      ['XAG', 'USD'],
+      ['USD', 'XAG'],
+    ],
+  },
+] as const satisfies readonly {
+  title: string;
+  pairs: readonly (readonly [string, string])[];
+}[];
+
+export function getHomepagePairGroups(): readonly HomepagePairGroup[] {
+  const featuredPairs = getFeaturedPairs();
+  return HOMEPAGE_PAIR_SELECTIONS.map(({ title, pairs }) => ({
+    title,
+    pairs: pairs.flatMap(([from, to]) => {
+      const pair = featuredPairs.find(
+        (featuredPair) => featuredPair.fromCode === from && featuredPair.toCode === to
+      );
+      return pair ? [pair] : [];
+    }),
+  }));
+}
+
 /**
  * Finds related conversion pairs from the featured registry for crawlable internal linking.
  * Prioritizes the direct inverse pair and pairs sharing source/target assets or category.

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 
 import { getSupportedAssets, GRAMS_PER_TROY_OUNCE_STR } from '../src/lib/assets.ts';
 import { getFeaturedPairs } from '../src/lib/pairs.ts';
+import { getHomepagePairGroups } from '../src/lib/pairs.ts';
 import {
   createDefaultMockSnapshot,
   isLiveSnapshotAcceptable,
@@ -51,6 +52,24 @@ function createLiveSnapshot(timestamp: number): RateSnapshotPayload {
 }
 
 describe('Static snapshot metadata and expiry', () => {
+  it('renders crawlable homepage links for the selected existing pair routes', () => {
+    const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
+    const groups = getHomepagePairGroups();
+
+    assert.match(homepage, /<h2 id="homepage-pairs-heading" class="homepage-pairs-heading">Explore Popular Conversions<\/h2>/);
+    assert.match(homepage, /Explore popular currency, cryptocurrency and precious-metal conversions/);
+    assert.match(homepage, /<a href=\{`\/\$\{pair\.slug\}`\}>/);
+    assert.deepEqual(groups.map((group) => group.title), [
+      'Currency conversions',
+      'Cryptocurrency conversions',
+      'Precious-metal conversions',
+    ]);
+
+    const slugs = groups.flatMap((group) => group.pairs.map((pair) => pair.slug));
+    assert.equal(new Set(slugs).size, slugs.length);
+    assert.ok(groups.every((group) => group.pairs.length > 0));
+  });
+
   it('uses the absolute branded social image and descriptive alternative text by default', () => {
     const layout = readFileSync(new URL('../src/layouts/BaseLayout.astro', import.meta.url), 'utf8');
 

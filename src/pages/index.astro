@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Converter from '../components/Converter.astro';
 import AssetCategories from '../components/AssetCategories.astro';
 import AdPlaceholder from '../components/AdPlaceholder.astro';
+import { getHomepagePairGroups, getAssetDisplayName } from '../lib/pairs.ts';
 import { getWebSiteStructuredData, getWebApplicationStructuredData } from '../lib/seo';
 
 const pageTitle = 'AllFinConverter — Currency, Crypto & Precious Metals Converter';
@@ -13,6 +14,7 @@ const structuredData = [
   getWebSiteStructuredData(),
   getWebApplicationStructuredData(),
 ];
+const homepagePairGroups = getHomepagePairGroups();
 ---
 
 <BaseLayout
@@ -44,6 +46,31 @@ const structuredData = [
         <p class="converter-disclaimer">
           AllFinConverter provides indicative conversion information for general reference only. Rates may be delayed or inaccurate and may differ from actual transaction prices. This is not financial advice. Verify rates independently before making financial decisions. See our <a href="/terms">Terms of Use &amp; Disclaimer</a>.
         </p>
+
+        <section class="homepage-pairs-section" aria-labelledby="homepage-pairs-heading">
+          <div class="homepage-pairs-header">
+            <h2 id="homepage-pairs-heading" class="homepage-pairs-heading">Explore Popular Conversions</h2>
+            <p class="homepage-pairs-intro">
+              Explore popular currency, cryptocurrency and precious-metal conversions.
+            </p>
+          </div>
+          <div class="homepage-pairs-groups">
+            {homepagePairGroups.map((group) => (
+              <section class="homepage-pair-group" aria-label={group.title}>
+                <h3 class="homepage-pair-group-title">{group.title}</h3>
+                <ul class="homepage-pair-links">
+                  {group.pairs.map((pair) => (
+                    <li>
+                      <a href={`/${pair.slug}`}>
+                        {getAssetDisplayName(pair.fromAsset)} to {getAssetDisplayName(pair.toAsset)}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </section>
 
         <!-- Responsive Ad Placement: Sub-Converter -->
         <AdPlaceholder
