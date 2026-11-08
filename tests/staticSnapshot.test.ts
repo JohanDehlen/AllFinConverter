@@ -51,6 +51,21 @@ function createLiveSnapshot(timestamp: number): RateSnapshotPayload {
 }
 
 describe('Static snapshot metadata and expiry', () => {
+  it('uses the absolute branded social image and descriptive alternative text by default', () => {
+    const layout = readFileSync(new URL('../src/layouts/BaseLayout.astro', import.meta.url), 'utf8');
+
+    assert.match(layout, /ogImage = '\/social-preview\.png'/);
+    assert.match(layout, /ogImageAlt = 'AllFinConverter — Currency, Crypto and Precious Metals Converter'/);
+    assert.match(layout, /new URL\(ogImage, Astro\.site \?\? 'https:\/\/allfinconverter\.com'\)\.href/);
+    assert.match(layout, /property="og:image" content=\{resolvedOgImage\}/);
+    assert.match(layout, /name="twitter:image" content=\{resolvedOgImage\}/);
+    assert.match(layout, /property="og:image:alt" content=\{ogImageAlt\}/);
+    assert.match(layout, /name="twitter:image:alt" content=\{ogImageAlt\}/);
+    assert.match(layout, /name="twitter:card" content="summary_large_image"/);
+    assert.match(layout, /property="og:image:width" content="1200"/);
+    assert.match(layout, /property="og:image:height" content="630"/);
+  });
+
   it('adds generation and 24-hour expiry metadata without dropping snapshot fields', async () => {
     const now = Date.now();
     const snapshot = createLiveSnapshot(now);
