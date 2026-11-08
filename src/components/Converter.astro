@@ -163,7 +163,7 @@ try {
                     <optgroup label={cat.label}>
                       {categoryAssets.map((asset) => (
                         <option value={asset.code} selected={asset.code === initialFrom}>
-                          {asset.code} &mdash; {asset.name}
+                          {asset.name.startsWith(`${asset.code} `) ? asset.name : `${asset.code} \u2014 ${asset.name}`}
                         </option>
                       ))}
                     </optgroup>
@@ -265,7 +265,7 @@ try {
                     <optgroup label={cat.label}>
                       {categoryAssets.map((asset) => (
                         <option value={asset.code} selected={asset.code === initialTo}>
-                          {asset.code} &mdash; {asset.name}
+                          {asset.name.startsWith(`${asset.code} `) ? asset.name : `${asset.code} \u2014 ${asset.name}`}
                         </option>
                       ))}
                     </optgroup>

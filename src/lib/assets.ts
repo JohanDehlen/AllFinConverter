@@ -70,7 +70,7 @@ export const ASSETS: readonly Asset[] = [
   { code: 'BTC', name: 'Bitcoin', category: 'crypto', symbol: '₿', enabled: true },
   { code: 'ETH', name: 'Ethereum', category: 'crypto', symbol: 'Ξ', enabled: true },
   { code: 'SOL', name: 'Solana', category: 'crypto', symbol: 'SOL', enabled: true },
-  { code: 'XRP', name: 'XRP', category: 'crypto', symbol: 'XRP', enabled: true },
+  { code: 'XRP', name: 'XRP cryptocurrency', category: 'crypto', symbol: 'XRP', enabled: true },
   { code: 'DOGE', name: 'Dogecoin', category: 'crypto', symbol: 'DOGE', enabled: true },
 
   // Precious Metals (Reference/spot-style assets, default unit: troy-ounce; gram support is a future capability)

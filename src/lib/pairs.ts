@@ -45,6 +45,12 @@ export function getAssetDisplayName(asset: Asset): string {
   return asset.code;
 }
 
+export function getAssetNameWithCode(asset: Asset): string {
+  return asset.name === asset.code || asset.name.startsWith(`${asset.code} `)
+    ? asset.name
+    : `${asset.name} (${asset.code})`;
+}
+
 /**
  * Formats a natural pair headline (e.g., 'USD to EUR Converter', 'Gold to USD Converter').
  */
@@ -88,7 +94,7 @@ export function validatePair(fromInput: string, toInput: string): ConversionPair
   const slug = formatPairSlug(fromAsset.code, toAsset.code);
   const headline = formatPairHeadline(fromAsset, toAsset);
   const title = `${headline} | AllFinConverter`;
-  const description = `Convert ${fromAsset.name} (${fromAsset.code}) to ${toAsset.name} (${toAsset.code}) with AllFinConverter's simple ${fromAsset.code} to ${toAsset.code} converter.`;
+  const description = `Convert ${getAssetNameWithCode(fromAsset)} to ${getAssetNameWithCode(toAsset)} with AllFinConverter's simple ${fromAsset.code} to ${toAsset.code} converter.`;
 
   return {
     fromCode: fromAsset.code,

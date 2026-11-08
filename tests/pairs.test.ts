@@ -100,6 +100,26 @@ describe('M1.6 — Conversion Pair Validation', () => {
     assert.equal(usdToBtc.slug, 'usd-to-btc');
   });
 
+  it('should generate clear metadata for XRP pairs without repeating its code as a parenthetical', () => {
+    const xrpToUsd = validatePair('XRP', 'USD');
+    assert.ok(xrpToUsd);
+    if (!xrpToUsd) throw new Error('Expected valid XRP -> USD pair');
+    assert.equal(xrpToUsd.title, 'XRP to USD Converter | AllFinConverter');
+    assert.equal(
+      xrpToUsd.description,
+      "Convert XRP cryptocurrency to US Dollar (USD) with AllFinConverter's simple XRP to USD converter."
+    );
+
+    const usdToXrp = validatePair('USD', 'XRP');
+    assert.ok(usdToXrp);
+    if (!usdToXrp) throw new Error('Expected valid USD -> XRP pair');
+    assert.equal(usdToXrp.title, 'USD to XRP Converter | AllFinConverter');
+    assert.equal(
+      usdToXrp.description,
+      "Convert US Dollar (USD) to XRP cryptocurrency with AllFinConverter's simple USD to XRP converter."
+    );
+  });
+
   it('should validate precious metal pairs with friendly slug aliases (XAU → USD, USD → XAU, XAG → ZAR)', () => {
     const xauToUsd = validatePair('XAU', 'USD');
     assert.ok(xauToUsd, 'XAU -> USD should be valid');

@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Converter from '../components/Converter.astro';
 import AdPlaceholder from '../components/AdPlaceholder.astro';
-import { getFeaturedPairs, getRelatedPairs, type ConversionPair } from '../lib/pairs';
+import { getAssetNameWithCode, getFeaturedPairs, getRelatedPairs, type ConversionPair } from '../lib/pairs';
 import { GRAMS_PER_TROY_OUNCE_STR } from '../lib/assets.ts';
 import {
   getWebSiteStructuredData,
@@ -85,7 +85,7 @@ const structuredData = [
         <section class="pair-hero-section" aria-label="Conversion pair header">
           <h1 class="hero-title">{pair.headline}</h1>
           <p class="hero-tagline">
-            Convert {pair.fromAsset.name} ({pair.fromAsset.code}) to {pair.toAsset.name} ({pair.toAsset.code}) with AllFinConverter's high-precision converter.
+            Convert {getAssetNameWithCode(pair.fromAsset)} to {getAssetNameWithCode(pair.toAsset)} with AllFinConverter's high-precision converter.
           </p>
         </section>
 
