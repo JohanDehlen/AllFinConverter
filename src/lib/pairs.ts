@@ -54,6 +54,11 @@ export function formatPairHeadline(fromAsset: Asset, toAsset: Asset): string {
   return `${fromDisplay} to ${toDisplay} Converter`;
 }
 
+export function isGoldOrSilverPair(pair: Pick<ConversionPair, 'fromCode' | 'toCode'>): boolean {
+  return pair.fromCode === 'XAU' || pair.toCode === 'XAU' ||
+    pair.fromCode === 'XAG' || pair.toCode === 'XAG';
+}
+
 /**
  * Validates whether a pair of asset codes can form a valid conversion pair.
  *

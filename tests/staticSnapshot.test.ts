@@ -115,4 +115,13 @@ describe('Static snapshot metadata and expiry', () => {
     assert.doesNotMatch(footer, /Live reference rates/);
     assert.match(converter, /footerRateStatus\.textContent = isSnapshot/);
   });
+
+  it('renders the gold/silver unit explanation conditionally using the shared conversion constant', () => {
+    const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
+
+    assert.match(pairPage, /isGoldOrSilverPair\(pair\) &&/);
+    assert.match(pairPage, /import \{ GRAMS_PER_TROY_OUNCE_STR \} from '\.\.\/lib\/assets\.ts'/);
+    assert.match(pairPage, /One troy ounce equals \{GRAMS_PER_TROY_OUNCE_STR\} grams\./);
+    assert.match(pairPage, /Changing the unit preserves the equivalent quantity and updates the conversion accordingly\./);
+  });
 });

@@ -24,6 +24,7 @@ import {
   getFeaturedPairs,
   getRelatedPairs,
   FEATURED_PAIR_DEFINITIONS,
+  isGoldOrSilverPair,
 } from '../src/lib/pairs.ts';
 
 import {
@@ -293,6 +294,20 @@ describe('M1.6 + SEO Batches 1 & 2 — Static Route Generation & Featured Pair R
     const slugs = featuredPairs.map((p) => p.slug);
     const uniqueSlugs = new Set(slugs);
     assert.equal(uniqueSlugs.size, slugs.length, `Found duplicate slugs: ${slugs.filter((s, i) => slugs.indexOf(s) !== i)}`);
+  });
+
+  it('should select only the four gold and silver pair routes for metal unit explanation', () => {
+    const applicableSlugs = getFeaturedPairs()
+      .filter(isGoldOrSilverPair)
+      .map((pair) => pair.slug)
+      .sort();
+
+    assert.deepEqual(applicableSlugs, [
+      'gold-to-usd',
+      'silver-to-usd',
+      'usd-to-gold',
+      'usd-to-silver',
+    ]);
   });
 
   it('should provide sensible related pairs for crawlable internal linking', () => {

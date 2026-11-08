@@ -2,7 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Converter from '../components/Converter.astro';
 import AdPlaceholder from '../components/AdPlaceholder.astro';
-import { getFeaturedPairs, getRelatedPairs, type ConversionPair } from '../lib/pairs';
+import { getFeaturedPairs, getRelatedPairs, isGoldOrSilverPair, type ConversionPair } from '../lib/pairs';
+import { GRAMS_PER_TROY_OUNCE_STR } from '../lib/assets.ts';
 import {
   getWebSiteStructuredData,
   getWebApplicationStructuredData,
@@ -167,6 +168,12 @@ const structuredData = [
               </dl>
             </div>
           </div>
+
+          {isGoldOrSilverPair(pair) && (
+            <p>
+              Precious metals are priced by default in troy ounces. You can switch to grams using the unit selector. One troy ounce equals {GRAMS_PER_TROY_OUNCE_STR} grams. Changing the unit preserves the equivalent quantity and updates the conversion accordingly.
+            </p>
+          )}
 
           {isMetalInvolved && (
             <p class="metal-disclaimer-box">
