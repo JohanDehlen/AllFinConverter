@@ -16,6 +16,7 @@
 import Big from 'big.js';
 import type { RateProvider } from '../rateProviders.ts';
 import type { RawRatePayload } from '../rates.ts';
+import { retryFetch } from './retryFetch.ts';
 
 /**
  * Default base URL for the Frankfurter API.
@@ -201,14 +202,11 @@ export class FrankfurterRateProvider implements RateProvider {
    */
   async getRates(): Promise<RawRatePayload> {
     const url = `${this.baseUrl}/latest?base=USD`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
-
     let response: Response;
+    let bodyText: string;
     try {
-      response = await this.fetchFn(url, { signal: controller.signal });
+      ({ response, bodyText } = await retryFetch(this.fetchFn, url, {}, this.timeoutMs));
     } catch (err) {
-      clearTimeout(timeoutId);
       if (err instanceof Error && err.name === 'AbortError') {
         throw new FrankfurterProviderError(
           `Frankfurter request timed out after ${this.timeoutMs}ms.`,
@@ -219,8 +217,6 @@ export class FrankfurterRateProvider implements RateProvider {
         `Frankfurter network request failed: ${err instanceof Error ? err.message : String(err)}`,
         err
       );
-    } finally {
-      clearTimeout(timeoutId);
     }
 
     if (!response.ok) {
@@ -231,7 +227,7 @@ export class FrankfurterRateProvider implements RateProvider {
 
     let json: unknown;
     try {
-      json = await response.json();
+      json = JSON.parse(bodyText);
     } catch (err) {
       throw new FrankfurterProviderError(
         `Failed to parse Frankfurter JSON response: ${err instanceof Error ? err.message : String(err)}`,

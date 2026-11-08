@@ -30,6 +30,7 @@
 import Big from 'big.js';
 import type { RateProvider } from '../rateProviders.ts';
 import type { RawRatePayload } from '../rates.ts';
+import { retryFetch } from './retryFetch.ts';
 
 /**
  * Default base URL for the Gold-API service.
@@ -254,52 +255,51 @@ export class GoldApiRateProvider implements RateProvider {
    */
   async getRates(): Promise<RawRatePayload> {
     const fetchPromises = this.symbols.map(async (symbol) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
       const url = `${this.baseUrl}/price/${encodeURIComponent(symbol)}`;
 
+      let response: Response;
+      let bodyText: string;
       try {
-        let response: Response;
-        try {
-          response = await this.fetchFn(url, {
-            signal: controller.signal,
+        ({ response, bodyText } = await retryFetch(
+          this.fetchFn,
+          url,
+          {
             headers: {
               Accept: 'application/json',
             },
-          });
-        } catch (err) {
-          if (err instanceof Error && err.name === 'AbortError') {
-            throw new GoldApiProviderError(
-              `Gold-API request for '${symbol}' timed out after ${this.timeoutMs}ms.`,
-              err
-            );
-          }
+          },
+          this.timeoutMs
+        ));
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
           throw new GoldApiProviderError(
-            `Gold-API network request for '${symbol}' failed: ${err instanceof Error ? err.message : String(err)}`,
+            `Gold-API request for '${symbol}' timed out after ${this.timeoutMs}ms.`,
             err
           );
         }
-
-        if (!response.ok) {
-          throw new GoldApiProviderError(
-            `Gold-API HTTP error for '${symbol}': ${response.status} ${response.statusText}`.trim()
-          );
-        }
-
-        let json: unknown;
-        try {
-          json = await response.json();
-        } catch (err) {
-          throw new GoldApiProviderError(
-            `Failed to parse Gold-API JSON response for '${symbol}': ${err instanceof Error ? err.message : String(err)}`,
-            err
-          );
-        }
-
-        return json;
-      } finally {
-        clearTimeout(timeoutId);
+        throw new GoldApiProviderError(
+          `Gold-API network request for '${symbol}' failed: ${err instanceof Error ? err.message : String(err)}`,
+          err
+        );
       }
+
+      if (!response.ok) {
+        throw new GoldApiProviderError(
+          `Gold-API HTTP error for '${symbol}': ${response.status} ${response.statusText}`.trim()
+        );
+      }
+
+      let json: unknown;
+      try {
+        json = JSON.parse(bodyText);
+      } catch (err) {
+        throw new GoldApiProviderError(
+          `Failed to parse Gold-API JSON response for '${symbol}': ${err instanceof Error ? err.message : String(err)}`,
+          err
+        );
+      }
+
+      return json;
     });
 
     const settledResults = await Promise.allSettled(fetchPromises);

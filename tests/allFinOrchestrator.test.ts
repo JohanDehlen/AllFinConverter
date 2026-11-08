@@ -137,47 +137,31 @@ function createMockFetchRouter(overrides?: {
     // 1. Frankfurter endpoint
     if (urlStr.includes('api.frankfurter.dev') || urlStr.includes('/v1/latest')) {
       if (overrides?.frankfurterFail) {
-        return {
-          ok: false,
+        return new Response(JSON.stringify({ message: 'Frankfurter outage' }), {
           status: 503,
           statusText: 'Service Unavailable',
-          json: async () => ({ message: 'Frankfurter outage' }),
-        } as unknown as Response;
+        });
       }
-      return {
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => MOCK_FRANKFURTER_RESPONSE,
-      } as unknown as Response;
+      return new Response(JSON.stringify(MOCK_FRANKFURTER_RESPONSE), { status: 200 });
     }
 
     // 2. Gold-API endpoints (/price/{symbol})
     if (urlStr.includes('api.gold-api.com') || urlStr.includes('/price/')) {
       if (overrides?.goldApiFail) {
-        return {
-          ok: false,
+        return new Response(JSON.stringify({ message: 'Gold-API outage' }), {
           status: 500,
           statusText: 'Internal Server Error',
-          json: async () => ({ message: 'Gold-API outage' }),
-        } as unknown as Response;
+        });
       }
       for (const [sym, data] of Object.entries(MOCK_GOLD_API_RESPONSES)) {
         if (urlStr.includes(`/price/${sym}`)) {
           if (overrides?.goldApiFailSymbol === sym) {
-            return {
-              ok: false,
+            return new Response(JSON.stringify({ message: `${sym} outage` }), {
               status: 500,
               statusText: 'Internal Server Error',
-              json: async () => ({ message: `${sym} outage` }),
-            } as unknown as Response;
+            });
           }
-          return {
-            ok: true,
-            status: 200,
-            statusText: 'OK',
-            json: async () => data,
-          } as unknown as Response;
+          return new Response(JSON.stringify(data), { status: 200 });
         }
       }
     }
@@ -185,27 +169,18 @@ function createMockFetchRouter(overrides?: {
     // 3. CoinGecko endpoint (/simple/price)
     if (urlStr.includes('coingecko.com') || urlStr.includes('/simple/price')) {
       if (overrides?.coinGeckoFail) {
-        return {
-          ok: false,
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
           status: 429,
           statusText: 'Too Many Requests',
-          json: async () => ({ error: 'Rate limit exceeded' }),
-        } as unknown as Response;
+        });
       }
-      return {
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => MOCK_COINGECKO_RESPONSE,
-      } as unknown as Response;
+      return new Response(JSON.stringify(MOCK_COINGECKO_RESPONSE), { status: 200 });
     }
 
-    return {
-      ok: false,
+    return new Response(JSON.stringify({ error: 'Unknown mock route' }), {
       status: 404,
       statusText: 'Not Found',
-      json: async () => ({ error: 'Unknown mock route' }),
-    } as unknown as Response;
+    });
   };
 }
 

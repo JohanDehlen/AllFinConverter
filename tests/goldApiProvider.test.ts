@@ -91,18 +91,24 @@ function createMockFetch(
 ): typeof globalThis.fetch {
   return async (url) => {
     const { status, body, statusText = 'OK' } = handler(String(url));
-    return {
-      ok: status >= 200 && status < 300,
-      status,
-      statusText,
-      json: async () => {
-        if (typeof body === 'string' && body === '__INVALID_JSON__') {
-          throw new SyntaxError('Unexpected token < in JSON at position 0');
-        }
-        return body;
-      },
-    } as unknown as Response;
+    return new Response(
+      typeof body === 'string' ? body : JSON.stringify(body),
+      { status, statusText }
+    );
   };
+}
+
+function createStalledBodyResponse(signal?: AbortSignal): Response {
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      signal?.addEventListener(
+        'abort',
+        () => controller.error(new DOMException('The operation was aborted', 'AbortError')),
+        { once: true }
+      );
+    },
+  });
+  return new Response(body, { status: 200 });
 }
 
 // ===========================================================================
@@ -281,6 +287,109 @@ describe('M2.3 — Invalid, Non-Finite, Non-Positive, and Missing Rates', () => 
 });
 
 describe('M2.3 — HTTP Errors, Network Failures, and Timeouts', () => {
+  it('should recover from a thrown network failure for an individual metal', async () => {
+    let attempts = 0;
+    const provider = new GoldApiRateProvider({
+      symbols: ['XAU'],
+      fetch: async () => {
+        attempts++;
+        if (attempts === 1) {
+          const error = new TypeError('fetch failed');
+          Object.defineProperty(error, 'cause', { value: { code: 'ECONNRESET' } });
+          throw error;
+        }
+        return new Response(JSON.stringify(SAMPLE_GOLD_RESPONSE), { status: 200 });
+      },
+    });
+
+    const payload = await provider.getRates();
+    assert.equal(attempts, 2);
+    assert.ok(payload.rates['XAU']);
+  });
+
+  it('should retry a timeout while downloading a metal response body', async () => {
+    let attempts = 0;
+    const provider = new GoldApiRateProvider({
+      symbols: ['XAU'],
+      timeoutMs: 15,
+      fetch: async (_url, init) => {
+        attempts++;
+        if (attempts === 1) return createStalledBodyResponse(init?.signal);
+        return new Response(JSON.stringify(SAMPLE_GOLD_RESPONSE), { status: 200 });
+      },
+    });
+
+    const payload = await provider.getRates();
+    assert.equal(attempts, 2);
+    assert.ok(payload.rates['XAU']);
+  });
+
+  it('should retry Gold-API metal requests independently', async () => {
+    const attempts: Record<string, number> = { XAU: 0, XAG: 0 };
+    const provider = new GoldApiRateProvider({
+      symbols: ['XAU', 'XAG'],
+      fetch: createMockFetch((url) => {
+        const symbol = url.includes('/XAU') ? 'XAU' : 'XAG';
+        attempts[symbol]++;
+        if (symbol === 'XAU' && attempts[symbol] === 1) {
+          return { status: 503, body: 'Unavailable', statusText: 'Service Unavailable' };
+        }
+        return {
+          status: 200,
+          body: symbol === 'XAU' ? SAMPLE_GOLD_RESPONSE : SAMPLE_SILVER_RESPONSE,
+        };
+      }),
+    });
+
+    const payload = await provider.getRates();
+    assert.equal(attempts.XAU, 2);
+    assert.equal(attempts.XAG, 1);
+    assert.ok(payload.rates['XAU']);
+    assert.ok(payload.rates['XAG']);
+  });
+
+  it('should stop after three transient failures for an individual metal', async () => {
+    let attempts = 0;
+    const provider = new GoldApiRateProvider({
+      symbols: ['XAU'],
+      fetch: createMockFetch(() => {
+        attempts++;
+        return { status: 429, body: 'Rate limited', statusText: 'Too Many Requests' };
+      }),
+    });
+
+    await assert.rejects(() => provider.getRates(), /All Gold-API metal requests failed/);
+    assert.equal(attempts, 3);
+  });
+
+  it('should not retry permanent HTTP errors', async () => {
+    let attempts = 0;
+    const provider = new GoldApiRateProvider({
+      symbols: ['XAU'],
+      fetch: createMockFetch(() => {
+        attempts++;
+        return { status: 404, body: 'Not Found', statusText: 'Not Found' };
+      }),
+    });
+
+    await assert.rejects(() => provider.getRates(), /All Gold-API metal requests failed/);
+    assert.equal(attempts, 1);
+  });
+
+  it('should not retry invalid response data', async () => {
+    let attempts = 0;
+    const provider = new GoldApiRateProvider({
+      symbols: ['XAU'],
+      fetch: createMockFetch(() => {
+        attempts++;
+        return { status: 200, body: { invalid: true } };
+      }),
+    });
+
+    await assert.rejects(() => provider.getRates(), /No valid precious metal rates found/);
+    assert.equal(attempts, 1);
+  });
+
   it('should fetch all four metals concurrently and normalize', async () => {
     const provider = new GoldApiRateProvider({
       fetch: createMockFetch((url) => {
@@ -364,8 +473,10 @@ describe('M2.3 — HTTP Errors, Network Failures, and Timeouts', () => {
   });
 
   it('should handle network timeout without unhandled rejection', async () => {
+    let attempts = 0;
     const provider = new GoldApiRateProvider({
       fetch: async (_url, init) => {
+        attempts++;
         return new Promise((resolve, reject) => {
           const timer = setTimeout(() => {
             resolve({
@@ -394,6 +505,7 @@ describe('M2.3 — HTTP Errors, Network Failures, and Timeouts', () => {
         return true;
       }
     );
+    assert.equal(attempts, GOLD_API_SUPPORTED_METALS.length * 3);
   });
 
   it('should handle malformed JSON response body', async () => {
@@ -447,20 +559,10 @@ describe('M2.3 — HTTP Errors, Network Failures, and Timeouts', () => {
         const urlStr = String(url);
         // XAU and XAG respond quickly
         if (urlStr.includes('/XAU')) {
-          return {
-            ok: true,
-            status: 200,
-            statusText: 'OK',
-            json: async () => SAMPLE_GOLD_RESPONSE,
-          } as unknown as Response;
+          return new Response(JSON.stringify(SAMPLE_GOLD_RESPONSE), { status: 200 });
         }
         if (urlStr.includes('/XAG')) {
-          return {
-            ok: true,
-            status: 200,
-            statusText: 'OK',
-            json: async () => SAMPLE_SILVER_RESPONSE,
-          } as unknown as Response;
+          return new Response(JSON.stringify(SAMPLE_SILVER_RESPONSE), { status: 200 });
         }
 
         // XPT and XPD simulate slow/unresponsive requests that trigger timeout
@@ -502,20 +604,10 @@ describe('M2.3 — HTTP Errors, Network Failures, and Timeouts', () => {
       fetch: async (url, init) => {
         const urlStr = String(url);
         if (urlStr.includes('/XAU')) {
-          return {
-            ok: true,
-            status: 200,
-            statusText: 'OK',
-            json: async () => SAMPLE_GOLD_RESPONSE,
-          } as unknown as Response;
+          return new Response(JSON.stringify(SAMPLE_GOLD_RESPONSE), { status: 200 });
         }
         if (urlStr.includes('/XAG')) {
-          return {
-            ok: true,
-            status: 200,
-            statusText: 'OK',
-            json: async () => SAMPLE_SILVER_RESPONSE,
-          } as unknown as Response;
+          return new Response(JSON.stringify(SAMPLE_SILVER_RESPONSE), { status: 200 });
         }
 
         return new Promise((resolve, reject) => {

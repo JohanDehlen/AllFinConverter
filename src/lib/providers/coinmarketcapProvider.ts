@@ -27,6 +27,7 @@
 import Big from 'big.js';
 import type { RateProvider } from '../rateProviders.ts';
 import type { RawRatePayload } from '../rates.ts';
+import { retryFetch } from './retryFetch.ts';
 
 /**
  * Default base URL for CoinMarketCap Pro API.
@@ -298,72 +299,70 @@ export class CoinMarketCapRateProvider implements RateProvider {
       );
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+    const symbolsParam = this.symbols.join(',');
+    const url = `${this.baseUrl}/cryptocurrency/quotes/latest?symbol=${symbolsParam}&convert=USD`;
 
+    let response: Response;
+    let bodyText: string;
     try {
-      const symbolsParam = this.symbols.join(',');
-      const url = `${this.baseUrl}/cryptocurrency/quotes/latest?symbol=${symbolsParam}&convert=USD`;
-
-      let response: Response;
-      try {
-        response = await this.fetchFn(url, {
+      ({ response, bodyText } = await retryFetch(
+        this.fetchFn,
+        url,
+        {
           method: 'GET',
           headers: {
             'X-CMC_PRO_API_KEY': this.apiKey,
             'Accept': 'application/json',
           },
-          signal: controller.signal,
-        });
-      } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') {
-          throw new CoinMarketCapProviderError(
-            `CoinMarketCap request timed out after ${this.timeoutMs}ms.`,
-            err
-          );
-        }
+        },
+        this.timeoutMs
+      ));
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
         throw new CoinMarketCapProviderError(
-          `CoinMarketCap network request failed: ${err instanceof Error ? err.message : String(err)}`,
+          `CoinMarketCap request timed out after ${this.timeoutMs}ms.`,
           err
         );
       }
-
-      if (!response.ok) {
-        let errorDetail = `${response.status} ${response.statusText}`.trim();
-        try {
-          const errorJson = (await response.json()) as Record<string, unknown>;
-          if (errorJson?.status && typeof errorJson.status === 'object') {
-            const statusObj = errorJson.status as Record<string, unknown>;
-            if (typeof statusObj.error_message === 'string') {
-              errorDetail += ` - ${statusObj.error_message}`;
-            }
-          }
-        } catch {
-          // Keep response statusText
-        }
-        throw new CoinMarketCapProviderError(`CoinMarketCap HTTP error: ${errorDetail}`);
-      }
-
-      let json: unknown;
-      try {
-        json = await response.json();
-      } catch (err) {
-        throw new CoinMarketCapProviderError(
-          `Failed to parse CoinMarketCap JSON response: ${err instanceof Error ? err.message : String(err)}`,
-          err
-        );
-      }
-
-      return normalizeCoinMarketCapResponse(
-        json,
-        this.symbols,
-        this.requireAll,
-        this.id,
-        this.name
+      throw new CoinMarketCapProviderError(
+        `CoinMarketCap network request failed: ${err instanceof Error ? err.message : String(err)}`,
+        err
       );
-    } finally {
-      clearTimeout(timeoutId);
     }
+
+    if (!response.ok) {
+      let errorDetail = `${response.status} ${response.statusText}`.trim();
+      try {
+        const errorJson = JSON.parse(bodyText) as Record<string, unknown>;
+        if (errorJson?.status && typeof errorJson.status === 'object') {
+          const statusObj = errorJson.status as Record<string, unknown>;
+          if (typeof statusObj.error_message === 'string') {
+            errorDetail += ` - ${statusObj.error_message}`;
+          }
+        }
+      } catch {
+        // Keep response statusText
+      }
+      throw new CoinMarketCapProviderError(`CoinMarketCap HTTP error: ${errorDetail}`);
+    }
+
+    let json: unknown;
+    try {
+      json = JSON.parse(bodyText);
+    } catch (err) {
+      throw new CoinMarketCapProviderError(
+        `Failed to parse CoinMarketCap JSON response: ${err instanceof Error ? err.message : String(err)}`,
+        err
+      );
+    }
+
+    return normalizeCoinMarketCapResponse(
+      json,
+      this.symbols,
+      this.requireAll,
+      this.id,
+      this.name
+    );
   }
 
   /**

@@ -72,18 +72,24 @@ function createMockFetch(
     if (delayMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
-    return {
-      ok: status >= 200 && status < 300,
-      status,
-      statusText,
-      json: async () => {
-        if (typeof body === 'string' && body === '__INVALID_JSON__') {
-          throw new SyntaxError('Unexpected token < in JSON at position 0');
-        }
-        return body;
-      },
-    } as unknown as Response;
+    return new Response(
+      typeof body === 'string' ? body : JSON.stringify(body),
+      { status, statusText }
+    );
   };
+}
+
+function createStalledBodyResponse(signal?: AbortSignal): Response {
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      signal?.addEventListener(
+        'abort',
+        () => controller.error(new DOMException('The operation was aborted', 'AbortError')),
+        { once: true }
+      );
+    },
+  });
+  return new Response(body, { status: 200 });
 }
 
 // ===========================================================================
@@ -317,9 +323,64 @@ describe('M2.1 — Malformed Payload Structure Validation', () => {
 });
 
 describe('M2.1 — HTTP Errors, Invalid JSON & Timeouts', () => {
-  it('should handle HTTP 404 cleanly', async () => {
+  it('should recover from a transient network failure', async () => {
+    let attempts = 0;
     const provider = new FrankfurterRateProvider({
-      fetch: createMockFetch(404, { message: 'not found' }, 'Not Found'),
+      fetch: async () => {
+        attempts++;
+        if (attempts === 1) {
+          const error = new TypeError('fetch failed');
+          Object.defineProperty(error, 'cause', { value: { code: 'ECONNRESET' } });
+          throw error;
+        }
+        return new Response(JSON.stringify(SAMPLE_FRANKFURTER_JSON), { status: 200 });
+      },
+    });
+
+    const payload = await provider.getRates();
+    assert.equal(attempts, 2);
+    assert.equal(payload.providerId, 'frankfurter');
+  });
+
+  it('should retry a timeout while downloading the response body', async () => {
+    let attempts = 0;
+    const provider = new FrankfurterRateProvider({
+      timeoutMs: 15,
+      fetch: async (_url, init) => {
+        attempts++;
+        if (attempts === 1) return createStalledBodyResponse(init?.signal);
+        return new Response(JSON.stringify(SAMPLE_FRANKFURTER_JSON), { status: 200 });
+      },
+    });
+
+    const payload = await provider.getRates();
+    assert.equal(attempts, 2);
+    assert.equal(payload.providerId, 'frankfurter');
+  });
+
+  it('should stop after three transient HTTP failures', async () => {
+    let attempts = 0;
+    const provider = new FrankfurterRateProvider({
+      fetch: async () => {
+        attempts++;
+        return new Response('Unavailable', { status: 503 });
+      },
+    });
+
+    await assert.rejects(() => provider.getRates(), /503/);
+    assert.equal(attempts, 3);
+  });
+
+  it('should handle HTTP 404 cleanly', async () => {
+    let attempts = 0;
+    const provider = new FrankfurterRateProvider({
+      fetch: async () => {
+        attempts++;
+        return new Response(JSON.stringify({ message: 'not found' }), {
+          status: 404,
+          statusText: 'Not Found',
+        });
+      },
     });
 
     await assert.rejects(
@@ -330,6 +391,22 @@ describe('M2.1 — HTTP Errors, Invalid JSON & Timeouts', () => {
         return true;
       }
     );
+    assert.equal(attempts, 1);
+  });
+
+  it('should not retry invalid response data', async () => {
+    let attempts = 0;
+    const provider = new FrankfurterRateProvider({
+      fetch: async () => {
+        attempts++;
+        return new Response(JSON.stringify({ base: 'USD', date: '2026-04-10', rates: null }), {
+          status: 200,
+        });
+      },
+    });
+
+    await assert.rejects(() => provider.getRates(), /rates object/);
+    assert.equal(attempts, 1);
   });
 
   it('should handle HTTP 500 server error cleanly', async () => {
@@ -378,9 +455,11 @@ describe('M2.1 — HTTP Errors, Invalid JSON & Timeouts', () => {
   });
 
   it('should handle network timeout without crashing', async () => {
+    let attempts = 0;
     // 50ms delay with 10ms timeout triggers AbortError
     const provider = new FrankfurterRateProvider({
       fetch: async (_url, init) => {
+        attempts++;
         return new Promise((resolve, reject) => {
           const timer = setTimeout(() => {
             resolve({
@@ -409,6 +488,7 @@ describe('M2.1 — HTTP Errors, Invalid JSON & Timeouts', () => {
         return true;
       }
     );
+    assert.equal(attempts, 3);
   });
 
   it('should provide safe non-throwing getRatesSafe method', async () => {

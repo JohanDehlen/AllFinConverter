@@ -101,6 +101,19 @@ const MOCK_CMC_RESPONSE = {
   },
 };
 
+function createStalledBodyResponse(signal?: AbortSignal): Response {
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      signal?.addEventListener(
+        'abort',
+        () => controller.error(new DOMException('The operation was aborted', 'AbortError')),
+        { once: true }
+      );
+    },
+  });
+  return new Response(body, { status: 200 });
+}
+
 describe('CoinMarketCapRateProvider & Normalization', () => {
   it('should normalize a standard CoinMarketCap response successfully', () => {
     const payload = normalizeCoinMarketCapResponse(MOCK_CMC_RESPONSE);
@@ -244,8 +257,96 @@ describe('CoinMarketCapRateProvider & Normalization', () => {
     assert.ok(payload.rates['BTC']);
   });
 
+  it('should recover from HTTP 429', async () => {
+    let attempts = 0;
+    const provider = new CoinMarketCapRateProvider({
+      apiKey: 'test-key',
+      fetch: async () => {
+        attempts++;
+        if (attempts === 1) return new Response('Rate limited', { status: 429 });
+        return new Response(JSON.stringify(MOCK_CMC_RESPONSE), { status: 200 });
+      },
+    });
+
+    const payload = await provider.getRates();
+    assert.equal(attempts, 2);
+    assert.ok(payload.rates['BTC']);
+  });
+
+  it('should stop after three transient network failures', async () => {
+    let attempts = 0;
+    const provider = new CoinMarketCapRateProvider({
+      apiKey: 'test-key',
+      fetch: async () => {
+        attempts++;
+        const error = new TypeError('fetch failed');
+        Object.defineProperty(error, 'cause', { value: { code: 'ECONNRESET' } });
+        throw error;
+      },
+    });
+
+    await assert.rejects(() => provider.getRates(), /network request failed/);
+    assert.equal(attempts, 3);
+  });
+
+  it('should not retry unrelated programming errors', async () => {
+    let attempts = 0;
+    const provider = new CoinMarketCapRateProvider({
+      apiKey: 'test-key',
+      fetch: async () => {
+        attempts++;
+        throw new Error('programming error');
+      },
+    });
+
+    await assert.rejects(() => provider.getRates(), /programming error/);
+    assert.equal(attempts, 1);
+  });
+
+  it('should cancel a retryable HTTP response body before retrying', async () => {
+    let attempts = 0;
+    let cancellations = 0;
+    const provider = new CoinMarketCapRateProvider({
+      apiKey: 'test-key',
+      fetch: async () => {
+        attempts++;
+        if (attempts === 1) {
+          return new Response(new ReadableStream<Uint8Array>({
+            cancel() {
+              cancellations++;
+            },
+          }), { status: 503 });
+        }
+        return new Response(JSON.stringify(MOCK_CMC_RESPONSE), { status: 200 });
+      },
+    });
+
+    await provider.getRates();
+    assert.equal(attempts, 2);
+    assert.equal(cancellations, 1);
+  });
+
+  it('should retry a timeout while downloading the response body', async () => {
+    let attempts = 0;
+    const provider = new CoinMarketCapRateProvider({
+      apiKey: 'test-key',
+      timeoutMs: 15,
+      fetch: async (_url, init) => {
+        attempts++;
+        if (attempts === 1) return createStalledBodyResponse(init?.signal);
+        return new Response(JSON.stringify(MOCK_CMC_RESPONSE), { status: 200 });
+      },
+    });
+
+    const payload = await provider.getRates();
+    assert.equal(attempts, 2);
+    assert.ok(payload.rates['BTC']);
+  });
+
   it('should handle HTTP 401 error with informative error', async () => {
+    let attempts = 0;
     const mockFetch: typeof globalThis.fetch = async () => {
+      attempts++;
       return new Response(
         JSON.stringify({
           status: { error_code: 1001, error_message: 'Invalid API Key' },
@@ -267,10 +368,29 @@ describe('CoinMarketCapRateProvider & Normalization', () => {
         return true;
       }
     );
+    assert.equal(attempts, 1);
+  });
+
+  it('should not retry invalid response data', async () => {
+    let attempts = 0;
+    const provider = new CoinMarketCapRateProvider({
+      apiKey: 'test-key',
+      fetch: async () => {
+        attempts++;
+        return new Response(JSON.stringify({ status: { error_code: 0 }, data: {} }), {
+          status: 200,
+        });
+      },
+    });
+
+    await assert.rejects(() => provider.getRates(), /missing required coin/);
+    assert.equal(attempts, 1);
   });
 
   it('should handle network timeout safely', async () => {
+    let attempts = 0;
     const mockFetch: typeof globalThis.fetch = async (url, init) => {
+      attempts++;
       return new Promise((_, reject) => {
         init?.signal?.addEventListener('abort', () => {
           const abortError = new Error('The operation was aborted');
@@ -294,6 +414,7 @@ describe('CoinMarketCapRateProvider & Normalization', () => {
         return true;
       }
     );
+    assert.equal(attempts, 3);
   });
 
   it('should instantiate CoinMarketCapRateProvider with zero network requests', () => {
