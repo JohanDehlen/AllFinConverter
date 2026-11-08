@@ -303,28 +303,6 @@ describe('Production Rate Snapshot Generator Pipeline', () => {
       content: 'PRESERVE_ME_EXACTLY',
     });
 
-    it('should preserve the existing snapshot when a provider returns stale rates', async () => {
-      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'allfin-stale-snapshot-test-'));
-      const targetFile = path.join(tempDir, 'latestSnapshot.json');
-      const initialContent = JSON.stringify({ preserved: true });
-      fs.writeFileSync(targetFile, initialContent, 'utf8');
-
-      await assert.rejects(
-        () =>
-          runProductionSnapshotPipeline({
-            orchestratorOptions: {
-              fetch: createMockFetch({ staleCmc: true }),
-              coinMarketCapOptions: { apiKey: 'test-key' },
-            },
-            targetPath: targetFile,
-            updateDistIfPresent: false,
-          }),
-        SnapshotGenerationError
-      );
-
-      assert.equal(fs.readFileSync(targetFile, 'utf8'), initialContent);
-      fs.rmSync(tempDir, { recursive: true, force: true });
-    });
     fs.writeFileSync(targetFile, initialContent, 'utf8');
 
     const mockFetch = createMockFetch({ failGold: true });
@@ -348,6 +326,29 @@ describe('Production Rate Snapshot Generator Pipeline', () => {
     assert.equal(afterContent, initialContent);
 
     // Clean up
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it('should preserve the existing snapshot when a provider returns stale rates', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'allfin-stale-snapshot-test-'));
+    const targetFile = path.join(tempDir, 'latestSnapshot.json');
+    const initialContent = JSON.stringify({ preserved: true });
+    fs.writeFileSync(targetFile, initialContent, 'utf8');
+
+    await assert.rejects(
+      () =>
+        runProductionSnapshotPipeline({
+          orchestratorOptions: {
+            fetch: createMockFetch({ staleCmc: true }),
+            coinMarketCapOptions: { apiKey: 'test-key' },
+          },
+          targetPath: targetFile,
+          updateDistIfPresent: false,
+        }),
+      SnapshotGenerationError
+    );
+
+    assert.equal(fs.readFileSync(targetFile, 'utf8'), initialContent);
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
