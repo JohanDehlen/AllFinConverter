@@ -16,7 +16,6 @@ import {
   type MetalUnit,
 } from '../lib/converter.ts';
 import { defaultRateEngine } from '../lib/rateEngine.ts';
-import { loadBuildSnapshot } from '../lib/buildSnapshot.ts';
 
 interface Props {
   initialFrom?: string;
@@ -48,15 +47,8 @@ const initialPrefixTo = getAssetAmountPrefix(initialTo);
 const initialSuffixFrom = getAssetAmountSuffix(initialFrom, initialFromUnit);
 const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
 
-// Load validated production rate snapshot if available on disk (src/data/latestSnapshot.json)
-const buildSnapshot = loadBuildSnapshot();
-const serverEngine = buildSnapshot.engine;
-const isInitialLive = buildSnapshot.isLive;
-const initialSnapshotTimestamp = buildSnapshot.timestamp;
-const initialSnapshotPayload = buildSnapshot.payload;
-
-// Compute initial server-side values for instant rendering reflecting the actual active rate data
-const activeEngine = serverEngine ?? defaultRateEngine;
+// Static HTML must not claim live status; the browser validates the snapshot after loading.
+const activeEngine = defaultRateEngine;
 let initialTargetAmount = '';
 let initialSummaryHeadline = '';
 let initialSummarySubtext = '';
@@ -69,9 +61,7 @@ try {
   });
   initialTargetAmount = formatDisplayAmount(initResult.targetAmount, initialTo);
   initialSummaryHeadline = `${formatQuantityWithUnit(initialAmount, initialFrom, initialFromUnit)} = ${formatQuantityWithUnit(initResult.targetAmount, initialTo, initialToUnit)}`;
-  initialSummarySubtext = isInitialLive && initialSnapshotTimestamp
-    ? `${formatUnitRateWithUnit(initResult.unitRate, initialFrom, initialTo, initialFromUnit, initialToUnit)} \u2022 Live rates as of ${new Date(initialSnapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC.`
-    : `${formatUnitRateWithUnit(initResult.unitRate, initialFrom, initialTo, initialFromUnit, initialToUnit)} \u2022 Demo conversion using fictional development rates.`;
+  initialSummarySubtext = `${formatUnitRateWithUnit(initResult.unitRate, initialFrom, initialTo, initialFromUnit, initialToUnit)} \u2022 Demo conversion using fictional development rates.`;
 } catch {
   // Graceful fallback if calculation fails at render time
 }
@@ -80,7 +70,6 @@ try {
 <section
   class="converter-wrapper"
   aria-labelledby="converter-heading"
-  data-initial-snapshot={initialSnapshotPayload ? JSON.stringify(initialSnapshotPayload) : undefined}
   data-is-pair-page={isPairPage ? "true" : undefined}
   data-page-from={isPairPage ? initialFrom : undefined}
   data-page-to={isPairPage ? initialTo : undefined}
@@ -90,12 +79,12 @@ try {
       <h2 id="converter-heading" class="converter-title">Convert Financial Assets</h2>
       <span
         id="rate-badge"
-        class={isInitialLive ? "live-badge" : "demo-badge"}
+        class="demo-badge"
         role="status"
-        aria-label={isInitialLive && initialSnapshotTimestamp ? `Live rates as of ${new Date(initialSnapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC` : "Demo mode: fictional mock exchange rates"}
+        aria-label="Demo mode: fictional mock exchange rates"
       >
-        <span id="rate-badge-dot" class={isInitialLive ? "live-dot" : "demo-dot"} aria-hidden="true"></span>
-        <span id="rate-badge-text">{isInitialLive ? "Live rates" : "Demo rates"}</span>
+        <span id="rate-badge-dot" class="demo-dot" aria-hidden="true"></span>
+        <span id="rate-badge-text">Demo rates</span>
       </span>
     </div>
 
@@ -325,7 +314,10 @@ try {
   } from '../lib/assets.ts';
   import { RateEngine } from '../lib/rateEngine.ts';
   import { SnapshotRateProvider } from '../lib/providers/snapshotProvider.ts';
-  import { isLiveSnapshotAcceptable } from '../lib/rateSnapshot.ts';
+  import {
+    isLiveSnapshotAcceptable,
+    MAX_SNAPSHOT_AGE_MS,
+  } from '../lib/rateSnapshot.ts';
 
   function initConverter() {
     const amountFrom = document.getElementById('amount-from') as HTMLInputElement | null;
@@ -346,6 +338,7 @@ try {
     const metalNote = document.getElementById('metal-note') as HTMLElement | null;
     const rateBadge = document.getElementById('rate-badge') as HTMLElement | null;
     const rateBadgeText = document.getElementById('rate-badge-text') as HTMLElement | null;
+    const footerRateStatus = document.querySelector<HTMLElement>('.footer-status .footer-note');
 
     if (
       !amountFrom ||
@@ -367,33 +360,9 @@ try {
     let toUnit: MetalUnit = 'troy-oz';
     let clientEngine: RateEngine | undefined = undefined;
     let activeSnapshotTimestamp: number | null = null;
+    let activeSnapshotExpiry: number | null = null;
 
-    // Initialize clientEngine immediately from pre-rendered active snapshot if present
     const wrapperEl = document.querySelector<HTMLElement>('.converter-wrapper');
-    const rawInitialSnapshot = wrapperEl?.getAttribute('data-initial-snapshot');
-    if (rawInitialSnapshot) {
-      try {
-        const parsedSnapshot = JSON.parse(rawInitialSnapshot);
-        if (
-          parsedSnapshot &&
-          typeof parsedSnapshot.timestamp === 'number' &&
-          isLiveSnapshotAcceptable(parsedSnapshot)
-        ) {
-          const initEngine = new RateEngine();
-          const initRes = initEngine.ingestPayload({
-            providerId: parsedSnapshot.providerId,
-            providerName: parsedSnapshot.providerName,
-            timestamp: parsedSnapshot.timestamp,
-            rates: parsedSnapshot.rates,
-          });
-          if (initRes.valid) {
-            clientEngine = initEngine;
-            activeSnapshotTimestamp = parsedSnapshot.timestamp;
-          }
-        }
-      } catch {}
-    }
-
     const isPairPage = wrapperEl?.getAttribute('data-is-pair-page') === 'true';
     const expectedFrom = wrapperEl?.getAttribute('data-page-from') || '';
     const expectedTo = wrapperEl?.getAttribute('data-page-to') || '';
@@ -457,6 +426,11 @@ try {
     }
 
     function updateRateBadge(isSnapshot: boolean, timestamp?: number) {
+      if (footerRateStatus) {
+        footerRateStatus.textContent = isSnapshot
+          ? 'Live reference rates'
+          : 'Exchange rates currently in demo mode';
+      }
       if (!rateBadge || !rateBadgeText) return;
       const rateBadgeDot = document.getElementById('rate-badge-dot');
       if (isSnapshot && timestamp) {
@@ -471,6 +445,15 @@ try {
         rateBadge.setAttribute('aria-label', 'Demo mode: fictional mock exchange rates');
         rateBadge.className = 'demo-badge';
         if (rateBadgeDot) rateBadgeDot.className = 'demo-dot';
+      }
+    }
+
+    function expireActiveSnapshotIfNeeded(): void {
+      if (clientEngine && activeSnapshotExpiry !== null && Date.now() > activeSnapshotExpiry) {
+        clientEngine = undefined;
+        activeSnapshotTimestamp = null;
+        activeSnapshotExpiry = null;
+        updateRateBadge(false);
       }
     }
 
@@ -542,6 +525,7 @@ try {
     }
 
     function recalculate() {
+      expireActiveSnapshotIfNeeded();
       if (isCalculating) return;
       isCalculating = true;
 
@@ -834,7 +818,6 @@ try {
       try {
         const provider = new SnapshotRateProvider({
           snapshotUrl: '/api/rates.json',
-          maxAgeMs: 24 * 60 * 60 * 1000,
           timeoutMs: 5000,
         });
 
@@ -851,8 +834,18 @@ try {
         ) {
           clientEngine = engine;
           activeSnapshotTimestamp = snapshot.timestamp;
+          const expiryTimestamp = snapshot.staticMetadata?.expiryTimestamp
+            ?? snapshot.timestamp + MAX_SNAPSHOT_AGE_MS;
+          activeSnapshotExpiry = expiryTimestamp;
           updateRateBadge(true, snapshot.timestamp);
           recalculate();
+          window.setTimeout(
+            () => {
+              expireActiveSnapshotIfNeeded();
+              recalculate();
+            },
+            Math.max(0, expiryTimestamp - Date.now() + 1)
+          );
           return;
         }
 
@@ -873,6 +866,13 @@ try {
     }
 
     loadClientSnapshot().catch(() => {});
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        expireActiveSnapshotIfNeeded();
+        recalculate();
+      }
+    });
   }
 
   // Initialize when DOM is ready

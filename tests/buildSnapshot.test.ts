@@ -139,20 +139,14 @@ describe('Build-Time Snapshot Loader', () => {
 
 describe('Pair Overview Rate Labels', () => {
   /**
-   * Simulates the pair-page overview label derivation logic from [pair].astro.
-   * This matches the exact expressions in the frontmatter.
+   * Static pair-page markup stays non-live until browser validation is possible.
    */
   function deriveOverviewLabels(snapshot: BuildSnapshotResult) {
-    const isLiveRate = snapshot.isLive;
-    const snapshotTimestamp = snapshot.timestamp;
-
-    const overviewBadgeLabel = isLiveRate && snapshotTimestamp
-      ? `Live rates as of ${new Date(snapshotTimestamp).toISOString().slice(0, 16).replace('T', ' ')} UTC`
-      : 'Demo mode: fictional mock exchange rates';
-    const overviewBadgeText = isLiveRate ? 'Live rates' : 'Demo rates \u2022 Offline preview';
-    const directRateLabel = isLiveRate ? 'Direct Rate' : 'Direct Rate (Demo)';
-    const inverseRateLabel = isLiveRate ? 'Inverse Rate' : 'Inverse Rate (Demo)';
-    const badgeClass = isLiveRate ? 'live-badge' : 'demo-badge';
+    const overviewBadgeLabel = 'Demo mode: fictional mock exchange rates';
+    const overviewBadgeText = 'Demo rates \u2022 Offline preview';
+    const directRateLabel = 'Direct Rate (Demo)';
+    const inverseRateLabel = 'Inverse Rate (Demo)';
+    const badgeClass = 'demo-badge';
 
     return { overviewBadgeLabel, overviewBadgeText, directRateLabel, inverseRateLabel, badgeClass };
   }
@@ -188,7 +182,7 @@ describe('Pair Overview Rate Labels', () => {
     assert.equal(labels.inverseRateLabel, 'Inverse Rate (Demo)');
   });
 
-  it('should produce live labels when snapshot is valid and non-mock', () => {
+  it('should keep static labels non-live even when a build snapshot is valid', () => {
     const ts = Date.now();
     const liveResult: BuildSnapshotResult = {
       engine: new RateEngine(),
@@ -198,12 +192,11 @@ describe('Pair Overview Rate Labels', () => {
     };
 
     const labels = deriveOverviewLabels(liveResult);
-    assert.equal(labels.badgeClass, 'live-badge');
-    assert.equal(labels.overviewBadgeText, 'Live rates');
-    assert.equal(labels.directRateLabel, 'Direct Rate');
-    assert.equal(labels.inverseRateLabel, 'Inverse Rate');
-    assert.ok(labels.overviewBadgeLabel.startsWith('Live rates as of '));
-    assert.ok(labels.overviewBadgeLabel.endsWith(' UTC'));
+    assert.equal(labels.badgeClass, 'demo-badge');
+    assert.equal(labels.overviewBadgeText, 'Demo rates \u2022 Offline preview');
+    assert.equal(labels.directRateLabel, 'Direct Rate (Demo)');
+    assert.equal(labels.inverseRateLabel, 'Inverse Rate (Demo)');
+    assert.equal(labels.overviewBadgeLabel, 'Demo mode: fictional mock exchange rates');
   });
 
   it('should never present mock rates with live labelling', () => {

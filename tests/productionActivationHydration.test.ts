@@ -47,6 +47,13 @@ function createProductionSnapshot(
         sourceName: 'Fixed Peg Reference (USD)',
         timestamp: nowMs,
       };
+    } else if (asset.code === 'AED') {
+      rates['AED'] = '3.6725';
+      provenance['AED'] = {
+        sourceId: 'fixed-peg',
+        sourceName: 'Fixed Peg Reference (USD)',
+        timestamp: nowMs,
+      };
     } else if (asset.category === 'fiat') {
       // Realistic live rates
       rates[asset.code] = asset.code === 'EUR' ? '0.89' : '1.50';
@@ -339,5 +346,28 @@ describe('CRITICAL: Production Snapshot Hydration & Activation', () => {
     assert.equal(badgeText, 'Live rates');
     assert.ok(!subtextSuffix.includes('fictional development rates'));
     assert.ok(subtextSuffix.includes('Live rates as of'));
+  });
+
+  it('keeps browser status non-live after the static snapshot expiry', () => {
+    const now = Date.now();
+    const expiredSnapshot: RateSnapshotPayload = {
+      ...createProductionSnapshot(now),
+      staticMetadata: {
+        generationTimestamp: now,
+        expiryTimestamp: now + MAX_SNAPSHOT_AGE_MS,
+        deliveryMode: 'static',
+        revalidatesAtRequestTime: false,
+      },
+    };
+
+    let clientEngine: RateEngine | undefined = new RateEngine();
+    let badgeText = 'Live rates';
+    if (!isLiveSnapshotAcceptable(expiredSnapshot, { now: now + MAX_SNAPSHOT_AGE_MS + 1 })) {
+      clientEngine = undefined;
+      badgeText = 'Demo rates';
+    }
+
+    assert.equal(clientEngine, undefined);
+    assert.equal(badgeText, 'Demo rates');
   });
 });

@@ -58,6 +58,11 @@ import {
   hasRate,
 } from '../src/lib/rateEngine.ts';
 
+import {
+  GET as getSitemapResponse,
+  STATIC_INFO_ROUTES,
+} from '../src/pages/sitemap.xml.ts';
+
 describe('M1.6 — Conversion Pair Validation', () => {
   it('should validate valid fiat pairs (USD → EUR, EUR → USD)', () => {
     const usdToEur = validatePair('USD', 'EUR');
@@ -528,5 +533,72 @@ describe('M1.6 — SEO Metadata & Structured Data', () => {
     ]);
     assert.equal(breadcrumbs['@type'], 'BreadcrumbList');
     assert.equal(Array.isArray(breadcrumbs.itemListElement), true);
+  });
+});
+
+describe('Sitemap Endpoint & Route Synchronization', () => {
+  it('should generate valid sitemap XML containing homepage, info pages, and all featured pairs', async () => {
+    const response = await (getSitemapResponse as any)({ site: new URL('https://allfinconverter.com') });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('Content-Type'), 'application/xml; charset=utf-8');
+
+    const xml = await response.text();
+
+    // Valid XML structure
+    assert.ok(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
+    assert.ok(xml.includes('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'));
+    assert.ok(xml.endsWith('</urlset>'));
+
+    // Extract all loc entries
+    const locMatches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1]);
+
+    // Homepage remains included
+    assert.ok(locMatches.includes('https://allfinconverter.com/'), 'Homepage must be included');
+
+    // All five information pages are included
+    const expectedInfoPages = [
+      'https://allfinconverter.com/about/',
+      'https://allfinconverter.com/how-it-works/',
+      'https://allfinconverter.com/privacy/',
+      'https://allfinconverter.com/terms/',
+      'https://allfinconverter.com/contact/',
+    ];
+    for (const infoUrl of expectedInfoPages) {
+      assert.ok(locMatches.includes(infoUrl), `Sitemap must include info page: ${infoUrl}`);
+    }
+
+    // Existing featured conversion-pair pages remain included
+    const featuredPairs = getFeaturedPairs();
+    assert.equal(featuredPairs.length, 46);
+    for (const pair of featuredPairs) {
+      const pairUrl = `https://allfinconverter.com/${pair.slug}`;
+      assert.ok(locMatches.includes(pairUrl), `Sitemap must include pair: ${pairUrl}`);
+    }
+
+    // Total count: 1 homepage + 5 info pages + 46 pairs = 52 URLs
+    assert.equal(locMatches.length, 1 + 5 + 46);
+
+    // No duplicate URLs are generated
+    const uniqueLocs = new Set(locMatches);
+    assert.equal(uniqueLocs.size, locMatches.length, 'Sitemap must contain no duplicate URLs');
+  });
+
+  it('should preserve default site fallback when site context is omitted', async () => {
+    const response = await (getSitemapResponse as any)({ site: undefined });
+    const xml = await response.text();
+    assert.ok(xml.includes('<loc>https://allfinconverter.com/</loc>'));
+    assert.ok(xml.includes('<loc>https://allfinconverter.com/terms/</loc>'));
+  });
+
+  it('should expose STATIC_INFO_ROUTES with all five legal and informational pages', () => {
+    assert.equal(STATIC_INFO_ROUTES.length, 5);
+    const paths = STATIC_INFO_ROUTES.map((r) => r.path);
+    assert.deepEqual(paths, [
+      '/about/',
+      '/how-it-works/',
+      '/privacy/',
+      '/terms/',
+      '/contact/',
+    ]);
   });
 });

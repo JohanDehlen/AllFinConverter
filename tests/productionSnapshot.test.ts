@@ -36,10 +36,14 @@ import { getSupportedAssets } from '../src/lib/assets.ts';
 // Mock Provider Response Fixtures
 // ---------------------------------------------------------------------------
 
+const MOCK_RATE_TIME = Date.now();
+const MOCK_RATE_DATE = new Date(MOCK_RATE_TIME).toISOString().slice(0, 10);
+const MOCK_RATE_ISO = new Date(MOCK_RATE_TIME - 60_000).toISOString();
+
 const MOCK_FRANKFURTER_FIAT = {
   amount: 1,
   base: 'USD',
-  date: '2026-10-28',
+  date: MOCK_RATE_DATE,
   rates: {
     EUR: 0.92,
     GBP: 0.79,
@@ -67,19 +71,19 @@ const MOCK_FRANKFURTER_FIAT = {
 const MOCK_CMC_CRYPTO = {
   status: { error_code: 0 },
   data: {
-    BTC: { symbol: 'BTC', quote: { USD: { price: 65000, last_updated: '2026-10-28T14:00:00Z' } } },
-    ETH: { symbol: 'ETH', quote: { USD: { price: 3500, last_updated: '2026-10-28T14:00:00Z' } } },
-    SOL: { symbol: 'SOL', quote: { USD: { price: 150, last_updated: '2026-10-28T14:00:00Z' } } },
-    XRP: { symbol: 'XRP', quote: { USD: { price: 0.55, last_updated: '2026-10-28T14:00:00Z' } } },
-    DOGE: { symbol: 'DOGE', quote: { USD: { price: 0.12, last_updated: '2026-10-28T14:00:00Z' } } },
+    BTC: { symbol: 'BTC', quote: { USD: { price: 65000, last_updated: MOCK_RATE_ISO } } },
+    ETH: { symbol: 'ETH', quote: { USD: { price: 3500, last_updated: MOCK_RATE_ISO } } },
+    SOL: { symbol: 'SOL', quote: { USD: { price: 150, last_updated: MOCK_RATE_ISO } } },
+    XRP: { symbol: 'XRP', quote: { USD: { price: 0.55, last_updated: MOCK_RATE_ISO } } },
+    DOGE: { symbol: 'DOGE', quote: { USD: { price: 0.12, last_updated: MOCK_RATE_ISO } } },
   },
 };
 
 const MOCK_GOLD_METALS: Record<string, unknown> = {
-  XAU: { symbol: 'XAU', name: 'Gold', price: 2400.0, currency: 'USD', updatedAt: '2026-10-28T14:00:00Z' },
-  XAG: { symbol: 'XAG', name: 'Silver', price: 30.0, currency: 'USD', updatedAt: '2026-10-28T14:00:00Z' },
-  XPT: { symbol: 'XPT', name: 'Platinum', price: 1000.0, currency: 'USD', updatedAt: '2026-10-28T14:00:00Z' },
-  XPD: { symbol: 'XPD', name: 'Palladium', price: 950.0, currency: 'USD', updatedAt: '2026-10-28T14:00:00Z' },
+  XAU: { symbol: 'XAU', name: 'Gold', price: 2400.0, currency: 'USD', updatedAt: MOCK_RATE_ISO },
+  XAG: { symbol: 'XAG', name: 'Silver', price: 30.0, currency: 'USD', updatedAt: MOCK_RATE_ISO },
+  XPT: { symbol: 'XPT', name: 'Platinum', price: 1000.0, currency: 'USD', updatedAt: MOCK_RATE_ISO },
+  XPD: { symbol: 'XPD', name: 'Palladium', price: 950.0, currency: 'USD', updatedAt: MOCK_RATE_ISO },
 };
 
 function createMockFetch(overrides?: {
@@ -87,6 +91,7 @@ function createMockFetch(overrides?: {
   failCmc?: boolean;
   failGold?: boolean;
   omitCmcCoin?: string;
+  staleCmc?: boolean;
 }): typeof globalThis.fetch {
   return async (url: string | URL | Request) => {
     const urlStr = String(url);
@@ -109,6 +114,14 @@ function createMockFetch(overrides?: {
         const copyData = { ...MOCK_CMC_CRYPTO.data };
         delete (copyData as Record<string, unknown>)[overrides.omitCmcCoin];
         return new Response(JSON.stringify({ status: { error_code: 0 }, data: copyData }), { status: 200 });
+      }
+      if (overrides?.staleCmc) {
+        const staleTime = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+        const staleData = JSON.parse(JSON.stringify(MOCK_CMC_CRYPTO)) as typeof MOCK_CMC_CRYPTO;
+        for (const coin of Object.values(staleData.data)) {
+          coin.quote.USD.last_updated = staleTime;
+        }
+        return new Response(JSON.stringify(staleData), { status: 200 });
       }
       return new Response(JSON.stringify(MOCK_CMC_CRYPTO), { status: 200 });
     }
@@ -289,6 +302,29 @@ describe('Production Rate Snapshot Generator Pipeline', () => {
       providerId: 'existing-snapshot',
       content: 'PRESERVE_ME_EXACTLY',
     });
+
+    it('should preserve the existing snapshot when a provider returns stale rates', async () => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'allfin-stale-snapshot-test-'));
+      const targetFile = path.join(tempDir, 'latestSnapshot.json');
+      const initialContent = JSON.stringify({ preserved: true });
+      fs.writeFileSync(targetFile, initialContent, 'utf8');
+
+      await assert.rejects(
+        () =>
+          runProductionSnapshotPipeline({
+            orchestratorOptions: {
+              fetch: createMockFetch({ staleCmc: true }),
+              coinMarketCapOptions: { apiKey: 'test-key' },
+            },
+            targetPath: targetFile,
+            updateDistIfPresent: false,
+          }),
+        SnapshotGenerationError
+      );
+
+      assert.equal(fs.readFileSync(targetFile, 'utf8'), initialContent);
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    });
     fs.writeFileSync(targetFile, initialContent, 'utf8');
 
     const mockFetch = createMockFetch({ failGold: true });
@@ -452,4 +488,3 @@ describe('Production Rate Snapshot Generator Pipeline', () => {
     });
   });
 });
-

@@ -525,6 +525,27 @@ body {
   font-style: italic;
 }
 
+.converter-disclaimer {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0.75rem auto 0;
+  max-width: var(--max-content-width);
+  padding: 0 0.5rem;
+}
+
+.converter-disclaimer a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.converter-disclaimer a:hover {
+  color: var(--color-brand-primary);
+}
+
 /* Supporting Asset Categories */
 .asset-categories-section {
   margin-bottom: 2rem;

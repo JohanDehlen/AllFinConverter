@@ -55,7 +55,7 @@ export function loadBuildSnapshot(): BuildSnapshotResult {
   try {
     const rawContent = fs.readFileSync(snapshotPath, 'utf8');
     const parsed = JSON.parse(rawContent);
-    const validated = validateRateSnapshot(parsed, { maxAgeMs: 0 });
+    const validated = validateRateSnapshot(parsed);
 
     const engine = new RateEngine();
     const result = engine.ingestPayload({

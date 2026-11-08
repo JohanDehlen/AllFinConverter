@@ -146,10 +146,12 @@ export function mergeSourceDatasets(
     };
   }
 
-  // Compute composite timestamp as the most recent individual rate timestamp
+  // The fixed peg is not market data and must not advance the market timestamp.
   let latestTimestamp = 0;
-  for (const ts of assetTimestamps.values()) {
-    if (ts > latestTimestamp) latestTimestamp = ts;
+  for (const [code, provenanceEntry] of provenance) {
+    if (provenanceEntry.sourceId === 'fixed-peg') continue;
+    const timestamp = assetTimestamps.get(code);
+    if (timestamp !== undefined && timestamp > latestTimestamp) latestTimestamp = timestamp;
   }
 
   // Determine if composite contains any mock data

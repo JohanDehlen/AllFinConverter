@@ -265,6 +265,30 @@ describe('M2.0 — Per-Rate Provenance and Timestamp Tracking', () => {
     );
   });
 
+  it('should not let the fixed-peg timestamp advance the composite market timestamp', () => {
+    const marketTimestamp = Date.now() - 60_000;
+    const pegTimestamp = Date.now() + 60_000;
+    const pegDataset = makeValidatedDataset({
+      providerId: 'fixed-peg',
+      providerName: 'Fixed Peg Reference (USD)',
+      timestamp: pegTimestamp,
+      isMock: false,
+      rates: { USD: '1', AED: '3.6725' },
+    });
+
+    const result = mergeSourceDatasets([
+      { dataset: makeFiatDataset(marketTimestamp) },
+      { dataset: makeCryptoDataset(marketTimestamp) },
+      { dataset: makeMetalsDataset(marketTimestamp) },
+      { dataset: pegDataset },
+    ]);
+
+    assert.ok(result.dataset);
+    assert.equal(result.provenance.get('AED')?.sourceId, 'fixed-peg');
+    assert.equal(result.provenance.get('AED')?.timestamp, pegTimestamp);
+    assert.equal(result.dataset.timestamp, marketTimestamp);
+  });
+
   it('should report provenance for every rate in the composite', () => {
     const ts = Date.now();
     const result = mergeSourceDatasets([

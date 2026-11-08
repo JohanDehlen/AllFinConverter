@@ -15,6 +15,7 @@ import { getSupportedAssets } from './assets.ts';
 import type { NormalizedRateDataset } from './rates.ts';
 import type { RateProvenance } from './compositeRates.ts';
 import { FICTIONAL_MOCK_RATES } from './providers/mockProvider.ts';
+import { evaluateRateFreshness } from './rateFreshness.ts';
 
 /**
  * Supported snapshot schema versions.
@@ -38,6 +39,16 @@ export interface RateSnapshotProvenanceEntry {
   readonly timestamp: number;
 }
 
+export interface StaticSnapshotMetadata {
+  /** Snapshot timestamp used as the generation reference for this static artifact. */
+  readonly generationTimestamp: number;
+  /** Time after which consumers must no longer treat this snapshot as live. */
+  readonly expiryTimestamp: number;
+  readonly deliveryMode: 'static';
+  /** Static hosting cannot revalidate snapshot freshness at request time. */
+  readonly revalidatesAtRequestTime: false;
+}
+
 /**
  * Canonical JSON-serializable rate snapshot payload.
  */
@@ -58,6 +69,8 @@ export interface RateSnapshotPayload {
   readonly rates: Readonly<Record<string, string>>;
   /** Per-asset provenance records mapping asset code to origin metadata */
   readonly provenance: Readonly<Record<string, RateSnapshotProvenanceEntry>>;
+  /** Present on the statically generated `/api/rates.json` artifact. */
+  readonly staticMetadata?: StaticSnapshotMetadata;
 }
 
 /**
@@ -88,6 +101,8 @@ export interface SnapshotValidationOptions {
    * Defaults to Date.now().
    */
   readonly now?: number;
+  /** Optional initial override for the Gold-API provenance age limit. */
+  readonly maxGoldApiAgeMs?: number;
 }
 
 /**
@@ -143,6 +158,40 @@ export function validateRateSnapshot(
 
   if (typeof payload.isMock !== 'boolean') {
     throw new RateSnapshotError('Rate snapshot missing valid isMock boolean property.');
+  }
+
+  let staticMetadata: StaticSnapshotMetadata | undefined;
+  const rawStaticMetadata = (raw as Record<string, unknown>).staticMetadata;
+  if (rawStaticMetadata !== undefined) {
+    if (!rawStaticMetadata || typeof rawStaticMetadata !== 'object' || Array.isArray(rawStaticMetadata)) {
+      throw new RateSnapshotError('Rate snapshot staticMetadata must be an object.');
+    }
+
+    const metadata = rawStaticMetadata as Record<string, unknown>;
+    if (
+      typeof metadata.generationTimestamp !== 'number' ||
+      !Number.isFinite(metadata.generationTimestamp) ||
+      metadata.generationTimestamp !== payload.timestamp ||
+      typeof metadata.expiryTimestamp !== 'number' ||
+      !Number.isFinite(metadata.expiryTimestamp) ||
+      metadata.expiryTimestamp !== metadata.generationTimestamp + MAX_SNAPSHOT_AGE_MS ||
+      metadata.deliveryMode !== 'static' ||
+      metadata.revalidatesAtRequestTime !== false
+    ) {
+      throw new RateSnapshotError('Rate snapshot staticMetadata is invalid or inconsistent.');
+    }
+
+    staticMetadata = {
+      generationTimestamp: metadata.generationTimestamp,
+      expiryTimestamp: metadata.expiryTimestamp,
+      deliveryMode: 'static',
+      revalidatesAtRequestTime: false,
+    };
+
+    const now = options?.now !== undefined ? options.now : Date.now();
+    if (now > staticMetadata.expiryTimestamp) {
+      throw new RateSnapshotError('Static rate snapshot has expired.');
+    }
   }
 
   // Age / freshness validation
@@ -256,6 +305,17 @@ export function validateRateSnapshot(
     };
   }
 
+  if (!payload.isMock) {
+    const freshness = evaluateRateFreshness(
+      ratesRecord as Record<string, string | number>,
+      cleanProvenance,
+      options
+    );
+    if (!freshness.fresh) {
+      throw new RateSnapshotError(`Rate snapshot contains stale or invalid source data: ${freshness.errors.join(' ')}`);
+    }
+  }
+
   // Freeze clean string rates
   const cleanRates: Record<string, string> = {};
   for (const asset of supported) {
@@ -271,6 +331,7 @@ export function validateRateSnapshot(
     isMock: payload.isMock,
     rates: Object.freeze(cleanRates),
     provenance: Object.freeze(cleanProvenance),
+    ...(staticMetadata ? { staticMetadata } : {}),
   };
 }
 
@@ -307,6 +368,7 @@ export function serializeRateSnapshot(
   options?: {
     providerId?: string;
     providerName?: string;
+    now?: number;
   }
 ): RateSnapshotPayload {
   const cleanRates: Record<string, string> = {};
@@ -357,7 +419,7 @@ export function serializeRateSnapshot(
   };
 
   // Validate to ensure full compliance (bypass age check during serialization)
-  return validateRateSnapshot(payload, { maxAgeMs: 0 });
+  return validateRateSnapshot(payload, { maxAgeMs: 0, now: options?.now });
 }
 
 /**

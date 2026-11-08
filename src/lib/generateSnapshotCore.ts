@@ -102,14 +102,24 @@ export async function generateProductionSnapshot(
     );
   }
 
-  // Serialize to canonical schema
-  const rawSnapshot = serializeRateSnapshot(composite.dataset, composite.provenance, {
-    providerId: 'allfin-live',
-    providerName: 'AllFinConverter Live Composite',
-  });
-
-  // Strict schema validation (bypassing max-age check during fresh serialization)
-  const validated = validateRateSnapshot(rawSnapshot, { maxAgeMs: 0 });
+  // Strict schema and source freshness validation (bypassing only aggregate age).
+  let validated: RateSnapshotPayload;
+  try {
+    const rawSnapshot = serializeRateSnapshot(composite.dataset, composite.provenance, {
+      providerId: 'allfin-live',
+      providerName: 'AllFinConverter Live Composite',
+      now: options?.timestamp,
+    });
+    validated = validateRateSnapshot(rawSnapshot, {
+      maxAgeMs: 0,
+      now: options?.timestamp,
+    });
+  } catch (err) {
+    throw new SnapshotGenerationError(
+      `Snapshot generation failed source freshness or schema validation: ${err instanceof Error ? err.message : String(err)}`,
+      err
+    );
+  }
 
   // Invariant check: Live snapshots must NEVER be marked mock
   if (validated.isMock) {
