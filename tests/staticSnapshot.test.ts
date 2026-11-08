@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { getSupportedAssets } from '../src/lib/assets.ts';
+import { getSupportedAssets, GRAMS_PER_TROY_OUNCE_STR } from '../src/lib/assets.ts';
 import { getFeaturedPairs } from '../src/lib/pairs.ts';
 import {
   createDefaultMockSnapshot,
@@ -117,13 +117,41 @@ describe('Static snapshot metadata and expiry', () => {
     assert.match(converter, /footerRateStatus\.textContent = isSnapshot/);
   });
 
-  it('renders the gold/silver unit explanation conditionally using the shared conversion constant', () => {
+  it('renders the metal explanation before asset details and the overview after them', () => {
     const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
+    const normalize = (text: string) => text.replace(/\s+/g, ' ').trim();
 
-    assert.match(pairPage, /isGoldOrSilverPair\(pair\) &&/);
+    assert.match(pairPage, /const isMetalPair = pair\.fromAsset\.category === 'metal' \|\| pair\.toAsset\.category === 'metal';/);
     assert.match(pairPage, /import \{ GRAMS_PER_TROY_OUNCE_STR \} from '\.\.\/lib\/assets\.ts'/);
-    assert.match(pairPage, /One troy ounce equals \{GRAMS_PER_TROY_OUNCE_STR\} grams\./);
-    assert.match(pairPage, /Changing the unit preserves the equivalent quantity and updates the conversion accordingly\./);
+
+    const metalExplanation = pairPage.match(/\{isMetalPair && \(\s*<p>\s*([\s\S]*?)\s*<\/p>\s*\)\}/)?.[1];
+    const expectedMetalExplanation =
+      'Precious metals are priced by default in troy ounces. You can switch to grams using the unit selector. One troy ounce equals 31.1034768 grams. Changing the unit preserves the equivalent quantity and updates the conversion accordingly.';
+    assert.ok(metalExplanation);
+    assert.equal(GRAMS_PER_TROY_OUNCE_STR, '31.1034768');
+    assert.equal(
+      normalize(metalExplanation),
+      expectedMetalExplanation.replace('31.1034768', '{GRAMS_PER_TROY_OUNCE_STR}')
+    );
+
+    const overviewMatches = [...pairPage.matchAll(/\{(!?isMetalPair) && \(\s*<p>\s*([\s\S]*?)\s*<\/p>\s*\)/g)];
+    const expectedOverview =
+      'This overview does not display static example rates. Use the interactive converter above to calculate conversions. It displays live reference rates when available and validated; otherwise, it clearly indicates demo mode.';
+    const nonMetalOverview = overviewMatches.find(
+      ([, condition, content]) => condition === '!isMetalPair' && normalize(content) === expectedOverview
+    );
+    const metalOverview = overviewMatches.find(
+      ([, condition, content]) => condition === 'isMetalPair' && normalize(content) === expectedOverview
+    );
+    assert.ok(nonMetalOverview);
+    assert.ok(metalOverview);
+    assert.equal(normalize(nonMetalOverview[2]), expectedOverview);
+    assert.equal(normalize(metalOverview[2]), expectedOverview);
+
+    const assetDetailsIndex = pairPage.indexOf('<div class="pair-assets-info">');
+    assert.ok(pairPage.indexOf('Precious metals are priced by default in troy ounces.') < assetDetailsIndex);
+    assert.ok(nonMetalOverview.index < assetDetailsIndex, 'non-metal overview must remain before asset details');
+    assert.ok(assetDetailsIndex < metalOverview.index, 'metal overview must follow asset details');
   });
 
   it('uses the approved overview wording and avoids conflicting metal-only overview copy', () => {
