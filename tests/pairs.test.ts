@@ -198,7 +198,7 @@ describe('M1.6 — URL Slug Handling & Metal Aliases', () => {
   });
 });
 
-describe('M1.6 + SEO Batches 1 & 2 — Static Route Generation & Featured Pair Registry', () => {
+describe('M1.6 + SEO Batches 1, 2 & 3 — Static Route Generation & Featured Pair Registry', () => {
   // ── Original 16 slugs that must never change ──
   const ORIGINAL_16_SLUGS = [
     'usd-to-eur', 'eur-to-usd',
@@ -234,13 +234,20 @@ describe('M1.6 + SEO Batches 1 & 2 — Static Route Generation & Featured Pair R
     'usd-to-brl', 'brl-to-usd',
   ];
 
-  it('should contain exactly 46 pairs in FEATURED_PAIR_DEFINITIONS', () => {
-    assert.equal(FEATURED_PAIR_DEFINITIONS.length, 46);
+  // ── SEO Batch 3: 6 USD crypto slugs ──
+  const BATCH3_6_SLUGS = [
+    'sol-to-usd', 'usd-to-sol',
+    'xrp-to-usd', 'usd-to-xrp',
+    'doge-to-usd', 'usd-to-doge',
+  ];
+
+  it('should contain exactly 52 pairs in FEATURED_PAIR_DEFINITIONS', () => {
+    assert.equal(FEATURED_PAIR_DEFINITIONS.length, 52);
   });
 
   it('should validate every configured featured pair successfully', () => {
     const featuredPairs = getFeaturedPairs();
-    assert.equal(featuredPairs.length, 46);
+    assert.equal(featuredPairs.length, 52);
 
     for (const pair of featuredPairs) {
       assert.ok(pair.fromCode, 'Must have fromCode');
@@ -280,6 +287,20 @@ describe('M1.6 + SEO Batches 1 & 2 — Static Route Generation & Featured Pair R
     }
   });
 
+  it('should include all six SEO Batch 3 USD crypto routes with generated metadata', () => {
+    const featuredPairs = getFeaturedPairs();
+    const pairs = BATCH3_6_SLUGS.map((slug) => getPairFromSlug(slug));
+
+    assert.deepEqual(pairs.map((pair) => pair?.slug), BATCH3_6_SLUGS);
+    for (const pair of pairs) {
+      assert.ok(pair);
+      assert.match(pair.title, /\| AllFinConverter$/);
+      assert.ok(pair.description.length > 0);
+      assert.equal(pair.headline, `${pair.fromCode} to ${pair.toCode} Converter`);
+      assert.ok(featuredPairs.some((featuredPair) => featuredPair.slug === pair.slug));
+    }
+  });
+
   it('should preserve all 36 pre-Batch-2 slugs unchanged', () => {
     const featuredPairs = getFeaturedPairs();
     const slugs = featuredPairs.map((p) => p.slug);
@@ -289,7 +310,7 @@ describe('M1.6 + SEO Batches 1 & 2 — Static Route Generation & Featured Pair R
     }
   });
 
-  it('should contain zero duplicate slugs among all 46 pairs', () => {
+  it('should contain zero duplicate slugs among all 52 pairs', () => {
     const featuredPairs = getFeaturedPairs();
     const slugs = featuredPairs.map((p) => p.slug);
     const uniqueSlugs = new Set(slugs);
@@ -584,14 +605,18 @@ describe('Sitemap Endpoint & Route Synchronization', () => {
 
     // Existing featured conversion-pair pages remain included
     const featuredPairs = getFeaturedPairs();
-    assert.equal(featuredPairs.length, 46);
+    assert.equal(featuredPairs.length, 52);
     for (const pair of featuredPairs) {
       const pairUrl = `https://allfinconverter.com/${pair.slug}`;
       assert.ok(locMatches.includes(pairUrl), `Sitemap must include pair: ${pairUrl}`);
     }
 
-    // Total count: 1 homepage + 5 info pages + 46 pairs = 52 URLs
-    assert.equal(locMatches.length, 1 + 5 + 46);
+    for (const slug of ['sol-to-usd', 'usd-to-sol', 'xrp-to-usd', 'usd-to-xrp', 'doge-to-usd', 'usd-to-doge']) {
+      assert.ok(locMatches.includes(`https://allfinconverter.com/${slug}`), `Sitemap must include Batch 3 pair: ${slug}`);
+    }
+
+    // Total count: 1 homepage + 5 info pages + 52 pairs = 58 URLs
+    assert.equal(locMatches.length, 1 + 5 + 52);
 
     // No duplicate URLs are generated
     const uniqueLocs = new Set(locMatches);

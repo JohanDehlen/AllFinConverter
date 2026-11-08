@@ -116,7 +116,7 @@ export function getPairFromSlug(slug: string): ConversionPair | null {
 
 /**
  * Curated list of featured conversion pairs for static page generation.
- * Original 16 representative pairs (M1.6) + 20 SEO expansion Batch 1 pairs + 10 SEO expansion Batch 2 pairs.
+ * Original 16 representative pairs (M1.6) + 20 SEO expansion Batch 1 pairs + 10 SEO expansion Batch 2 pairs + 6 SEO expansion Batch 3 pairs.
  */
 export const FEATURED_PAIR_DEFINITIONS: readonly [string, string][] = [
   // ── Original Fiat Pairs (8) ──
@@ -174,6 +174,14 @@ export const FEATURED_PAIR_DEFINITIONS: readonly [string, string][] = [
   ['DKK', 'USD'],
   ['USD', 'BRL'],
   ['BRL', 'USD'],
+
+  // ── SEO Expansion Batch 3 — USD Crypto Pairs (6) ──
+  ['SOL', 'USD'],
+  ['USD', 'SOL'],
+  ['XRP', 'USD'],
+  ['USD', 'XRP'],
+  ['DOGE', 'USD'],
+  ['USD', 'DOGE'],
 ] as const;
 
 /**
