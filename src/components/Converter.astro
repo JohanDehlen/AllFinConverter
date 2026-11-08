@@ -9,13 +9,8 @@ import {
   getAssetAmountSuffix,
 } from '../lib/assets.ts';
 import {
-  calculateConversion,
-  formatDisplayAmount,
-  formatQuantityWithUnit,
-  formatUnitRateWithUnit,
   type MetalUnit,
 } from '../lib/converter.ts';
-import { defaultRateEngine } from '../lib/rateEngine.ts';
 
 interface Props {
   initialFrom?: string;
@@ -37,7 +32,6 @@ const initialBadgeFrom = fromMeta ? getCategoryPill(fromMeta.category) : 'CURREN
 const initialBadgeTo = toMeta ? getCategoryPill(toMeta.category) : 'CURRENCY';
 const isFromMetal = isPreciousMetal(initialFrom);
 const isToMetal = isPreciousMetal(initialTo);
-const isInitialMetal = isFromMetal || isToMetal;
 
 const initialFromUnit: MetalUnit = 'troy-oz';
 const initialToUnit: MetalUnit = 'troy-oz';
@@ -47,24 +41,6 @@ const initialPrefixTo = getAssetAmountPrefix(initialTo);
 const initialSuffixFrom = getAssetAmountSuffix(initialFrom, initialFromUnit);
 const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
 
-// Static HTML must not claim live status; the browser validates the snapshot after loading.
-const activeEngine = defaultRateEngine;
-let initialTargetAmount = '';
-let initialSummaryHeadline = '';
-let initialSummarySubtext = '';
-
-try {
-  const initResult = calculateConversion(initialAmount, initialFrom, initialTo, {
-    fromUnit: initialFromUnit,
-    toUnit: initialToUnit,
-    rateEngine: activeEngine,
-  });
-  initialTargetAmount = formatDisplayAmount(initResult.targetAmount, initialTo);
-  initialSummaryHeadline = `${formatQuantityWithUnit(initialAmount, initialFrom, initialFromUnit)} = ${formatQuantityWithUnit(initResult.targetAmount, initialTo, initialToUnit)}`;
-  initialSummarySubtext = `${formatUnitRateWithUnit(initResult.unitRate, initialFrom, initialTo, initialFromUnit, initialToUnit)} \u2022 Demo conversion using fictional development rates.`;
-} catch {
-  // Graceful fallback if calculation fails at render time
-}
 ---
 
 <section
@@ -79,12 +55,12 @@ try {
       <h2 id="converter-heading" class="converter-title">Convert Financial Assets</h2>
       <span
         id="rate-badge"
-        class="demo-badge"
+        class="checking-badge"
         role="status"
-        aria-label="Demo mode: fictional mock exchange rates"
+        aria-label="Checking rates"
       >
-        <span id="rate-badge-dot" class="demo-dot" aria-hidden="true"></span>
-        <span id="rate-badge-text">Demo rates</span>
+        <span id="rate-badge-dot" class="checking-dot" aria-hidden="true"></span>
+        <span id="rate-badge-text">Checking rates…</span>
       </span>
     </div>
 
@@ -240,9 +216,9 @@ try {
                   id="amount-to"
                   type="text"
                   class="amount-input"
-                  value={initialTargetAmount}
-                  placeholder="0"
-                  size={initialTargetAmount ? initialTargetAmount.length : 1}
+                  value=""
+                  placeholder="—"
+                  size="1"
                   inputmode="decimal"
                   autocomplete="off"
                   spellcheck="false"
@@ -280,12 +256,10 @@ try {
       <!-- Converted Result Display -->
       <div class="conversion-summary" aria-live="polite">
         <div class="summary-rate">
-          <span id="summary-headline" class="summary-calculation">{initialSummaryHeadline}</span>
+          <span id="summary-headline" class="summary-calculation">—</span>
         </div>
-        <p id="summary-subtext" class="summary-disclaimer">
-          {initialSummarySubtext}
-        </p>
-        <p id="metal-note" class="metal-disclaimer" style={isInitialMetal ? "display: block;" : "display: none;"}>
+        <p id="summary-subtext" class="summary-disclaimer"></p>
+        <p id="metal-note" class="metal-disclaimer" style="display: none;">
           Precious metals are represented as reference assets in this development version.
         </p>
       </div>
@@ -356,6 +330,7 @@ try {
 
     let activeSide: 'from' | 'to' = 'from';
     let isCalculating = false;
+    let isCheckingRates = true;
     let fromUnit: MetalUnit = 'troy-oz';
     let toUnit: MetalUnit = 'troy-oz';
     let clientEngine: RateEngine | undefined = undefined;
@@ -426,6 +401,7 @@ try {
     }
 
     function updateRateBadge(isSnapshot: boolean, timestamp?: number) {
+      isCheckingRates = false;
       if (footerRateStatus) {
         footerRateStatus.textContent = isSnapshot
           ? 'Live reference rates'
@@ -469,7 +445,7 @@ try {
 
       const isMetalInvolved = metaFrom?.category === 'metal' || metaTo?.category === 'metal';
       if (metalNote) {
-        metalNote.style.display = isMetalInvolved ? 'block' : 'none';
+        metalNote.style.display = isMetalInvolved && !isCheckingRates ? 'block' : 'none';
       }
     }
 
@@ -538,6 +514,14 @@ try {
 
         const activeInput = activeSide === 'from' ? amountFrom! : amountTo!;
         const targetInput = activeSide === 'from' ? amountTo! : amountFrom!;
+
+        if (isCheckingRates) {
+          targetInput.value = '';
+          summaryHeadline!.textContent = '—';
+          summarySubtext!.textContent = '';
+          syncInputSizes();
+          return;
+        }
 
         // Clear previous error indicators
         amountFrom!.removeAttribute('aria-invalid');
@@ -797,7 +781,7 @@ try {
     // Ensure designated pair is restored if browser restored form state on an SEO pair page
     restoreDesignatedPair();
 
-    // Initial calculation run (synchronous mock rendering)
+    // Initialize converter controls while keeping results neutral until snapshot validation completes.
     updateCategoryBadges();
     updateUnitToggleUI();
     updateAmountAffixes();

@@ -111,13 +111,19 @@ describe('Static snapshot metadata and expiry', () => {
     assert.equal(isLiveSnapshotAcceptable(response, { now: now + MAX_SNAPSHOT_AGE_MS + 1 }), false);
   });
 
-  it('keeps generated HTML statuses non-live until browser validation', () => {
+  it('renders a neutral checking state until browser validation', () => {
     const converter = readFileSync(new URL('../src/components/Converter.astro', import.meta.url), 'utf8');
     const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
     const footer = readFileSync(new URL('../src/components/Footer.astro', import.meta.url), 'utf8');
+    const initialMarkup = converter.slice(converter.indexOf('<section'), converter.indexOf('<script>'));
 
-    assert.match(converter, /class="demo-badge"/);
-    assert.match(converter, /<span id="rate-badge-text">Demo rates<\/span>/);
+    assert.match(initialMarkup, /class="checking-badge"/);
+    assert.match(initialMarkup, /aria-label="Checking rates"/);
+    assert.match(initialMarkup, /<span id="rate-badge-text">Checking rates…<\/span>/);
+    assert.match(initialMarkup, /id="amount-to"[\s\S]*?value=""[\s\S]*?placeholder="—"/);
+    assert.match(initialMarkup, /id="summary-headline" class="summary-calculation">—<\/span>/);
+    assert.match(initialMarkup, /id="summary-subtext" class="summary-disclaimer"><\/p>/);
+    assert.doesNotMatch(initialMarkup, /Demo rates|fictional development rates|1 USD = 0\.92 EUR/);
     assert.doesNotMatch(converter, /data-initial-snapshot|loadBuildSnapshot/);
     assert.doesNotMatch(pairPage, /loadBuildSnapshot|isLiveRate|live-badge/);
     assert.match(pairPage, /Use the interactive converter above to calculate conversions/);
@@ -125,9 +131,11 @@ describe('Static snapshot metadata and expiry', () => {
     assert.match(pairPage, /<p class="related-pairs-subheading">Related conversions<\/p>/);
     assert.doesNotMatch(pairPage, /popular conversion/i);
     assert.doesNotMatch(pairPage, /Direct Rate \(Demo\)|Inverse Rate \(Demo\)|formattedUnitRate|formattedInverseRate/);
-    assert.match(footer, /Exchange rates currently in demo mode/);
+    assert.match(footer, /<p class="footer-note"><\/p>/);
     assert.doesNotMatch(footer, /Live reference rates/);
     assert.match(converter, /footerRateStatus\.textContent = isSnapshot/);
+    assert.match(converter, /if \(isCheckingRates\) \{/);
+    assert.match(converter, /isCheckingRates = false;/);
   });
 
   it('renders the metal explanation before asset details and the overview after them', () => {

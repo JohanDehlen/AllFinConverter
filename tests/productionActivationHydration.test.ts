@@ -295,12 +295,14 @@ describe('CRITICAL: Production Snapshot Hydration & Activation', () => {
     assert.equal(engine.getRate('USD').toFixed(), '1');
     assert.equal(engine.getRate('EUR').toFixed(), FICTIONAL_MOCK_RATES['EUR']);
 
-    // Converter fallback simulation
+    // The converter remains neutral until the failed request selects demo mode.
     let clientEngine: RateEngine | undefined = undefined;
-    let badge = 'Demo rates';
+    let badge = 'Checking rates…';
     if (result.valid) {
       clientEngine = engine;
       badge = 'Live rates';
+    } else {
+      badge = 'Demo rates';
     }
 
     assert.equal(clientEngine, undefined);
@@ -314,8 +316,8 @@ describe('CRITICAL: Production Snapshot Hydration & Activation', () => {
     // Simulate loadClientSnapshot function from Converter.astro
     let clientEngine: RateEngine | undefined = undefined;
     let activeSnapshotTimestamp: number | null = null;
-    let badgeText = 'Demo rates';
-    let subtextSuffix = ' • Demo conversion using fictional development rates.';
+    let badgeText = 'Checking rates…';
+    let subtextSuffix = '';
 
     const provider = new SnapshotRateProvider({
       snapshotUrl: '/api/rates.json',
@@ -346,6 +348,33 @@ describe('CRITICAL: Production Snapshot Hydration & Activation', () => {
     assert.equal(badgeText, 'Live rates');
     assert.ok(!subtextSuffix.includes('fictional development rates'));
     assert.ok(subtextSuffix.includes('Live rates as of'));
+  });
+
+  it('should switch from checking to demo when a fetched snapshot fails live validation', async () => {
+    const invalidSnapshot = createProductionSnapshot(Date.now(), { isMock: true });
+    const provider = new SnapshotRateProvider({
+      snapshotUrl: '/api/rates.json',
+      fetch: async () => new Response(JSON.stringify(invalidSnapshot)),
+    });
+
+    const engine = new RateEngine();
+    engine.registerProvider(provider);
+    const activation = await engine.setActiveProviderAsync(provider.id);
+    const snapshot = provider.getLatestSnapshot();
+    let badgeText = 'Checking rates…';
+
+    if (
+      activation.valid &&
+      snapshot &&
+      typeof snapshot.timestamp === 'number' &&
+      isLiveSnapshotAcceptable(snapshot)
+    ) {
+      badgeText = 'Live rates';
+    } else {
+      badgeText = 'Demo rates';
+    }
+
+    assert.equal(badgeText, 'Demo rates');
   });
 
   it('keeps browser status non-live after the static snapshot expiry', () => {
