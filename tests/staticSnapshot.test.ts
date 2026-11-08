@@ -104,6 +104,11 @@ describe('Static snapshot metadata and expiry', () => {
     assert.match(converter, /<span id="rate-badge-text">Demo rates<\/span>/);
     assert.doesNotMatch(converter, /data-initial-snapshot|loadBuildSnapshot/);
     assert.doesNotMatch(pairPage, /loadBuildSnapshot|isLiveRate|live-badge/);
+    assert.match(pairPage, /does not display static example rates/);
+    assert.match(pairPage, /Use the interactive converter above to calculate conversions/);
+    assert.match(pairPage, /live reference rates when available and validated/);
+    assert.match(pairPage, /otherwise, it clearly indicates demo mode/);
+    assert.doesNotMatch(pairPage, /Direct Rate \(Demo\)|Inverse Rate \(Demo\)|formattedUnitRate|formattedInverseRate/);
     assert.match(footer, /Exchange rates currently in demo mode/);
     assert.doesNotMatch(footer, /Live reference rates/);
     assert.match(converter, /footerRateStatus\.textContent = isSnapshot/);

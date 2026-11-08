@@ -9,8 +9,6 @@ import {
   getBreadcrumbStructuredData,
   resolveCanonicalUrl,
 } from '../lib/seo';
-import { calculateConversion, formatUnitRateWithUnit } from '../lib/converter.ts';
-import { defaultRateEngine } from '../lib/rateEngine.ts';
 
 export async function getStaticPaths() {
   const pairs = getFeaturedPairs();
@@ -27,19 +25,6 @@ interface Props {
 const { pair } = Astro.props;
 
 const relatedPairs = getRelatedPairs(pair.slug, 4);
-
-// Static HTML cannot know whether a snapshot will still be fresh when viewed.
-const activeEngine = defaultRateEngine;
-
-// Calculate unit rates using the best available rate engine
-const unitConversion = calculateConversion('1', pair.fromCode, pair.toCode, { rateEngine: activeEngine });
-const formattedUnitRate = formatUnitRateWithUnit(unitConversion.unitRate, pair.fromCode, pair.toCode);
-const formattedInverseRate = formatUnitRateWithUnit(unitConversion.inverseRate, pair.toCode, pair.fromCode);
-
-const overviewBadgeLabel = 'Demo mode: fictional mock exchange rates';
-const overviewBadgeText = 'Demo rates \u2022 Offline preview';
-const directRateLabel = 'Direct Rate (Demo)';
-const inverseRateLabel = 'Inverse Rate (Demo)';
 
 // Friendly category labels
 function getCategoryDisplay(cat: string): string {
@@ -123,22 +108,11 @@ const structuredData = [
         <div class="pair-details-card">
           <div class="pair-details-header">
             <h2 class="pair-details-title">{pair.fromAsset.code} / {pair.toAsset.code} Conversion Overview</h2>
-            <span class="demo-badge" role="status" aria-label={overviewBadgeLabel}>
-              <span class="demo-dot" aria-hidden="true"></span>
-              {overviewBadgeText}
-            </span>
           </div>
 
-          <div class="pair-rate-grid">
-            <div class="pair-rate-box">
-              <span class="pair-rate-label">{directRateLabel}</span>
-              <span class="pair-rate-value">{formattedUnitRate}</span>
-            </div>
-            <div class="pair-rate-box">
-              <span class="pair-rate-label">{inverseRateLabel}</span>
-              <span class="pair-rate-value">{formattedInverseRate}</span>
-            </div>
-          </div>
+          <p>
+            This overview does not display static example rates. Use the interactive converter above to calculate conversions. It displays live reference rates when available and validated; otherwise, it clearly indicates demo mode.
+          </p>
 
           <div class="pair-assets-info">
             <div class="asset-info-col">
