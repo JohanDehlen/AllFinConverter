@@ -771,17 +771,6 @@ body {
   color: var(--color-text-primary);
 }
 
-.metal-disclaimer-box {
-  margin-top: 1.25rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  background-color: var(--color-unit-bg);
-  border: 1px solid var(--color-unit-border);
-  font-size: 0.8125rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
 /* Related Conversion Pairs Section */
 .related-pairs-section {
   margin-bottom: 3rem;
@@ -1359,4 +1348,3 @@ body {
     gap: 0.875rem;
   }
 }
-

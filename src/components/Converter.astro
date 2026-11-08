@@ -27,7 +27,7 @@ interface Props {
 const {
   initialFrom = 'USD',
   initialTo = 'EUR',
-  initialAmount = '100',
+  initialAmount = '1',
   isPairPage = false,
 } = Astro.props;
 
@@ -787,7 +787,6 @@ try {
         fromUnit = 'troy-oz';
         toUnit = 'troy-oz';
         activeSide = 'from';
-        amountFrom!.value = '100';
         amountTo!.value = '';
         recalculate();
         return true;

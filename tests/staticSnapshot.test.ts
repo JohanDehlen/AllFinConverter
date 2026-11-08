@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { getSupportedAssets } from '../src/lib/assets.ts';
+import { getFeaturedPairs } from '../src/lib/pairs.ts';
 import {
   createDefaultMockSnapshot,
   isLiveSnapshotAcceptable,
@@ -123,5 +124,33 @@ describe('Static snapshot metadata and expiry', () => {
     assert.match(pairPage, /import \{ GRAMS_PER_TROY_OUNCE_STR \} from '\.\.\/lib\/assets\.ts'/);
     assert.match(pairPage, /One troy ounce equals \{GRAMS_PER_TROY_OUNCE_STR\} grams\./);
     assert.match(pairPage, /Changing the unit preserves the equivalent quantity and updates the conversion accordingly\./);
+  });
+
+  it('uses the approved overview wording and avoids conflicting metal-only overview copy', () => {
+    const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
+
+    assert.match(
+      pairPage,
+      /<p>\s*This overview does not display static example rates\. Use the interactive converter above to calculate conversions\. It displays live reference rates when available and validated; otherwise, it clearly indicates demo mode\.\s*<\/p>/
+    );
+    assert.doesNotMatch(pairPage, /Precious metals are represented as reference assets in this development version\./);
+
+    const preciousMetalPairSlugs = getFeaturedPairs()
+      .filter((pair) => pair.fromAsset.category === 'metal' || pair.toAsset.category === 'metal')
+      .map((pair) => pair.slug)
+      .sort();
+    assert.deepEqual(preciousMetalPairSlugs, [
+      'gold-to-usd',
+      'silver-to-usd',
+      'usd-to-gold',
+      'usd-to-silver',
+    ]);
+  });
+
+  it('sets the converter default opening amount to one', () => {
+    const converter = readFileSync(new URL('../src/components/Converter.astro', import.meta.url), 'utf8');
+
+    assert.match(converter, /initialAmount = '1'/);
+    assert.match(converter, /value=\{initialAmount\}/);
   });
 });

@@ -37,7 +37,6 @@ function getCategoryDisplay(cat: string): string {
 
 const fromCategoryDisplay = getCategoryDisplay(pair.fromAsset.category);
 const toCategoryDisplay = getCategoryDisplay(pair.toAsset.category);
-const isMetalInvolved = pair.fromAsset.category === 'metal' || pair.toAsset.category === 'metal';
 
 const canonicalUrl = resolveCanonicalUrl(`/${pair.slug}`, Astro.site);
 const siteBase = Astro.site ? Astro.site.toString().replace(/\/$/, '') : 'https://allfinconverter.com';
@@ -175,11 +174,6 @@ const structuredData = [
             </p>
           )}
 
-          {isMetalInvolved && (
-            <p class="metal-disclaimer-box">
-              Precious metals are represented as reference assets in this development version.
-            </p>
-          )}
         </div>
       </section>
 
