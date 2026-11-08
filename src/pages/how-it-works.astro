@@ -1,0 +1,129 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const pageTitle = 'How Conversions Work — AllFinConverter';
+const pageDescription =
+  'Understand how AllFinConverter calculates cross-asset exchange rates, our trusted data sources, update schedules, and reference-rate limitations.';
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+>
+  <main class="page-main">
+    <div class="content-container">
+      <header class="info-header">
+        <h1 class="info-title">How It Works</h1>
+        <p class="info-subtitle">
+          Transparent, high-precision financial conversion mechanics, data provenance, and rate methodology.
+        </p>
+      </header>
+
+      <article class="info-card">
+        <section class="info-section">
+          <h2 class="info-section-title">The Conversion Engine: Canonical USD Base Bridge</h2>
+          <p class="info-text">
+            To enable direct conversion between any pair among our 30 supported assets without requiring hundreds of separate market order books, AllFinConverter uses a unified <strong>Canonical USD Base Bridge</strong>.
+          </p>
+          <p class="info-text">
+            Every supported asset's exchange rate is normalized relative to the US Dollar (USD = 1.0). When you convert from Asset A to Asset B:
+          </p>
+          <ul class="info-list">
+            <li>
+              <strong>Direct Rate Calculation:</strong> The converter divides the base rate of the source asset by the base rate of the target asset:
+              <code>Target Amount = Source Amount &times; (Rate(Target) / Rate(Source))</code>.
+            </li>
+            <li>
+              <strong>Exact Decimal Precision:</strong> Standard computer arithmetic often introduces rounding artifacts (e.g. <code>0.1 + 0.2 = 0.30000000000000004</code>). AllFinConverter performs all calculations using arbitrary-precision decimal mathematics (<a href="https://github.com/MikeMcl/big.js" target="_blank" rel="noopener noreferrer">Big.js</a>), guaranteeing exact decimal results with zero floating-point drift.
+            </li>
+            <li>
+              <strong>Two-Way Interactive Editing:</strong> You can edit either side of the converter at any time. When you type in the source field, the target calculates instantaneously; when you type in the target field, the source computes using exact inverse mathematics.
+            </li>
+          </ul>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Our Rate Sources &amp; Attribution</h2>
+          <p class="info-text">
+            We source market rates from specialized, industry-recognized data providers for each asset category:
+          </p>
+          <ul class="info-list">
+            <li>
+              <strong>Fiat Currencies (20 currencies):</strong> Sourced from the <a href="https://frankfurter.dev" target="_blank" rel="noopener noreferrer">Frankfurter API</a>, which tracks official daily reference exchange rates published by the European Central Bank (ECB).
+            </li>
+            <li>
+              <strong>UAE Dirham (AED):</strong> Derived from its official, statutory currency peg against the US Dollar established by the Central Bank of the UAE (1 USD = 3.6725 AED).
+            </li>
+            <li>
+              <strong>Cryptocurrencies (5 coins):</strong> Sourced from the <a href="https://coinmarketcap.com" target="_blank" rel="noopener noreferrer">CoinMarketCap API</a>, capturing volume-weighted global spot prices across major digital asset exchanges for Bitcoin, Ethereum, Solana, Ripple, and Dogecoin.
+            </li>
+            <li>
+              <strong>Precious Metals (4 metals):</strong> Sourced from <a href="https://gold-api.com" target="_blank" rel="noopener noreferrer">Gold-API</a>, reflecting institutional spot market quotes for Gold (XAU), Silver (XAG), Platinum (XPT), and Palladium (XPD).
+            </li>
+          </ul>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Update Frequency &amp; Data Freshness</h2>
+          <p class="info-text">
+            Maintaining reliable reference data while delivering instant page loads requires distinguishing between our automated snapshot schedule and the publication cycles of our underlying data sources:
+          </p>
+          <ul class="info-list">
+            <li>
+              <strong>Automated 6-Hour Snapshot Schedule:</strong> Our server-side build pipeline executes every six hours to fetch, validate, and publish a fresh snapshot of all reference rates.
+            </li>
+            <li>
+              <strong>Differing Provider Publication Frequencies:</strong> The six-hour pipeline cycle does not mean every data provider publishes new market prices every six hours. Each provider operates on its own schedule:
+              <ul style="margin-top: 0.5rem; margin-bottom: 0.5rem; padding-left: 1.25rem;">
+                <li><em>Fiat currencies:</em> The European Central Bank publishes reference rates once per business day (around 16:00 CET), meaning fiat rates remain constant over weekends and holidays.</li>
+                <li><em>UAE Dirham:</em> The AED exchange rate is pegged to the US Dollar by statute and does not fluctuate.</li>
+                <li><em>Cryptocurrencies:</em> Trade continuously 24/7 on global spot markets, and our snapshot captures the latest market price at each pipeline run.</li>
+                <li><em>Precious metals:</em> Spot metal markets operate during international trading desk hours and observe market closures.</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Freshness Threshold:</strong> Rate snapshots are considered valid and fresh for up to 24 hours. The converter clearly displays the timestamp of the active dataset.
+            </li>
+            <li>
+              <strong>Offline &amp; Fallback Resilience:</strong> If an external provider experiences temporary downtime, AllFinConverter retains the Last-Known-Good (LKG) valid data. In the event that all rate data is inaccessible, the system falls back to a clearly labelled demo mode so the interface remains functional.
+            </li>
+          </ul>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Precious Metals: Unit Conversions</h2>
+          <p class="info-text">
+            In global financial markets, precious metals are traditionally quoted per <strong>troy ounce (oz t)</strong>, which differs from standard avoirdupois ounces.
+          </p>
+          <p class="info-text">
+            AllFinConverter supports seamless toggling between troy ounces and grams (g) using the internationally recognized definition:
+          </p>
+          <ul class="info-list">
+            <li><strong>1 Troy Ounce = exactly 31.1034768 grams</strong></li>
+          </ul>
+          <p class="info-text">
+            When you select a precious metal, unit toggle buttons appear automatically, allowing you to convert quantities in either weight standard with zero loss of accuracy.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Important Reference Rate Limitations</h2>
+          <p class="info-text">
+            Please be aware of the following scope limitations when using AllFinConverter:
+          </p>
+          <ul class="info-list">
+            <li>
+              <strong>Informational Reference Rates Only:</strong> The figures displayed are mid-market reference rates. They do not constitute binding commercial offers, real-time trading quotes, or investment advice.
+            </li>
+            <li>
+              <strong>No Retail Spreads or Transaction Fees:</strong> Actual exchange rates offered by banks, credit card networks, airport kiosks, or crypto brokerages typically include bid-ask spreads, transaction commissions, or foreign exchange fees that will vary from mid-market reference values.
+            </li>
+            <li>
+              <strong>Commodity Reference Pricing:</strong> Precious metal rates reflect raw bullion spot commodity prices. They do not include retail fabrication costs, dealer premiums, or collector value associated with physical minted coins or jewelry.
+            </li>
+          </ul>
+        </section>
+      </article>
+    </div>
+  </main>
+</BaseLayout>

@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const pageTitle = 'About AllFinConverter — Multi-Asset Financial Converter';
+const pageDescription =
+  'Learn about AllFinConverter, our mission to unify fiat currencies, cryptocurrencies, and precious metals into a fast, high-precision conversion engine.';
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+>
+  <main class="page-main">
+    <div class="content-container">
+      <header class="info-header">
+        <h1 class="info-title">About AllFinConverter</h1>
+        <p class="info-subtitle">
+          Bridging international currencies, digital assets, and precious metals in one unified, high-precision financial calculator.
+        </p>
+      </header>
+
+      <article class="info-card">
+        <section class="info-section">
+          <h2 class="info-section-title">Our Purpose</h2>
+          <p class="info-text">
+            Most conversion tools online are built for a single asset category. Traditional currency converters support only government-issued fiat currencies, crypto tools focus solely on tokens, and commodity calculators operate in isolation.
+          </p>
+          <p class="info-text">
+            AllFinConverter was built to solve this fragmentation. Whether you want to check how much Bitcoin is worth in Swiss Francs, calculate the value of Gold in Polish Zloty, or convert between Japanese Yen and US Dollars, AllFinConverter delivers instantaneous, mathematically exact calculations across asset boundaries.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Supported Asset Classes</h2>
+          <p class="info-text">
+            AllFinConverter currently tracks 30 canonical financial assets across three foundational asset categories:
+          </p>
+          <ul class="info-list">
+            <li>
+              <strong>21 Global Fiat Currencies:</strong> US Dollar (USD), Euro (EUR), British Pound (GBP), Japanese Yen (JPY), Canadian Dollar (CAD), Australian Dollar (AUD), Swiss Franc (CHF), Chinese Yuan (CNY), Singapore Dollar (SGD), New Zealand Dollar (NZD), Hong Kong Dollar (HKD), South Korean Won (KRW), Mexican Peso (MXN), Indian Rupee (INR), South African Rand (ZAR), UAE Dirham (AED), Polish Zloty (PLN), Swedish Krona (SEK), Norwegian Krone (NOK), Danish Krone (DKK), and Brazilian Real (BRL).
+            </li>
+            <li>
+              <strong>5 Major Cryptocurrencies:</strong> Bitcoin (BTC), Ethereum (ETH), Solana (SOL), Ripple (XRP), and Dogecoin (DOGE).
+            </li>
+            <li>
+              <strong>4 Precious Metals (Commodity Reference Assets):</strong> Gold (XAU), Silver (XAG), Platinum (XPT), and Palladium (XPD), with support for both troy ounce and gram measurements.
+            </li>
+          </ul>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Who AllFinConverter Is For</h2>
+          <p class="info-text">
+            AllFinConverter is engineered for anyone who interacts with global value across traditional and modern financial ecosystems:
+          </p>
+          <ul class="info-list">
+            <li>
+              <strong>Multi-Asset Investors:</strong> Individuals holding diversified portfolios across cash, crypto assets, and precious metals who want quick cross-parity comparisons without switching between multiple apps.
+            </li>
+            <li>
+              <strong>International Travelers &amp; Remote Professionals:</strong> Expats, digital nomads, and global travelers who need clean, reliable, and ad-light currency conversions on desktop or mobile.
+            </li>
+            <li>
+              <strong>E-Commerce &amp; Cross-Border Businesses:</strong> Merchants and service providers pricing goods or services internationally across fiat and digital currencies.
+            </li>
+            <li>
+              <strong>Researchers &amp; Curious Observers:</strong> Anyone interested in understanding relative purchasing power, historical metal value ratios, or crypto-to-fiat parity.
+            </li>
+          </ul>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Core Operating Principles</h2>
+          <ul class="info-list">
+            <li>
+              <strong>Mathematical Exactness:</strong> We use arbitrary-precision decimal mathematics (<a href="https://github.com/MikeMcl/big.js" target="_blank" rel="noopener noreferrer">Big.js</a>) to eliminate floating-point rounding errors common in standard web calculators.
+            </li>
+            <li>
+              <strong>Client-Side Privacy:</strong> All calculations run directly inside your browser. The numbers you enter and the conversions you perform are never transmitted to application servers, tracked, or saved.
+            </li>
+            <li>
+              <strong>Source Transparency:</strong> We clearly disclose our rate providers, update frequencies, and rate timestamps on every conversion. If rate data is ever temporarily unavailable, we transparently state that demo rates are active.
+            </li>
+          </ul>
+        </section>
+      </article>
+    </div>
+  </main>
+</BaseLayout>

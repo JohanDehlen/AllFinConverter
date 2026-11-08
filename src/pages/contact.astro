@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const pageTitle = 'Contact AllFinConverter — Support & Inquiries';
+const pageDescription =
+  'Get in touch with the AllFinConverter team for questions, feedback, bug reports, or data inquiries.';
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+>
+  <main class="page-main">
+    <div class="content-container">
+      <header class="info-header">
+        <h1 class="info-title">Contact Us</h1>
+        <p class="info-subtitle">
+          Have a question, feedback, or a feature suggestion? We would love to hear from you.
+        </p>
+      </header>
+
+      <article class="info-card">
+        <section class="info-section">
+          <h2 class="info-section-title">Direct Email Communication</h2>
+          <p class="info-text">
+            To keep AllFinConverter fast, private, and simple, we do not use third-party contact form plugins or maintain backend communication databases. You can reach the project maintainer directly via email:
+          </p>
+
+          <div class="info-contact-box">
+            <p class="info-contact-title">Project Contact &amp; Support</p>
+            <a href="mailto:johan@allfinconverter.com" class="info-email-link">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+              </svg>
+              johan@allfinconverter.com
+            </a>
+          </div>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">What We Can Help With</h2>
+          <ul class="info-list">
+            <li><strong>Data &amp; Rates:</strong> Questions regarding exchange rate sources, update schedules, or supported currency definitions.</li>
+            <li><strong>Feature Suggestions:</strong> Additional fiat currencies, cryptocurrencies, or commodities you would like to see supported.</li>
+            <li><strong>Bug Reports &amp; Technical Feedback:</strong> Discrepancies, layout issues on specific devices, or calculation concerns.</li>
+            <li><strong>General Inquiries:</strong> Collaboration, project information, or press inquiries.</li>
+          </ul>
+          <p class="info-text">
+            We aim to review and respond to genuine inquiries within one to two business days.
+          </p>
+        </section>
+      </article>
+    </div>
+  </main>
+</BaseLayout>

@@ -1,0 +1,143 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const pageTitle = 'Privacy Policy — AllFinConverter';
+const pageDescription =
+  "AllFinConverter's Privacy Policy explaining our client-side conversion architecture, browser storage practices, and third-party service disclosures.";
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+>
+  <main class="page-main">
+    <div class="content-container">
+      <header class="info-header">
+        <h1 class="info-title">Privacy Policy</h1>
+        <p class="info-subtitle">
+          Last updated: November 2026 &bull; Honest, transparent information on how AllFinConverter handles your data.
+        </p>
+      </header>
+
+      <article class="info-card">
+        <section class="info-section">
+          <h2 class="info-section-title">1. Overview &amp; Privacy-First Architecture</h2>
+          <p class="info-text">
+            AllFinConverter (<a href="https://allfinconverter.com">allfinconverter.com</a>) is committed to protecting visitor privacy. We believe that a financial conversion utility should respect user confidentiality.
+          </p>
+          <p class="info-text">
+            Our conversion engine is built around a <strong>client-side architecture</strong>: all arithmetic and conversion calculations take place directly inside your web browser. AllFinConverter does not transmit entered conversion amounts or selected asset pairs to its application servers.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">2. Information Collection &amp; Use</h2>
+          <p class="info-text">
+            AllFinConverter does not require user registration, accounts, or personal profiles. Specifically:
+          </p>
+          <ul class="info-list">
+            <li><strong>No Conversion Telemetry:</strong> AllFinConverter does not transmit entered conversion amounts or selected asset pairs to its application servers. Conversion calculations take place entirely in the visitor's browser.</li>
+            <li><strong>No Account Credentials:</strong> We do not ask for or collect passwords, financial account numbers, credit card details, or cryptocurrency wallet keys.</li>
+            <li><strong>Voluntary Email Communications:</strong> Visitors who contact us by email voluntarily provide their email address and message, which we receive and may retain to respond to inquiries and maintain correspondence.</li>
+          </ul>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">3. Browser Storage Practices</h2>
+          <p class="info-text">
+            Here is an exact, transparent account of how AllFinConverter interacts with browser storage:
+          </p>
+          <h3 class="info-subsection-title">Transient Session Storage (sessionStorage)</h3>
+          <p class="info-text">
+            We use browser <code>sessionStorage</code> for a single, transient functional purpose: preserving your entered amount and selected assets when you navigate from a specific currency pair page (such as <code>/pln-to-usd/</code>) to the homepage.
+          </p>
+          <p class="info-text">
+            When you change a currency or click swap on a pair page, the selected assets, amount, editing side, and metal unit are saved temporarily under the key <code>allfin_nav_state</code>. Once you arrive at the homepage, this data is read once to restore your calculator state and is <strong>immediately deleted</strong> (via <code>sessionStorage.removeItem</code>). It is never sent to any server and does not persist after you close your browser tab.
+          </p>
+          <h3 class="info-subsection-title">No Local Storage (localStorage)</h3>
+          <p class="info-text">
+            We do not store any information in persistent browser <code>localStorage</code>.
+          </p>
+          <h3 class="info-subsection-title">No First-Party Cookies</h3>
+          <p class="info-text">
+            AllFinConverter does not set or read any first-party cookies for the operation of the website.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">4. Hosting Infrastructure &amp; Technical Server Logs</h2>
+          <p class="info-text">
+            AllFinConverter is hosted and globally distributed via <strong>Cloudflare Pages</strong> (provided by Cloudflare, Inc.).
+          </p>
+          <p class="info-text">
+            When your web browser requests pages, stylesheets, scripts, or rate files from our domain, Cloudflare, as hosting provider, may process IP addresses, HTTP headers, requested URLs, and request metadata for delivery, security, and DDoS protection. This technical data processing is governed by <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Cloudflare's Privacy Policy</a>.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">5. Third-Party Rate Sources</h2>
+          <p class="info-text">
+            AllFinConverter references market data from Frankfurter (European Central Bank), CoinMarketCap, and Gold-API. These external APIs are queried on automated server-side build pipelines—never directly from your web browser. Your device only downloads our static public rate file (<code>/api/rates.json</code>) directly from our own domain.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">6. Advertising &amp; Future Google AdSense Disclosures</h2>
+          <p class="info-text">
+            To maintain AllFinConverter as a free, publicly accessible service without paywalls, we plan to introduce third-party advertising in the future through <strong>Google AdSense</strong>.
+          </p>
+          <p class="info-text">
+            <strong>Current Status:</strong> The website currently displays non-clickable, neutral layout placeholders labelled "Advertisement" to reserve responsive space. <em>No advertising scripts, ad network trackers, or advertising cookies are currently active on the site.</em>
+          </p>
+          <p class="info-text">
+            <strong>Future Advertising Disclosures:</strong> When advertising is introduced on AllFinConverter:
+          </p>
+          <ul class="info-list">
+            <li>
+              Third-party vendors, including Google, will use cookies, web beacons, or similar technologies to serve advertisements based on your prior visits to this website or other websites across the Internet.
+            </li>
+            <li>
+              Google's use of advertising cookies enables it and its partner networks to serve targeted ads based on your visit to AllFinConverter and/or other sites on the Internet.
+            </li>
+            <li>
+              You may opt out of personalized advertising by visiting Google's <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a> (or <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer">adssettings.google.com</a>).
+            </li>
+            <li>
+              Alternatively, you can opt out of a third-party vendor's use of cookies for personalized advertising by visiting the <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">Digital Advertising Alliance Consumer Choice page (aboutads.info)</a> or the <a href="https://optout.networkadvertising.org/" target="_blank" rel="noopener noreferrer">Network Advertising Initiative (NAI) opt-out tool</a>.
+            </li>
+            <li>
+              You can also manage, block, or delete cookies at any time through your browser's security and privacy settings.
+            </li>
+          </ul>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">7. External Links</h2>
+          <p class="info-text">
+            Our website contains links to external data providers, documentation, and regulatory resources. Once you navigate to an external website, your browsing is governed by that third party's privacy policy and terms. We encourage you to review the privacy notices of any external sites you visit.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">8. Updates to This Policy</h2>
+          <p class="info-text">
+            We may update this Privacy Policy from time to time to reflect operational, legal, or regulatory enhancements. Any changes will be posted on this page with an updated revision date.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">9. Contact Us</h2>
+          <p class="info-text">
+            If you have questions, comments, or concerns regarding this Privacy Policy or our data practices, please contact us at:
+          </p>
+          <p class="info-text">
+            <a href="mailto:johan@allfinconverter.com">johan@allfinconverter.com</a>
+          </p>
+          <p class="info-text">
+            Visitors who contact us by email voluntarily provide their email address and message, which we receive and may retain to respond.
+          </p>
+        </section>
+      </article>
+    </div>
+  </main>
+</BaseLayout>
