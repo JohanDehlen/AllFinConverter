@@ -108,6 +108,8 @@ describe('Static snapshot metadata and expiry', () => {
     assert.match(pairPage, /Use the interactive converter above to calculate conversions/);
     assert.match(pairPage, /live reference rates when available and validated/);
     assert.match(pairPage, /otherwise, it clearly indicates demo mode/);
+    assert.match(pairPage, /<p class="related-pairs-subheading">Related conversions<\/p>/);
+    assert.doesNotMatch(pairPage, /popular conversion/i);
     assert.doesNotMatch(pairPage, /Direct Rate \(Demo\)|Inverse Rate \(Demo\)|formattedUnitRate|formattedInverseRate/);
     assert.match(footer, /Exchange rates currently in demo mode/);
     assert.doesNotMatch(footer, /Live reference rates/);
