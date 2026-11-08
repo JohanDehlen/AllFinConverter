@@ -105,10 +105,8 @@ describe('Static snapshot metadata and expiry', () => {
     assert.match(converter, /<span id="rate-badge-text">Demo rates<\/span>/);
     assert.doesNotMatch(converter, /data-initial-snapshot|loadBuildSnapshot/);
     assert.doesNotMatch(pairPage, /loadBuildSnapshot|isLiveRate|live-badge/);
-    assert.match(pairPage, /does not display static example rates/);
     assert.match(pairPage, /Use the interactive converter above to calculate conversions/);
-    assert.match(pairPage, /live reference rates when available and validated/);
-    assert.match(pairPage, /otherwise, it clearly indicates demo mode/);
+    assert.match(pairPage, /shows validated live reference rates when available and clearly indicates demo mode otherwise/);
     assert.match(pairPage, /<p class="related-pairs-subheading">Related conversions<\/p>/);
     assert.doesNotMatch(pairPage, /popular conversion/i);
     assert.doesNotMatch(pairPage, /Direct Rate \(Demo\)|Inverse Rate \(Demo\)|formattedUnitRate|formattedInverseRate/);
@@ -136,7 +134,7 @@ describe('Static snapshot metadata and expiry', () => {
 
     const overviewMatches = [...pairPage.matchAll(/\{(!?isMetalPair) && \(\s*<p>\s*([\s\S]*?)\s*<\/p>\s*\)/g)];
     const expectedOverview =
-      'This overview does not display static example rates. Use the interactive converter above to calculate conversions. It displays live reference rates when available and validated; otherwise, it clearly indicates demo mode.';
+      'Use the interactive converter above to calculate conversions. It shows validated live reference rates when available and clearly indicates demo mode otherwise.';
     const nonMetalOverview = overviewMatches.find(
       ([, condition, content]) => condition === '!isMetalPair' && normalize(content) === expectedOverview
     );
@@ -159,7 +157,7 @@ describe('Static snapshot metadata and expiry', () => {
 
     assert.match(
       pairPage,
-      /<p>\s*This overview does not display static example rates\. Use the interactive converter above to calculate conversions\. It displays live reference rates when available and validated; otherwise, it clearly indicates demo mode\.\s*<\/p>/
+      /<p>\s*Use the interactive converter above to calculate conversions\. It shows validated live reference rates when available and clearly indicates demo mode otherwise\.\s*<\/p>/
     );
     assert.doesNotMatch(pairPage, /Precious metals are represented as reference assets in this development version\./);
 
