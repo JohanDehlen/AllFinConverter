@@ -215,6 +215,17 @@ describe('Static snapshot metadata and expiry', () => {
     ]);
   });
 
+  it('limits pair-specific explanations to USD/EUR, BTC/USD, and gold/USD', () => {
+    const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
+
+    assert.match(pairPage, /const isUsdToEurPair = pair\.fromCode === 'USD' && pair\.toCode === 'EUR';/);
+    assert.match(pairPage, /const isBtcToUsdPair = pair\.fromCode === 'BTC' && pair\.toCode === 'USD';/);
+    assert.match(pairPage, /const isGoldToUsdPair = pair\.fromCode === 'XAU' && pair\.toCode === 'USD';/);
+    assert.match(pairPage, /\{isUsdToEurPair && \([\s\S]*?Converting US dollars to euros[\s\S]*?does not execute transactions\./);
+    assert.match(pairPage, /\{isBtcToUsdPair && \([\s\S]*?Bitcoin amount into its indicative US dollar equivalent[\s\S]*?not a cryptocurrency exchange or trading service\./);
+    assert.match(pairPage, /\{isGoldToUsdPair && \([\s\S]*?US dollars per troy ounce[\s\S]*?dealer premiums, spreads, taxes, and other charges/);
+  });
+
   it('sets the converter default opening amount to one', () => {
     const converter = readFileSync(new URL('../src/components/Converter.astro', import.meta.url), 'utf8');
 

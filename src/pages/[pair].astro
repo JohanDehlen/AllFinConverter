@@ -27,6 +27,9 @@ const { pair } = Astro.props;
 
 const relatedPairs = getRelatedPairs(pair.slug, 4);
 const isMetalPair = pair.fromAsset.category === 'metal' || pair.toAsset.category === 'metal';
+const isUsdToEurPair = pair.fromCode === 'USD' && pair.toCode === 'EUR';
+const isBtcToUsdPair = pair.fromCode === 'BTC' && pair.toCode === 'USD';
+const isGoldToUsdPair = pair.fromCode === 'XAU' && pair.toCode === 'USD';
 
 // Friendly category labels
 function getCategoryDisplay(cat: string): string {
@@ -176,6 +179,24 @@ const structuredData = [
               </dl>
             </div>
           </div>
+
+          {isUsdToEurPair && (
+            <p>
+              Converting US dollars to euros shows the indicative euro value of a US dollar amount using the reference rates available to this page. The displayed rate may differ from what a bank, card provider, exchange bureau, or payment service offers. Provider spreads and fees can affect the final amount received. AllFinConverter provides conversion information and does not execute transactions.
+            </p>
+          )}
+
+          {isBtcToUsdPair && (
+            <p>
+              This page converts a Bitcoin amount into its indicative US dollar equivalent. Cryptocurrency prices can change rapidly, and different exchanges may show different prices. AllFinConverter is a reference conversion tool, not a cryptocurrency exchange or trading service.
+            </p>
+          )}
+
+          {isGoldToUsdPair && (
+            <p>
+              Gold is commonly quoted internationally in US dollars per troy ounce. This reference, spot-style price is not necessarily the retail price of physical gold; dealer premiums, spreads, taxes, and other charges can affect actual buying or selling prices.
+            </p>
+          )}
 
           {isMetalPair && (
             <p>
