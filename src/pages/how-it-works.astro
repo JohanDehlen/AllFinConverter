@@ -82,7 +82,7 @@ const pageDescription =
               </ul>
             </li>
             <li>
-              <strong>Freshness Threshold:</strong> Rate snapshots are considered valid and fresh for up to 24 hours. The converter clearly displays the timestamp of the active dataset.
+              <strong>Freshness Thresholds:</strong> Each rate is checked against its provider's data-age limit: fiat rates from Frankfurter up to 7 days, cryptocurrency quotes from CoinMarketCap up to 24 hours, and precious-metal prices from Gold-API up to 96 hours. Separately, the overall snapshot must be no more than 24 hours old to be treated as live. The converter displays the latest provider update for the snapshot; individual asset update times may differ.
             </li>
             <li>
               <strong>Offline &amp; Fallback Resilience:</strong> If an external provider experiences temporary downtime, AllFinConverter retains the Last-Known-Good (LKG) valid data. In the event that all rate data is inaccessible, the system falls back to a clearly labelled demo mode so the interface remains functional.

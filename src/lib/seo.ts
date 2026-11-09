@@ -60,7 +60,7 @@ export function getWebSiteStructuredData(siteUrl = 'https://allfinconverter.com'
     name: 'AllFinConverter',
     alternateName: 'AllFinConverter Converter',
     url: siteUrl,
-    description: 'Fast, high-precision currency, cryptocurrency, and precious metals converter.',
+    description: 'Convert between currencies, cryptocurrencies, and precious metals with AllFinConverter.',
   };
 }
 
@@ -71,12 +71,12 @@ export function getWebApplicationStructuredData(siteUrl = 'https://allfinconvert
   return {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'AllFinConverter Financial Converter',
+    name: 'AllFinConverter',
     url: siteUrl,
     applicationCategory: 'FinanceApplication',
     operatingSystem: 'All',
     browserRequirements: 'Requires JavaScript. Requires HTML5.',
-    description: 'Calculate cross-rates between fiat currencies, cryptocurrencies, and precious metals instantly.',
+    description: 'Convert between currencies, cryptocurrencies, and precious metals with AllFinConverter.',
   };
 }
 
