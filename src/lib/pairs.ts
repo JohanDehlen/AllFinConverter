@@ -122,7 +122,7 @@ export function getPairFromSlug(slug: string): ConversionPair | null {
 
 /**
  * Curated list of featured conversion pairs for static page generation.
- * Original 16 representative pairs (M1.6) + 20 SEO expansion Batch 1 pairs + 10 SEO expansion Batch 2 pairs + 6 SEO expansion Batch 3 pairs.
+ * Original 16 representative pairs (M1.6) + 20 SEO expansion Batch 1 pairs + 10 SEO expansion Batch 2 pairs + 6 SEO expansion Batch 3 pairs + NZD to ZAR.
  */
 export const FEATURED_PAIR_DEFINITIONS: readonly [string, string][] = [
   // ── Original Fiat Pairs (8) ──
@@ -188,6 +188,9 @@ export const FEATURED_PAIR_DEFINITIONS: readonly [string, string][] = [
   ['USD', 'XRP'],
   ['DOGE', 'USD'],
   ['USD', 'DOGE'],
+
+  // Additional featured fiat pair
+  ['NZD', 'ZAR'],
 ] as const;
 
 /**

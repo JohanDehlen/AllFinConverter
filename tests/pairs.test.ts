@@ -16,6 +16,7 @@
 import { describe, it } from 'node:test';
 // @ts-ignore
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import Big from 'big.js';
 
 import {
@@ -263,13 +264,13 @@ describe('M1.6 + SEO Batches 1, 2 & 3 — Static Route Generation & Featured Pai
     'doge-to-usd', 'usd-to-doge',
   ];
 
-  it('should contain exactly 52 pairs in FEATURED_PAIR_DEFINITIONS', () => {
-    assert.equal(FEATURED_PAIR_DEFINITIONS.length, 52);
+  it('should contain exactly 53 pairs in FEATURED_PAIR_DEFINITIONS', () => {
+    assert.equal(FEATURED_PAIR_DEFINITIONS.length, 53);
   });
 
   it('should validate every configured featured pair successfully', () => {
     const featuredPairs = getFeaturedPairs();
-    assert.equal(featuredPairs.length, 52);
+    assert.equal(featuredPairs.length, 53);
 
     for (const pair of featuredPairs) {
       assert.ok(pair.fromCode, 'Must have fromCode');
@@ -317,6 +318,21 @@ describe('M1.6 + SEO Batches 1, 2 & 3 — Static Route Generation & Featured Pai
     }
 
     assert.deepEqual(groups.map((group) => group.pairs.length), [8, 8, 4]);
+    assert.ok(!allSlugs.includes('nzd-to-zar'), 'NZD to ZAR must not be added to homepage conversion groups');
+  });
+
+  it('should validate and feature only the NZD-to-ZAR direction at its exact slug', () => {
+    const pair = validatePair('NZD', 'ZAR');
+    assert.ok(pair);
+    assert.equal(pair.slug, 'nzd-to-zar');
+    assert.ok(getFeaturedPairs().some((featuredPair) =>
+      featuredPair.fromCode === 'NZD' &&
+      featuredPair.toCode === 'ZAR' &&
+      featuredPair.slug === 'nzd-to-zar'
+    ));
+    assert.ok(!getFeaturedPairs().some((featuredPair) =>
+      featuredPair.fromCode === 'ZAR' && featuredPair.toCode === 'NZD'
+    ), 'Reverse ZAR-to-NZD pair must not be added');
   });
 
   it('should preserve all 16 original slugs unchanged', () => {
@@ -366,11 +382,23 @@ describe('M1.6 + SEO Batches 1, 2 & 3 — Static Route Generation & Featured Pai
     }
   });
 
-  it('should contain zero duplicate slugs among all 52 pairs', () => {
+  it('should contain zero duplicate slugs among all 53 pairs', () => {
     const featuredPairs = getFeaturedPairs();
     const slugs = featuredPairs.map((p) => p.slug);
     const uniqueSlugs = new Set(slugs);
     assert.equal(uniqueSlugs.size, slugs.length, `Found duplicate slugs: ${slugs.filter((s, i) => slugs.indexOf(s) !== i)}`);
+  });
+
+  it('should restrict the NZD-to-ZAR explanation to the exact pair', () => {
+    const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
+    assert.match(
+      pairPage,
+      /const isNzdToZarPair = pair\.fromCode === 'NZD' && pair\.toCode === 'ZAR';/
+    );
+    assert.match(
+      pairPage,
+      /\{isNzdToZarPair && \(\s*<p>\s*Use this page to estimate the South African rand value of New Zealand dollar amounts, including travel expenses\.[\s\S]*?rates, spreads, and fees can vary\.\s*<\/p>\s*\)\}/
+    );
   });
 
   it('should select only the four gold and silver pair routes for metal unit explanation', () => {
@@ -666,18 +694,19 @@ describe('Sitemap Endpoint & Route Synchronization', () => {
 
     // Existing featured conversion-pair pages remain included
     const featuredPairs = getFeaturedPairs();
-    assert.equal(featuredPairs.length, 52);
+    assert.equal(featuredPairs.length, 53);
     for (const pair of featuredPairs) {
       const pairUrl = `https://allfinconverter.com/${pair.slug}`;
       assert.ok(locMatches.includes(pairUrl), `Sitemap must include pair: ${pairUrl}`);
     }
+    assert.ok(locMatches.includes('https://allfinconverter.com/nzd-to-zar'));
 
     for (const slug of ['sol-to-usd', 'usd-to-sol', 'xrp-to-usd', 'usd-to-xrp', 'doge-to-usd', 'usd-to-doge']) {
       assert.ok(locMatches.includes(`https://allfinconverter.com/${slug}`), `Sitemap must include Batch 3 pair: ${slug}`);
     }
 
-    // Total count: 1 homepage + 5 info pages + 4 guides + 52 pairs = 62 URLs
-    assert.equal(locMatches.length, 1 + 5 + GUIDE_ROUTES.length + 52);
+    // Total count: 1 homepage + 5 info pages + 4 guides + 53 pairs = 63 URLs
+    assert.equal(locMatches.length, 1 + 5 + GUIDE_ROUTES.length + 53);
 
     // No duplicate URLs are generated
     const uniqueLocs = new Set(locMatches);

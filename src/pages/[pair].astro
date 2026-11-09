@@ -30,6 +30,7 @@ const isMetalPair = pair.fromAsset.category === 'metal' || pair.toAsset.category
 const isUsdToEurPair = pair.fromCode === 'USD' && pair.toCode === 'EUR';
 const isBtcToUsdPair = pair.fromCode === 'BTC' && pair.toCode === 'USD';
 const isGoldToUsdPair = pair.fromCode === 'XAU' && pair.toCode === 'USD';
+const isNzdToZarPair = pair.fromCode === 'NZD' && pair.toCode === 'ZAR';
 
 // Friendly category labels
 function getCategoryDisplay(cat: string): string {
@@ -195,6 +196,12 @@ const structuredData = [
           {isGoldToUsdPair && (
             <p>
               Gold is commonly quoted internationally in US dollars per troy ounce. This reference, spot-style price is not necessarily the retail price of physical gold; dealer premiums, spreads, taxes, and other charges can affect actual buying or selling prices.
+            </p>
+          )}
+
+          {isNzdToZarPair && (
+            <p>
+              Use this page to estimate the South African rand value of New Zealand dollar amounts, including travel expenses. The displayed reference rate may differ from the amount received or charged by banks, card providers, ATMs, or currency exchange services because their rates, spreads, and fees can vary.
             </p>
           )}
 
