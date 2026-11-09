@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const pageTitle = 'Currency Exchange Rates Explained: Reference Rates vs Bank Rates';
+const pageDescription =
+  'Learn what currency exchange and ECB reference rates mean, why bank rates differ, and how spreads and fees affect a USD-to-EUR conversion.';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} ogType="article" siteTitleSuffix={false}>
+  <main class="page-main">
+    <div class="content-container">
+      <header class="info-header">
+        <h1 class="info-title">{pageTitle}</h1>
+        <p class="info-subtitle">
+          Understand what an exchange rate tells you—and why a reference rate is not necessarily the rate you will receive.
+        </p>
+      </header>
+
+      <article class="info-card">
+        <section class="info-section">
+          <h2 class="info-section-title">What an exchange rate represents</h2>
+          <p class="info-text">
+            An exchange rate expresses the value of one currency in another. If a quoted rate is 1 US dollar = 0.92 euros, it means that the quoted relationship assigns 0.92 euros to each dollar. To estimate a conversion, multiply the amount in the starting currency by the rate expressed in the required direction.
+          </p>
+          <p class="info-text">
+            Rates can be quoted in either direction. A quote of euros per dollar is not the same written value as dollars per euro; the two are reciprocals. Always check which currency is being valued and which is being used as the unit.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">What is a reference exchange rate?</h2>
+          <p class="info-text">
+            A reference rate is a published benchmark for understanding or comparing currency values. It is useful for calculations and context, but it does not promise that a customer can exchange money at that exact price. A reference rate can also represent a particular time or publication cycle rather than a continuously changing quote.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">How the ECB euro reference rates are published</h2>
+          <p class="info-text">
+            The European Central Bank (ECB) publishes euro foreign-exchange reference rates for a range of currencies. The rates are established through a concertation procedure between central banks, normally around 14:10 Central European time, and published by the ECB around 16:00 Central European time on working days. They are expressed as the value of one euro in each listed currency.
+          </p>
+          <p class="info-text">
+            The ECB says these rates are for information purposes and strongly discourages their use for transaction purposes. They are a reference point, not an offer to buy or sell currency. See the <a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" target="_blank" rel="noopener noreferrer">ECB euro reference exchange rates</a> for the ECB’s published data and notice.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Why a bank or payment rate can differ</h2>
+          <p class="info-text">
+            A bank, card provider, exchange bureau, or payment service sets the terms for its own service. Its conversion rate may include a spread—the difference between a market reference and the price offered to a customer. The rate can also depend on when the provider processes the conversion, the currencies involved, and the provider’s pricing rules.
+          </p>
+          <p class="info-text">
+            Fees may be separate from the quoted rate or included in the conversion. A fixed transaction charge, a percentage fee, or a card’s foreign-currency fee can reduce the amount received. For an actual payment or exchange, review the provider’s displayed rate and all charges before confirming.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Illustrative USD-to-EUR calculation</h2>
+          <p class="info-text">
+            <strong>Hypothetical example—not a current market rate or an offer:</strong> If an illustrative reference rate were 1 USD = 0.92 EUR, then 100 USD × 0.92 would equal 92 EUR before any provider spread or fee. The amount a service ultimately pays or credits could be different.
+          </p>
+          <p class="info-text">
+            Use the <a href="/usd-to-eur">USD-to-EUR converter</a> for an indicative reference conversion, and read <a href="/how-it-works">how AllFinConverter sources and uses reference rates</a>. AllFinConverter provides conversion information and does not execute currency transactions.
+          </p>
+        </section>
+      </article>
+    </div>
+  </main>
+</BaseLayout>

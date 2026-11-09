@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const pageTitle = 'Guides | AllFinConverter';
+const pageDescription =
+  'Understand currency exchange rates, Bitcoin prices across exchanges, and how precious-metal prices are measured.';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} siteTitleSuffix={false}>
+  <main class="page-main">
+    <div class="content-container">
+      <header class="info-header">
+        <h1 class="info-title">Guides</h1>
+        <p class="info-subtitle">
+          Instantly convert between currencies, cryptocurrencies, and precious metals. These guides help you understand the rates, market references, and units behind those conversions.
+        </p>
+      </header>
+
+      <article class="info-card">
+        <section class="info-section">
+          <h2 class="info-section-title">
+            <a href="/guides/currency-exchange-rates">Currency Exchange Rates Explained: Reference Rates vs Bank Rates</a>
+          </h2>
+          <p class="info-text">
+            Learn what exchange and reference rates mean, how the ECB publishes euro reference rates, and why the amount offered by a bank or payment provider can differ.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">
+            <a href="/guides/bitcoin-prices-across-exchanges">Why Bitcoin Prices Differ Between Exchanges</a>
+          </h2>
+          <p class="info-text">
+            Explore how independent markets, trading activity, liquidity, and volume-weighted prices contribute to differences between Bitcoin quotes.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">
+            <a href="/guides/troy-ounce-vs-gram">Troy Ounce vs Gram: How Gold and Silver Prices Are Measured</a>
+          </h2>
+          <p class="info-text">
+            See how troy ounces differ from ordinary ounces, how to convert a quoted price to a per-gram amount, and why retail metal prices may differ.
+          </p>
+        </section>
+      </article>
+    </div>
+  </main>
+</BaseLayout>

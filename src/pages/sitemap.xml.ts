@@ -7,7 +7,8 @@ import { getFeaturedPairs } from '../lib/pairs.ts';
  * Generates a valid sitemap.xml containing exclusively real, generated routes:
  * 1. Homepage ('/')
  * 2. Static information pages ('/about/', '/how-it-works/', '/privacy/', '/terms/', '/contact/')
- * 3. Generated conversion pair pages (from getFeaturedPairs())
+ * 3. Educational guide pages
+ * 4. Generated conversion pair pages (from getFeaturedPairs())
  *
  * Automatically stays synchronized with the pair engine and static pages to prevent 404s or stale entries.
  *
@@ -42,6 +43,29 @@ export const STATIC_INFO_ROUTES = [
   },
 ] as const;
 
+export const GUIDE_ROUTES = [
+  {
+    path: '/guides/',
+    changefreq: 'monthly',
+    priority: '0.7',
+  },
+  {
+    path: '/guides/currency-exchange-rates/',
+    changefreq: 'monthly',
+    priority: '0.6',
+  },
+  {
+    path: '/guides/bitcoin-prices-across-exchanges/',
+    changefreq: 'monthly',
+    priority: '0.6',
+  },
+  {
+    path: '/guides/troy-ounce-vs-gram/',
+    changefreq: 'monthly',
+    priority: '0.6',
+  },
+] as const;
+
 export const GET: APIRoute = ({ site }) => {
   const baseUrl = site ? site.toString().replace(/\/$/, '') : 'https://allfinconverter.com';
 
@@ -54,6 +78,7 @@ export const GET: APIRoute = ({ site }) => {
       priority: '1.0',
     },
     ...STATIC_INFO_ROUTES,
+    ...GUIDE_ROUTES,
     ...featuredPairs.map((pair) => ({
       path: `/${pair.slug}`,
       changefreq: 'daily',

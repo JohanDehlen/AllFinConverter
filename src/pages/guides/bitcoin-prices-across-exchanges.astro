@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const pageTitle = 'Why Bitcoin Prices Differ Between Exchanges';
+const pageDescription =
+  'Learn why Bitcoin prices vary across independent exchanges, how volume-weighted averages work, and how reference prices differ from executable quotes.';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} ogType="article" siteTitleSuffix={false}>
+  <main class="page-main">
+    <div class="content-container">
+      <header class="info-header">
+        <h1 class="info-title">{pageTitle}</h1>
+        <p class="info-subtitle">
+          Bitcoin has no single exchange price: each marketplace reflects its own trading activity and available liquidity.
+        </p>
+      </header>
+
+      <article class="info-card">
+        <section class="info-section">
+          <h2 class="info-section-title">Independent markets, independent quotes</h2>
+          <p class="info-text">
+            Bitcoin trades on many independent exchanges rather than through one central marketplace that sets a universal price. Each exchange connects its own buyers and sellers and maintains its own trading pairs, such as BTC/USD or BTC/EUR. A quote on one platform is therefore a price available in that market, under its conditions, not automatically the price on every other platform.
+          </p>
+          <p class="info-text">
+            Prices move as orders are placed and trades take place. When buyers are willing to pay more relative to available sell orders, the traded price can rise; when sellers accept lower bids, it can fall. The balance of supply and demand is reflected in the orders and completed trades at each venue.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Trading activity and liquidity</h2>
+          <p class="info-text">
+            Liquidity describes how readily an asset can be bought or sold in a market without substantially changing its price. A market with more active orders near the current quote may be able to handle a trade with less price movement than a thinner market. The size and direction of a particular order can also matter: a large order may consume several available prices in an order book.
+          </p>
+          <p class="info-text">
+            Differences between exchanges can persist because they have separate participants, order books, trading volumes, fees, and access conditions. Prices may also change between the time a quote is observed and the time someone checks another venue. A reference comparison can help explain relative values, but it does not remove these market differences.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">How a volume-weighted average works</h2>
+          <p class="info-text">
+            A volume-weighted average gives more influence to prices associated with more trading volume. In simplified form, multiply each included market-pair price by its volume, add those products, and divide by the total included volume. A small-volume quote consequently has less effect on the average than a quote representing a larger share of trading.
+          </p>
+          <p class="info-text">
+            CoinMarketCap describes its cryptoasset price as a volume-weighted average of reported market-pair prices. It also says some prices may be excluded when they do not appear indicative of a free market price or when algorithms identify a significant outlier. Read <a href="https://support.coinmarketcap.com/hc/en-us/articles/360015968632-How-are-prices-calculated-on-CoinMarketCap" target="_blank" rel="noopener noreferrer">CoinMarketCap’s price calculation methodology</a> for its explanation.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">A reference conversion is not an executable exchange quote</h2>
+          <p class="info-text">
+            An aggregate reference price summarizes market data; it is not necessarily the price at which a specific exchange will fill a particular order. The exchange may show a different quote, and the result of a trade can depend on order size, available liquidity, fees, and how quickly market conditions change. AllFinConverter is a reference conversion tool, not a cryptocurrency exchange or trading service.
+          </p>
+          <p class="info-text">
+            Cryptocurrency markets trade continuously, but AllFinConverter does not stream prices. Its production pipeline generates rate snapshots every six hours. Crypto provider data is subject to a 24-hour age limit, and the overall snapshot has a separate 24-hour age limit. A displayed conversion is therefore based on the available validated snapshot, not a promise of a live exchange price.
+          </p>
+          <p class="info-text">
+            Try an <a href="/btc-to-usd">indicative Bitcoin-to-USD conversion</a> or learn <a href="/how-it-works">how AllFinConverter’s rates and snapshots work</a>.
+          </p>
+        </section>
+      </article>
+    </div>
+  </main>
+</BaseLayout>

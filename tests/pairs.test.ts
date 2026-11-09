@@ -62,6 +62,7 @@ import {
 
 import {
   GET as getSitemapResponse,
+  GUIDE_ROUTES,
   STATIC_INFO_ROUTES,
 } from '../src/pages/sitemap.xml.ts';
 
@@ -658,6 +659,11 @@ describe('Sitemap Endpoint & Route Synchronization', () => {
       assert.ok(locMatches.includes(infoUrl), `Sitemap must include info page: ${infoUrl}`);
     }
 
+    for (const guide of GUIDE_ROUTES) {
+      const guideUrl = `https://allfinconverter.com${guide.path}`;
+      assert.ok(locMatches.includes(guideUrl), `Sitemap must include guide: ${guideUrl}`);
+    }
+
     // Existing featured conversion-pair pages remain included
     const featuredPairs = getFeaturedPairs();
     assert.equal(featuredPairs.length, 52);
@@ -670,8 +676,8 @@ describe('Sitemap Endpoint & Route Synchronization', () => {
       assert.ok(locMatches.includes(`https://allfinconverter.com/${slug}`), `Sitemap must include Batch 3 pair: ${slug}`);
     }
 
-    // Total count: 1 homepage + 5 info pages + 52 pairs = 58 URLs
-    assert.equal(locMatches.length, 1 + 5 + 52);
+    // Total count: 1 homepage + 5 info pages + 4 guides + 52 pairs = 62 URLs
+    assert.equal(locMatches.length, 1 + 5 + GUIDE_ROUTES.length + 52);
 
     // No duplicate URLs are generated
     const uniqueLocs = new Set(locMatches);

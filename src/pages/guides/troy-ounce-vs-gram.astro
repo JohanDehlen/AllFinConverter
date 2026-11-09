@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const pageTitle = 'Troy Ounce vs Gram: How Gold and Silver Prices Are Measured';
+const pageDescription =
+  'Understand troy ounces and grams, calculate a precious-metal price per gram, and see why retail gold and silver prices differ from spot references.';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} ogType="article" siteTitleSuffix={false}>
+  <main class="page-main">
+    <div class="content-container">
+      <header class="info-header">
+        <h1 class="info-title">{pageTitle}</h1>
+        <p class="info-subtitle">
+          Precious-metal quotes use a traditional weight unit that is different from the everyday ounce.
+        </p>
+      </header>
+
+      <article class="info-card">
+        <section class="info-section">
+          <h2 class="info-section-title">Why precious metals use the troy ounce</h2>
+          <p class="info-text">
+            Gold and silver are commonly quoted in troy ounces in international bullion markets. This convention gives buyers, sellers, and market data providers a shared unit for comparing metal prices. It is a unit of mass—not a coin, bar size, or guarantee about the form of metal being priced.
+          </p>
+          <p class="info-text">
+            A troy ounce is not the same as the ordinary avoirdupois ounce used for many everyday goods. One troy ounce equals exactly 31.1034768 grams, while an ordinary ounce is about 28.35 grams. Confusing the two would produce a meaningful error when converting a precious-metal quote.
+          </p>
+          <p class="info-text">
+            The <a href="https://www.lbma.org.uk/wonders-of-gold/items/the-troy-ounce" target="_blank" rel="noopener noreferrer">London Bullion Market Association’s explanation of the troy ounce</a> describes its history and confirms the metric definition.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Convert a price per troy ounce to a price per gram</h2>
+          <p class="info-text">
+            To calculate a reference price per gram from a price per troy ounce, divide the per-ounce price by 31.1034768. The result is a unit conversion of the quoted price; it does not add dealer costs or change the underlying market quote.
+          </p>
+          <p class="info-text">
+            <strong>Hypothetical worked example—not a current gold or silver price:</strong> If a reference quote were 2,400 US dollars per troy ounce, divide 2,400 by 31.1034768. The result is approximately 77.16 US dollars per gram before rounding. This example only demonstrates the arithmetic and is not an actual quote or offer.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Why retail prices can differ from spot references</h2>
+          <p class="info-text">
+            A spot-style reference price describes the metal value used as a market benchmark. The amount paid for a physical coin or bar can be higher because a dealer may add a premium to cover fabrication, handling, distribution, and other costs. Products can differ by weight, form, availability, and seller, so a reference quote alone does not determine a retail price.
+          </p>
+          <p class="info-text">
+            When metal is bought or sold, dealer spreads between bid and asking prices can affect the amount received or paid. Applicable taxes and other charges can also affect the total. Check the specific dealer’s full terms and quote before a transaction. AllFinConverter supplies reference conversions and does not buy or sell physical precious metals.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h2 class="info-section-title">Use a precious-metal reference conversion</h2>
+          <p class="info-text">
+            AllFinConverter treats precious metals as reference assets quoted by default in troy ounces. See an indicative <a href="/gold-to-usd">gold-to-USD conversion</a>, compare a <a href="/silver-to-usd">silver-to-USD conversion</a>, or read <a href="/how-it-works">how metal units and reference rates work</a>.
+          </p>
+        </section>
+      </article>
+    </div>
+  </main>
+</BaseLayout>
