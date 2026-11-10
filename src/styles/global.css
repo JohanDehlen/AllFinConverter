@@ -1176,7 +1176,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
 .ad-placeholder-body {
@@ -1204,13 +1204,12 @@ body {
 .ad-placeholder-text {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
 .ad-placeholder-subtext {
   font-size: 0.6875rem;
-  color: var(--color-text-muted);
-  opacity: 0.75;
+  color: var(--color-text-secondary);
 }
 
 /* Side Rail Placeholders (Desktop Skyscrapers: 160x600) */
