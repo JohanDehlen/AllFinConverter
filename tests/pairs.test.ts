@@ -642,14 +642,16 @@ describe('M1.6 — Rate Engine & Mock Isolation Invariants', () => {
 
 describe('M1.6 — SEO Metadata & Structured Data', () => {
   it('should generate canonical URLs properly', () => {
-    assert.equal(resolveCanonicalUrl('/usd-to-eur', 'https://allfinconverter.com'), 'https://allfinconverter.com/usd-to-eur');
-    assert.equal(resolveCanonicalUrl('/gold-to-usd', 'https://allfinconverter.com/'), 'https://allfinconverter.com/gold-to-usd');
+    assert.equal(resolveCanonicalUrl('/usd-to-eur', 'https://allfinconverter.com'), 'https://allfinconverter.com/usd-to-eur/');
+    assert.equal(resolveCanonicalUrl('/gold-to-usd/', 'https://allfinconverter.com/'), 'https://allfinconverter.com/gold-to-usd/');
+    assert.equal(resolveCanonicalUrl('/', 'https://allfinconverter.com'), 'https://allfinconverter.com/');
+    assert.equal(resolveCanonicalUrl('/about?ref=home#top'), '/about/');
   });
 
   it('should generate valid BreadcrumbList structured data', () => {
     const breadcrumbs = getBreadcrumbStructuredData([
       { name: 'Home', url: 'https://allfinconverter.com/' },
-      { name: 'USD to EUR', url: 'https://allfinconverter.com/usd-to-eur' },
+      { name: 'USD to EUR', url: 'https://allfinconverter.com/usd-to-eur/' },
     ]);
     assert.equal(breadcrumbs['@type'], 'BreadcrumbList');
     assert.equal(Array.isArray(breadcrumbs.itemListElement), true);
@@ -696,13 +698,13 @@ describe('Sitemap Endpoint & Route Synchronization', () => {
     const featuredPairs = getFeaturedPairs();
     assert.equal(featuredPairs.length, 53);
     for (const pair of featuredPairs) {
-      const pairUrl = `https://allfinconverter.com/${pair.slug}`;
+      const pairUrl = `https://allfinconverter.com/${pair.slug}/`;
       assert.ok(locMatches.includes(pairUrl), `Sitemap must include pair: ${pairUrl}`);
     }
-    assert.ok(locMatches.includes('https://allfinconverter.com/nzd-to-zar'));
+    assert.ok(locMatches.includes('https://allfinconverter.com/nzd-to-zar/'));
 
     for (const slug of ['sol-to-usd', 'usd-to-sol', 'xrp-to-usd', 'usd-to-xrp', 'doge-to-usd', 'usd-to-doge']) {
-      assert.ok(locMatches.includes(`https://allfinconverter.com/${slug}`), `Sitemap must include Batch 3 pair: ${slug}`);
+      assert.ok(locMatches.includes(`https://allfinconverter.com/${slug}/`), `Sitemap must include Batch 3 pair: ${slug}`);
     }
 
     // Total count: 1 homepage + 5 info pages + 4 guides + 53 pairs = 63 URLs

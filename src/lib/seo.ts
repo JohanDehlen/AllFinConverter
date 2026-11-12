@@ -38,16 +38,17 @@ export interface PageMetadata {
 export function resolveCanonicalUrl(pathname: string, site?: URL | string): string {
   const cleanPath = pathname.split('?')[0].split('#')[0] || '/';
   const normalizedPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+  const canonicalPath = normalizedPath.endsWith('/') ? normalizedPath : `${normalizedPath}/`;
 
   if (site) {
     try {
-      return new URL(normalizedPath, site).href;
+      return new URL(canonicalPath, site).href;
     } catch {
-      return normalizedPath;
+      return canonicalPath;
     }
   }
 
-  return normalizedPath;
+  return canonicalPath;
 }
 
 /**

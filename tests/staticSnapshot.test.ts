@@ -58,7 +58,7 @@ describe('Static snapshot metadata and expiry', () => {
 
     assert.match(homepage, /<h2 id="homepage-pairs-heading" class="homepage-pairs-heading">Explore Popular Conversions<\/h2>/);
     assert.match(homepage, /Explore popular currency, cryptocurrency and precious-metal conversions/);
-    assert.match(homepage, /<a href=\{`\/\$\{pair\.slug\}`\}>/);
+    assert.match(homepage, /<a href=\{`\/\$\{pair\.slug\}\/`\}>/);
     assert.deepEqual(groups.map((group) => group.title), [
       'Currency conversions',
       'Cryptocurrency conversions',

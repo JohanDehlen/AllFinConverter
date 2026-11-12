@@ -16,8 +16,8 @@ const guidePages = [
       'Fees may be separate',
       'Hypothetical example—not a current market rate or an offer',
       'https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html',
-      'href="/usd-to-eur"',
-      'href="/how-it-works"',
+      'href="/usd-to-eur/"',
+      'href="/how-it-works/"',
     ],
   },
   {
@@ -30,8 +30,8 @@ const guidePages = [
       'https://support.coinmarketcap.com/hc/en-us/articles/360015968632-How-are-prices-calculated-on-CoinMarketCap',
       'every six hours',
       '24-hour age limit',
-      'href="/btc-to-usd"',
-      'href="/how-it-works"',
+      'href="/btc-to-usd/"',
+      'href="/how-it-works/"',
     ],
   },
   {
@@ -46,9 +46,9 @@ const guidePages = [
       'spreads',
       'taxes',
       'https://www.lbma.org.uk/wonders-of-gold/items/the-troy-ounce',
-      'href="/gold-to-usd"',
-      'href="/silver-to-usd"',
-      'href="/how-it-works"',
+      'href="/gold-to-usd/"',
+      'href="/silver-to-usd/"',
+      'href="/how-it-works/"',
     ],
   },
 ] as const;
@@ -72,7 +72,7 @@ describe('Educational guides', () => {
     assert.match(index, /<h1 class="info-title">Guides<\/h1>/);
     for (const { file, title } of guidePages) {
       const slug = file.replace(/\.astro$/, '');
-      assert.ok(index.includes(`href="/guides/${slug}"`), `Guides index must link to ${slug}`);
+      assert.ok(index.includes(`href="/guides/${slug}/"`), `Guides index must link to ${slug}`);
       assert.ok(index.includes(title), `Guides index must name ${title}`);
     }
     assert.match(index, /Instantly convert between currencies, cryptocurrencies, and precious metals/);
@@ -97,6 +97,6 @@ describe('Educational guides', () => {
 
   it('adds a Guides link to the existing footer navigation', () => {
     const footer = readFileSync(new URL('../src/components/Footer.astro', import.meta.url), 'utf8');
-    assert.match(footer, /<a href="\/guides" class="footer-nav-link">Guides<\/a>/);
+    assert.match(footer, /<a href="\/guides\/" class="footer-nav-link">Guides<\/a>/);
   });
 });

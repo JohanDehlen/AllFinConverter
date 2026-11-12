@@ -43,7 +43,7 @@ function getCategoryDisplay(cat: string): string {
 const fromCategoryDisplay = getCategoryDisplay(pair.fromAsset.category);
 const toCategoryDisplay = getCategoryDisplay(pair.toAsset.category);
 
-const canonicalUrl = resolveCanonicalUrl(`/${pair.slug}`, Astro.site);
+const canonicalUrl = resolveCanonicalUrl(`/${pair.slug}/`, Astro.site);
 const siteBase = Astro.site ? Astro.site.toString().replace(/\/$/, '') : 'https://allfinconverter.com';
 
 const structuredData = [
@@ -98,7 +98,7 @@ const structuredData = [
 
         <!-- Converter Legal & Indicative Rates Disclaimer -->
         <p class="converter-disclaimer">
-          AllFinConverter provides indicative conversion information for general reference only. Rates may be delayed or inaccurate and may differ from actual transaction prices. This is not financial advice. Verify rates independently before making financial decisions. See our <a href="/terms">Terms of Use &amp; Disclaimer</a>.
+          AllFinConverter provides indicative conversion information for general reference only. Rates may be delayed or inaccurate and may differ from actual transaction prices. This is not financial advice. Verify rates independently before making financial decisions. See our <a href="/terms/">Terms of Use &amp; Disclaimer</a>.
         </p>
 
         <!-- Responsive Ad Placement: Sub-Converter -->
@@ -223,7 +223,7 @@ const structuredData = [
           </div>
           <div class="related-pairs-grid">
             {relatedPairs.map((rel) => (
-              <a href={`/${rel.slug}`} class="related-pair-card">
+              <a href={`/${rel.slug}/`} class="related-pair-card">
                 <div class="related-pair-codes">
                   <span class="related-code">{rel.fromCode}</span>
                   <span class="related-arrow" aria-hidden="true">&rarr;</span>

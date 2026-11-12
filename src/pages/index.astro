@@ -44,7 +44,7 @@ const homepagePairGroups = getHomepagePairGroups();
 
         <!-- Converter Legal & Indicative Rates Disclaimer -->
         <p class="converter-disclaimer">
-          AllFinConverter provides indicative conversion information for general reference only. Rates may be delayed or inaccurate and may differ from actual transaction prices. This is not financial advice. Verify rates independently before making financial decisions. See our <a href="/terms">Terms of Use &amp; Disclaimer</a>.
+          AllFinConverter provides indicative conversion information for general reference only. Rates may be delayed or inaccurate and may differ from actual transaction prices. This is not financial advice. Verify rates independently before making financial decisions. See our <a href="/terms/">Terms of Use &amp; Disclaimer</a>.
         </p>
 
         <section class="homepage-pairs-section" aria-labelledby="homepage-pairs-heading">
@@ -61,7 +61,7 @@ const homepagePairGroups = getHomepagePairGroups();
                 <ul class="homepage-pair-links">
                   {group.pairs.map((pair) => (
                     <li>
-                      <a href={`/${pair.slug}`}>
+                      <a href={`/${pair.slug}/`}>
                         {getAssetDisplayName(pair.fromAsset)} to {getAssetDisplayName(pair.toAsset)}
                       </a>
                     </li>

@@ -80,7 +80,7 @@ export const GET: APIRoute = ({ site }) => {
     ...STATIC_INFO_ROUTES,
     ...GUIDE_ROUTES,
     ...featuredPairs.map((pair) => ({
-      path: `/${pair.slug}`,
+      path: `/${pair.slug}/`,
       changefreq: 'daily',
       priority: '0.8',
     })),
