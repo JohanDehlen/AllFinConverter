@@ -26,10 +26,17 @@ interface Props {
 const { pair } = Astro.props;
 
 const relatedPairs = getRelatedPairs(pair.slug, 4);
+const isFiatPair = pair.fromAsset.category === 'fiat' && pair.toAsset.category === 'fiat';
+const isCryptoPair = pair.fromAsset.category === 'crypto' || pair.toAsset.category === 'crypto';
+const isCryptoToFiatPair = pair.fromAsset.category === 'crypto' && pair.toAsset.category === 'fiat';
+const isFiatToCryptoPair = pair.fromAsset.category === 'fiat' && pair.toAsset.category === 'crypto';
 const isMetalPair = pair.fromAsset.category === 'metal' || pair.toAsset.category === 'metal';
 const isUsdToEurPair = pair.fromCode === 'USD' && pair.toCode === 'EUR';
+const isUsdToAedPair = pair.fromCode === 'USD' && pair.toCode === 'AED';
 const isBtcToUsdPair = pair.fromCode === 'BTC' && pair.toCode === 'USD';
+const isUsdToBtcPair = pair.fromCode === 'USD' && pair.toCode === 'BTC';
 const isGoldToUsdPair = pair.fromCode === 'XAU' && pair.toCode === 'USD';
+const isUsdToGoldPair = pair.fromCode === 'USD' && pair.toCode === 'XAU';
 const isNzdToZarPair = pair.fromCode === 'NZD' && pair.toCode === 'ZAR';
 
 // Friendly category labels
@@ -115,9 +122,36 @@ const structuredData = [
             <h2 class="pair-details-title">{pair.fromAsset.code} / {pair.toAsset.code} Conversion Overview</h2>
           </div>
 
+          {isFiatPair && (
+            <p>
+              This page converts an amount in {pair.fromCode} to an indicative amount in {pair.toCode}. The reverse direction starts with {pair.toCode} and estimates {pair.fromCode} instead. These reference rates may differ from rates offered by banks, card providers, or exchange services; sources and publication schedules vary by currency.
+              {pair.fromCode !== 'USD' && pair.toCode !== 'USD' && (
+                <span> Because neither currency is USD, the cross-rate is derived from their USD-based reference rates.</span>
+              )}
+            </p>
+          )}
+
+          {isCryptoPair && (
+            <p>
+              Cryptocurrency markets trade continuously, so reference prices can change at any time. This is an indicative conversion based on available reference data, not a guaranteed exchange execution or purchase price.
+            </p>
+          )}
+
+          {isCryptoToFiatPair && (
+            <p>
+              In this direction, the entered {pair.fromCode} amount is converted to an indicative {pair.toCode} value. It is not a guaranteed sale price or the net amount you would receive after any provider fees.
+            </p>
+          )}
+
+          {isFiatToCryptoPair && (
+            <p>
+              In this direction, the entered {pair.fromCode} amount is converted to an indicative {pair.toCode} equivalent. It is not a guaranteed purchase quantity or an exchange quote after any provider fees.
+            </p>
+          )}
+
           {isMetalPair && (
             <p>
-              Precious metals are priced by default in troy ounces. You can switch to grams using the unit selector. One troy ounce equals {GRAMS_PER_TROY_OUNCE_STR} grams. Changing the unit preserves the equivalent quantity and updates the conversion accordingly.
+              Precious-metal reference prices are expressed in USD per troy ounce. One troy ounce equals {GRAMS_PER_TROY_OUNCE_STR} grams; use the unit selector to view a metal quantity in grams. This is not a retail buying or selling price for a physical coin, bar, or piece of jewellery. Premiums, fabrication costs, and dealer margins can affect retail prices.
             </p>
           )}
 
@@ -183,19 +217,37 @@ const structuredData = [
 
           {isUsdToEurPair && (
             <p>
-              Converting US dollars to euros shows the indicative euro value of a US dollar amount using the reference rates available to this page. The displayed rate may differ from what a bank, card provider, exchange bureau, or payment service offers. Provider spreads and fees can affect the final amount received. AllFinConverter provides conversion information and does not execute transactions.
+              On this USD-to-EUR page, the entered amount is in US dollars and the estimate is in euros. The EUR-to-USD page reverses the direction, so always read the rate with its source and target currencies in mind.
+            </p>
+          )}
+
+          {isUsdToAedPair && (
+            <p>
+              This USD-to-AED estimate uses AllFinConverter's separately configured fixed reference rate of 1 USD = 3.6725 AED, not a Frankfurter rate. A bank, card provider, or exchange service may apply its own rate or fees.
             </p>
           )}
 
           {isBtcToUsdPair && (
             <p>
-              This page converts a Bitcoin amount into its indicative US dollar equivalent. Cryptocurrency prices can change rapidly, and different exchanges may show different prices. AllFinConverter is a reference conversion tool, not a cryptocurrency exchange or trading service.
+              This BTC-to-USD page estimates the dollar value of the entered Bitcoin amount. A changing reference price does not predict the proceeds of a future sale; an exchange's execution price and fees may differ.
+            </p>
+          )}
+
+          {isUsdToBtcPair && (
+            <p>
+              This USD-to-BTC page estimates the Bitcoin equivalent of the entered dollar amount. It is not a promise of how much Bitcoin an exchange will sell for that amount; the price may change and provider fees may apply.
             </p>
           )}
 
           {isGoldToUsdPair && (
             <p>
-              Gold is commonly quoted internationally in US dollars per troy ounce. This reference, spot-style price is not necessarily the retail price of physical gold; dealer premiums, spreads, taxes, and other charges can affect actual buying or selling prices.
+              On this Gold-to-USD page, the entered gold quantity is valued using a USD-per-troy-ounce reference price. If you select grams, the displayed metal quantity changes unit; the underlying reference is still per troy ounce.
+            </p>
+          )}
+
+          {isUsdToGoldPair && (
+            <p>
+              On this USD-to-Gold page, the dollar amount is converted to an indicative gold quantity using the USD-per-troy-ounce reference price. It does not guarantee that a physical coin or bar of that quantity can be bought for the displayed amount.
             </p>
           )}
 

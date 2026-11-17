@@ -51,6 +51,15 @@ function createLiveSnapshot(timestamp: number): RateSnapshotPayload {
   };
 }
 
+function getConditionalParagraphs(source: string, condition: string): string[] {
+  const escapedCondition = condition.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(
+    `\\{${escapedCondition} && \\(\\s*<p>([\\s\\S]*?)<\\/p>\\s*\\)\\}`,
+    'g'
+  );
+  return [...source.matchAll(pattern)].map((match) => match[1] ?? '');
+}
+
 describe('How it works methodology content', () => {
   const methodology = readFileSync(new URL('../src/pages/how-it-works.astro', import.meta.url), 'utf8');
 
@@ -204,15 +213,17 @@ describe('Static snapshot metadata and expiry', () => {
     assert.match(pairPage, /const isMetalPair = pair\.fromAsset\.category === 'metal' \|\| pair\.toAsset\.category === 'metal';/);
     assert.match(pairPage, /import \{ GRAMS_PER_TROY_OUNCE_STR \} from '\.\.\/lib\/assets\.ts'/);
 
-    const metalExplanation = pairPage.match(/\{isMetalPair && \(\s*<p>\s*([\s\S]*?)\s*<\/p>\s*\)\}/)?.[1];
-    const expectedMetalExplanation =
-      'Precious metals are priced by default in troy ounces. You can switch to grams using the unit selector. One troy ounce equals 31.1034768 grams. Changing the unit preserves the equivalent quantity and updates the conversion accordingly.';
+    const metalExplanation = getConditionalParagraphs(pairPage, 'isMetalPair')[0];
     assert.ok(metalExplanation);
     assert.equal(GRAMS_PER_TROY_OUNCE_STR, '31.1034768');
-    assert.equal(
-      normalize(metalExplanation),
-      expectedMetalExplanation.replace('31.1034768', '{GRAMS_PER_TROY_OUNCE_STR}')
+    assert.match(metalExplanation, /reference prices are expressed in USD per troy ounce/i);
+    assert.match(metalExplanation, /One troy ounce equals \{GRAMS_PER_TROY_OUNCE_STR\} grams/);
+    assert.match(metalExplanation, /unit selector to view a metal quantity in grams/i);
+    assert.match(
+      metalExplanation,
+      /not a retail buying or selling price for a physical coin, bar, or piece of jewellery/i
     );
+    assert.match(metalExplanation, /premiums, fabrication costs, and dealer margins/i);
 
     const overviewMatches = [...pairPage.matchAll(/\{(!?isMetalPair) && \(\s*<p>\s*([\s\S]*?)\s*<\/p>\s*\)/g)];
     const expectedOverview =
@@ -229,7 +240,7 @@ describe('Static snapshot metadata and expiry', () => {
     assert.equal(normalize(metalOverview[2]), expectedOverview);
 
     const assetDetailsIndex = pairPage.indexOf('<div class="pair-assets-info">');
-    assert.ok(pairPage.indexOf('Precious metals are priced by default in troy ounces.') < assetDetailsIndex);
+    assert.ok(pairPage.indexOf(metalExplanation) < assetDetailsIndex);
     assert.ok(nonMetalOverview.index < assetDetailsIndex, 'non-metal overview must remain before asset details');
     assert.ok(assetDetailsIndex < metalOverview.index, 'metal overview must follow asset details');
   });
@@ -255,15 +266,148 @@ describe('Static snapshot metadata and expiry', () => {
     ]);
   });
 
-  it('limits pair-specific explanations to USD/EUR, BTC/USD, and gold/USD', () => {
+  it('shows category explanations for the matching existing pair types', () => {
     const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
+    const featuredPairs = getFeaturedPairs();
+    const categoryCounts = {
+      fiatToFiat: featuredPairs.filter(
+        (pair) => pair.fromAsset.category === 'fiat' && pair.toAsset.category === 'fiat'
+      ).length,
+      cryptoToFiat: featuredPairs.filter(
+        (pair) => pair.fromAsset.category === 'crypto' && pair.toAsset.category === 'fiat'
+      ).length,
+      fiatToCrypto: featuredPairs.filter(
+        (pair) => pair.fromAsset.category === 'fiat' && pair.toAsset.category === 'crypto'
+      ).length,
+      metalToFiat: featuredPairs.filter(
+        (pair) => pair.fromAsset.category === 'metal' && pair.toAsset.category === 'fiat'
+      ).length,
+      fiatToMetal: featuredPairs.filter(
+        (pair) => pair.fromAsset.category === 'fiat' && pair.toAsset.category === 'metal'
+      ).length,
+    };
 
-    assert.match(pairPage, /const isUsdToEurPair = pair\.fromCode === 'USD' && pair\.toCode === 'EUR';/);
-    assert.match(pairPage, /const isBtcToUsdPair = pair\.fromCode === 'BTC' && pair\.toCode === 'USD';/);
-    assert.match(pairPage, /const isGoldToUsdPair = pair\.fromCode === 'XAU' && pair\.toCode === 'USD';/);
-    assert.match(pairPage, /\{isUsdToEurPair && \([\s\S]*?Converting US dollars to euros[\s\S]*?does not execute transactions\./);
-    assert.match(pairPage, /\{isBtcToUsdPair && \([\s\S]*?Bitcoin amount into its indicative US dollar equivalent[\s\S]*?not a cryptocurrency exchange or trading service\./);
-    assert.match(pairPage, /\{isGoldToUsdPair && \([\s\S]*?US dollars per troy ounce[\s\S]*?dealer premiums, spreads, taxes, and other charges/);
+    assert.deepEqual(categoryCounts, {
+      fiatToFiat: 39,
+      cryptoToFiat: 5,
+      fiatToCrypto: 5,
+      metalToFiat: 2,
+      fiatToMetal: 2,
+    });
+
+    for (const [condition, declaration] of [
+      ['isFiatPair', /const isFiatPair = pair\.fromAsset\.category === 'fiat' && pair\.toAsset\.category === 'fiat';/],
+      ['isCryptoToFiatPair', /const isCryptoToFiatPair = pair\.fromAsset\.category === 'crypto' && pair\.toAsset\.category === 'fiat';/],
+      ['isFiatToCryptoPair', /const isFiatToCryptoPair = pair\.fromAsset\.category === 'fiat' && pair\.toAsset\.category === 'crypto';/],
+      ['isCryptoPair', /const isCryptoPair = pair\.fromAsset\.category === 'crypto' \|\| pair\.toAsset\.category === 'crypto';/],
+    ] as const) {
+      assert.match(pairPage, declaration);
+      assert.ok(
+        getConditionalParagraphs(pairPage, condition).length > 0,
+        `${condition} must render an explanation`
+      );
+    }
+
+    const fiatExplanation = getConditionalParagraphs(pairPage, 'isFiatPair')[0];
+    assert.match(fiatExplanation, /amount in \{pair\.fromCode\} to an indicative amount in \{pair\.toCode\}/);
+    assert.match(fiatExplanation, /reverse direction starts with \{pair\.toCode\}/);
+    assert.match(
+      fiatExplanation,
+      /reference rates may differ from rates offered by banks, card providers, or exchange services/i
+    );
+    assert.match(fiatExplanation, /sources and publication schedules vary by currency/i);
+    assert.match(fiatExplanation, /cross-rate is derived from their USD-based reference rates/i);
+
+    const cryptoExplanation = getConditionalParagraphs(pairPage, 'isCryptoPair')[0];
+    assert.match(cryptoExplanation, /markets trade continuously/i);
+    assert.match(cryptoExplanation, /indicative conversion/i);
+    assert.match(cryptoExplanation, /not a guaranteed exchange execution or purchase price/i);
+    assert.match(
+      getConditionalParagraphs(pairPage, 'isCryptoToFiatPair')[0],
+      /entered \{pair\.fromCode\} amount is converted to an indicative \{pair\.toCode\} value/
+    );
+    assert.match(
+      getConditionalParagraphs(pairPage, 'isFiatToCryptoPair')[0],
+      /entered \{pair\.fromCode\} amount is converted to an indicative \{pair\.toCode\} equivalent/
+    );
+  });
+
+  it('limits selected explanations to their intended pair directions', () => {
+    const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
+    const featuredPairs = getFeaturedPairs();
+    const selectedPairs = [
+      {
+        condition: 'isUsdToEurPair',
+        from: 'USD',
+        to: 'EUR',
+        content: /entered amount is in US dollars and the estimate is in euros[\s\S]*EUR-to-USD page reverses the direction/,
+      },
+      {
+        condition: 'isUsdToAedPair',
+        from: 'USD',
+        to: 'AED',
+        content: /configured fixed reference rate of 1 USD = 3\.6725 AED[\s\S]*not a Frankfurter rate/,
+      },
+      {
+        condition: 'isBtcToUsdPair',
+        from: 'BTC',
+        to: 'USD',
+        content: /estimates the dollar value of the entered Bitcoin amount[\s\S]*proceeds of a future sale/,
+      },
+      {
+        condition: 'isUsdToBtcPair',
+        from: 'USD',
+        to: 'BTC',
+        content: /estimates the Bitcoin equivalent of the entered dollar amount[\s\S]*not a promise/,
+      },
+      {
+        condition: 'isGoldToUsdPair',
+        from: 'XAU',
+        to: 'USD',
+        content: /entered gold quantity is valued using a USD-per-troy-ounce reference price[\s\S]*underlying reference is still per troy ounce/,
+      },
+      {
+        condition: 'isUsdToGoldPair',
+        from: 'USD',
+        to: 'XAU',
+        content: /dollar amount is converted to an indicative gold quantity[\s\S]*does not guarantee/,
+      },
+      {
+        condition: 'isNzdToZarPair',
+        from: 'NZD',
+        to: 'ZAR',
+        content: /South African rand value of New Zealand dollar amounts[\s\S]*travel expenses/,
+      },
+    ] as const;
+
+    for (const { condition, from, to, content } of selectedPairs) {
+      assert.match(
+        pairPage,
+        new RegExp(`const ${condition} = pair\\.fromCode === '${from}' && pair\\.toCode === '${to}';`)
+      );
+      assert.ok(
+        featuredPairs.some((pair) => pair.fromCode === from && pair.toCode === to),
+        `Expected existing featured pair ${from} to ${to}`
+      );
+      const explanation = getConditionalParagraphs(pairPage, condition)[0];
+      assert.ok(explanation, `${condition} must have a pair-specific explanation`);
+      assert.match(explanation, content);
+    }
+  });
+
+  it('preserves the existing pair routes and metadata bindings', () => {
+    const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
+    const featuredPairs = getFeaturedPairs();
+
+    assert.equal(featuredPairs.length, 53);
+    assert.equal(new Set(featuredPairs.map((pair) => pair.slug)).size, 53);
+    assert.match(pairPage, /const pairs = getFeaturedPairs\(\)/);
+    assert.match(pairPage, /params: \{ pair: pair\.slug \}/);
+    assert.match(pairPage, /props: \{ pair \}/);
+    assert.match(pairPage, /title=\{pair\.title\}/);
+    assert.match(pairPage, /description=\{pair\.description\}/);
+    assert.match(pairPage, /canonicalUrl=\{canonicalUrl\}/);
+    assert.match(pairPage, /structuredData=\{structuredData\}/);
   });
 
   it('sets the converter default opening amount to one', () => {

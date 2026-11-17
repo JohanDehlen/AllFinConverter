@@ -395,10 +395,14 @@ describe('M1.6 + SEO Batches 1, 2 & 3 — Static Route Generation & Featured Pai
       pairPage,
       /const isNzdToZarPair = pair\.fromCode === 'NZD' && pair\.toCode === 'ZAR';/
     );
-    assert.match(
-      pairPage,
-      /\{isNzdToZarPair && \(\s*<p>\s*Use this page to estimate the South African rand value of New Zealand dollar amounts, including travel expenses\.[\s\S]*?rates, spreads, and fees can vary\.\s*<\/p>\s*\)\}/
-    );
+    const explanation = pairPage.match(
+      /\{isNzdToZarPair && \(\s*<p>\s*([\s\S]*?)\s*<\/p>\s*\)\}/
+    )?.[1];
+    assert.ok(explanation);
+    assert.match(explanation, /South African rand value of New Zealand dollar amounts/i);
+    assert.match(explanation, /travel expenses/i);
+    assert.match(explanation, /reference rate/i);
+    assert.match(explanation, /banks, card providers, ATMs, or currency exchange services/i);
   });
 
   it('should select only the four gold and silver pair routes for metal unit explanation', () => {
