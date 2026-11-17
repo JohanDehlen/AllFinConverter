@@ -30,14 +30,14 @@ const pageDescription =
           </p>
           <ul class="info-list">
             <li>
-              <strong>Direct Rate Calculation:</strong> The converter divides the base rate of the source asset by the base rate of the target asset:
+              <strong>Direct Rate Calculation:</strong> Each rate represents units of an asset per 1 USD. The converter multiplies the source amount by the target asset's rate divided by the source asset's rate:
               <code>Target Amount = Source Amount &times; (Rate(Target) / Rate(Source))</code>.
             </li>
             <li>
-              <strong>Exact Decimal Precision:</strong> Standard computer arithmetic often introduces rounding artifacts (e.g. <code>0.1 + 0.2 = 0.30000000000000004</code>). AllFinConverter performs all calculations using arbitrary-precision decimal mathematics (<a href="https://github.com/MikeMcl/big.js" target="_blank" rel="noopener noreferrer">Big.js</a>), guaranteeing exact decimal results with zero floating-point drift.
+              <strong>Decimal Arithmetic and Division Precision:</strong> The converter uses arbitrary-precision decimal arithmetic with <a href="https://github.com/MikeMcl/big.js" target="_blank" rel="noopener noreferrer">Big.js</a>, avoiding the ordinary binary floating-point representation artefacts seen in calculations such as <code>0.1 + 0.2</code>. Division precision is configured to 30 decimal places. A division with a non-terminating decimal result is rounded to that configured precision; results are not unlimited or mathematically exact in every case.
             </li>
             <li>
-              <strong>Two-Way Interactive Editing:</strong> You can edit either side of the converter at any time. When you type in the source field, the target calculates instantaneously; when you type in the target field, the source computes using exact inverse mathematics.
+              <strong>Two-Way Interactive Editing:</strong> You can edit either side of the converter. When you type in one field, the other is recalculated using the same rate relationship and configured division precision.
             </li>
           </ul>
         </section>
@@ -45,20 +45,20 @@ const pageDescription =
         <section class="info-section">
           <h2 class="info-section-title">Our Rate Sources &amp; Attribution</h2>
           <p class="info-text">
-            We source market rates from specialized, industry-recognized data providers for each asset category:
+            We use the following reference-rate sources and configured inputs for each asset category:
           </p>
           <ul class="info-list">
             <li>
-              <strong>Fiat Currencies (20 currencies):</strong> Sourced from the <a href="https://frankfurter.dev" target="_blank" rel="noopener noreferrer">Frankfurter API</a>, which tracks official daily reference exchange rates published by the European Central Bank (ECB).
+              <strong>Fiat Currencies:</strong> USD is the normalization base currency, with a rate of 1. The <a href="https://frankfurter.dev" target="_blank" rel="noopener noreferrer">Frankfurter API</a> supplies daily ECB-derived reference rates for the other 19 fiat currencies. The <a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" target="_blank" rel="noopener noreferrer">ECB explains its euro reference rates</a> and notes they are published for information, not as transaction prices.
             </li>
             <li>
-              <strong>UAE Dirham (AED):</strong> Derived from its official, statutory currency peg against the US Dollar established by the Central Bank of the UAE (1 USD = 3.6725 AED).
+              <strong>UAE Dirham (AED):</strong> AllFinConverter uses a separately configured fixed-peg reference rate of 1 USD = 3.6725 AED. This input comes from the fixed-peg provider; it is not an AED market rate supplied by Frankfurter. See the <a href="https://centralbank.ae/en/forex-eibor/exchange-rates/" target="_blank" rel="noopener noreferrer">Central Bank of the UAE's exchange-rate information</a>.
             </li>
             <li>
-              <strong>Cryptocurrencies (5 coins):</strong> Sourced from the <a href="https://coinmarketcap.com" target="_blank" rel="noopener noreferrer">CoinMarketCap API</a>, capturing volume-weighted global spot prices across major digital asset exchanges for Bitcoin, Ethereum, Solana, Ripple, and Dogecoin.
+              <strong>Cryptocurrencies (5 assets):</strong> AllFinConverter consumes USD-denominated reference prices supplied by the <a href="https://coinmarketcap.com" target="_blank" rel="noopener noreferrer">CoinMarketCap API</a> for Bitcoin, Ethereum, Solana, XRP, and Dogecoin, then normalizes them for its conversion system. CoinMarketCap describes its own <a href="https://support.coinmarketcap.com/hc/en-us/articles/360015968632-How-are-prices-calculated-on-CoinMarketCap" target="_blank" rel="noopener noreferrer">price calculation methodology</a>; AllFinConverter consumes its supplied prices and does not independently calculate CoinMarketCap's volume-weighted market price. A displayed conversion is a reference value, not a guaranteed executable exchange or purchase price.
             </li>
             <li>
-              <strong>Precious Metals (4 metals):</strong> Sourced from <a href="https://gold-api.com" target="_blank" rel="noopener noreferrer">Gold-API</a>, reflecting institutional spot market quotes for Gold (XAU), Silver (XAG), Platinum (XPT), and Palladium (XPD).
+              <strong>Precious Metals (4 metals):</strong> <a href="https://gold-api.com" target="_blank" rel="noopener noreferrer">Gold-API</a> supplies USD-denominated reference prices for Gold (XAU), Silver (XAG), Platinum (XPT), and Palladium (XPD), expressed per troy ounce before quantity-unit conversion. These are not product-specific retail prices: premiums, fabrication costs, purity, product form, and dealer margins can make retail prices differ.
             </li>
           </ul>
         </section>
@@ -75,8 +75,8 @@ const pageDescription =
             <li>
               <strong>Differing Provider Publication Frequencies:</strong> The six-hour pipeline cycle does not mean every data provider publishes new market prices every six hours. Each provider operates on its own schedule:
               <ul style="margin-top: 0.5rem; margin-bottom: 0.5rem; padding-left: 1.25rem;">
-                <li><em>Fiat currencies:</em> The European Central Bank publishes reference rates once per business day (around 16:00 CET), meaning fiat rates remain constant over weekends and holidays.</li>
-                <li><em>UAE Dirham:</em> The AED exchange rate is pegged to the US Dollar by statute and does not fluctuate.</li>
+                <li><em>Fiat currencies:</em> The ECB generally publishes reference rates around 16:00 CET on working days, except TARGET closing days. These are dated reference rates, not continuously updated market quotes.</li>
+                <li><em>UAE Dirham:</em> AllFinConverter uses the configured fixed-peg rate described above rather than a floating market quote.</li>
                 <li><em>Cryptocurrencies:</em> Trade continuously 24/7 on global spot markets, and our snapshot captures the latest market price at each pipeline run.</li>
                 <li><em>Precious metals:</em> Spot metal markets operate during international trading desk hours and observe market closures.</li>
               </ul>
@@ -96,13 +96,10 @@ const pageDescription =
             In global financial markets, precious metals are traditionally quoted per <strong>troy ounce (oz t)</strong>, which differs from standard avoirdupois ounces.
           </p>
           <p class="info-text">
-            AllFinConverter supports seamless toggling between troy ounces and grams (g) using the internationally recognized definition:
+            The converter can display metal quantities in troy ounces or grams (g). One troy ounce equals exactly 31.1034768 grams. The <a href="https://www.lbma.org.uk/wonders-of-gold/items/the-troy-ounce" target="_blank" rel="noopener noreferrer">London Bullion Market Association explains the troy ounce</a>.
           </p>
-          <ul class="info-list">
-            <li><strong>1 Troy Ounce = exactly 31.1034768 grams</strong></li>
-          </ul>
           <p class="info-text">
-            When you select a precious metal, unit toggle buttons appear automatically, allowing you to convert quantities in either weight standard with zero loss of accuracy.
+            Unit changes convert the quantity while preserving its equivalent metal amount. Conversions that require division use the converter's configured 30-decimal-place division precision.
           </p>
         </section>
 
@@ -113,13 +110,13 @@ const pageDescription =
           </p>
           <ul class="info-list">
             <li>
-              <strong>Informational Reference Rates Only:</strong> The figures displayed are mid-market reference rates. They do not constitute binding commercial offers, real-time trading quotes, or investment advice.
+              <strong>Informational Reference Values Only:</strong> The figures displayed are indicative values based on available reference data. They are not binding commercial offers, guaranteed executable exchange or purchase prices, or investment advice.
             </li>
             <li>
               <strong>No Retail Spreads or Transaction Fees:</strong> Actual exchange rates offered by banks, credit card networks, airport kiosks, or crypto brokerages typically include bid-ask spreads, transaction commissions, or foreign exchange fees that will vary from mid-market reference values.
             </li>
             <li>
-              <strong>Commodity Reference Pricing:</strong> Precious metal rates reflect raw bullion spot commodity prices. They do not include retail fabrication costs, dealer premiums, or collector value associated with physical minted coins or jewelry.
+              <strong>Precious-Metal Reference Pricing:</strong> Metal reference prices are not quotes for a specific physical product. Retail prices may also reflect premiums, fabrication costs, purity, product form, dealer margins, taxes, or collector value.
             </li>
           </ul>
         </section>

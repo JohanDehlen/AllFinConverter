@@ -51,6 +51,46 @@ function createLiveSnapshot(timestamp: number): RateSnapshotPayload {
   };
 }
 
+describe('How it works methodology content', () => {
+  const methodology = readFileSync(new URL('../src/pages/how-it-works.astro', import.meta.url), 'utf8');
+
+  it('explains Big.js arithmetic and its configured division precision without promising exact results', () => {
+    assert.match(methodology, /Big\.js/);
+    assert.match(methodology, /binary floating-point representation artefacts/i);
+    assert.match(methodology, /Division precision is configured to 30 decimal places/);
+    assert.match(methodology, /non-terminating decimal result is rounded to that configured precision/i);
+    assert.match(methodology, /Rate\(Target\) \/ Rate\(Source\)/);
+    assert.doesNotMatch(
+      methodology,
+      /guaranteeing exact decimal results|zero floating-point drift|exact inverse mathematics|zero loss of accuracy/i
+    );
+  });
+
+  it('describes fiat, cryptocurrency, and precious-metal data sources and limitations accurately', () => {
+    assert.match(methodology, /USD is the normalization base currency, with a rate of 1/);
+    assert.match(methodology, /Frankfurter API<\/a> supplies daily ECB-derived reference rates for the other 19 fiat currencies/);
+    assert.match(methodology, /fixed-peg reference rate of 1 USD = 3\.6725 AED/);
+    assert.match(methodology, /not an AED market rate supplied by Frankfurter/);
+    assert.match(methodology, /consumes USD-denominated reference prices supplied by the/);
+    assert.match(methodology, /does not independently calculate CoinMarketCap's volume-weighted market price/);
+    assert.match(methodology, /not a guaranteed executable exchange or purchase price/);
+    assert.match(methodology, /Gold-API<\/a> supplies USD-denominated reference prices/);
+    assert.match(methodology, /expressed per troy ounce before quantity-unit conversion/);
+    assert.match(methodology, /premiums, fabrication costs, purity, product form, and dealer margins/);
+
+    for (const sourceUrl of [
+      'https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html',
+      'https://support.coinmarketcap.com/hc/en-us/articles/360015968632-How-are-prices-calculated-on-CoinMarketCap',
+      'https://www.lbma.org.uk/wonders-of-gold/items/the-troy-ounce',
+      'https://centralbank.ae/en/forex-eibor/exchange-rates/',
+    ]) {
+      assert.ok(methodology.includes(sourceUrl), `Expected methodology source link: ${sourceUrl}`);
+    }
+
+    assert.doesNotMatch(methodology, /institutional spot market quotes|Frankfurter API<\/a>[^<]*20 currencies/i);
+  });
+});
+
 describe('Static snapshot metadata and expiry', () => {
   it('renders crawlable homepage links for the selected existing pair routes', () => {
     const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
