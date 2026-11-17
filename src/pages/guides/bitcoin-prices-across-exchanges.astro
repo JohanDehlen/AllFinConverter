@@ -43,6 +43,9 @@ const pageDescription =
             A volume-weighted average gives more influence to prices associated with more trading volume. In simplified form, multiply each included market-pair price by its volume, add those products, and divide by the total included volume. A small-volume quote consequently has less effect on the average than a quote representing a larger share of trading.
           </p>
           <p class="info-text">
+            For two included market pairs, a simplified formula is <code>(P1 × V1 + P2 × V2) / (V1 + V2)</code>, where each P is a reported pair price and each V is its corresponding volume. This illustrates the weighting, not CoinMarketCap’s full calculation or the exact inputs used for a particular asset.
+          </p>
+          <p class="info-text">
             CoinMarketCap describes its cryptoasset price as a volume-weighted average of reported market-pair prices. It also says some prices may be excluded when they do not appear indicative of a free market price or when algorithms identify a significant outlier. Read <a href="https://support.coinmarketcap.com/hc/en-us/articles/360015968632-How-are-prices-calculated-on-CoinMarketCap" target="_blank" rel="noopener noreferrer">CoinMarketCap’s price calculation methodology</a> for its explanation.
           </p>
         </section>
@@ -50,7 +53,7 @@ const pageDescription =
         <section class="info-section">
           <h2 class="info-section-title">A reference conversion is not an executable exchange quote</h2>
           <p class="info-text">
-            An aggregate reference price summarizes market data; it is not necessarily the price at which a specific exchange will fill a particular order. The exchange may show a different quote, and the result of a trade can depend on order size, available liquidity, fees, and how quickly market conditions change. AllFinConverter is a reference conversion tool, not a cryptocurrency exchange or trading service.
+            An aggregate reference price summarizes market data; it is not necessarily the price at which a specific exchange will fill a particular order. The exchange may show a different quote, and the result of a trade can depend on order size, available liquidity, fees, and how quickly market conditions change. AllFinConverter consumes CoinMarketCap’s USD-denominated reference price and normalizes it for conversion; it does not independently collect exchange quotes or recalculate CoinMarketCap’s weighted average. It is a reference conversion tool, not a cryptocurrency exchange or trading service.
           </p>
           <p class="info-text">
             Cryptocurrency markets trade continuously, but AllFinConverter does not stream prices. Its production pipeline generates rate snapshots every six hours. Crypto provider data is subject to a 24-hour age limit, and the overall snapshot has a separate 24-hour age limit. A displayed conversion is therefore based on the available validated snapshot, not a promise of a live exchange price.
