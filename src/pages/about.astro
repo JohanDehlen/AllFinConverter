@@ -26,7 +26,7 @@ const pageDescription =
             Most conversion tools online are built for a single asset category. Traditional currency converters support only government-issued fiat currencies, crypto tools focus solely on tokens, and commodity calculators operate in isolation.
           </p>
           <p class="info-text">
-            AllFinConverter was built to solve this fragmentation. Whether you want to check how much Bitcoin is worth in Swiss Francs, calculate the value of Gold in Polish Zloty, or convert between Japanese Yen and US Dollars, AllFinConverter delivers instantaneous, mathematically exact calculations across asset boundaries.
+            AllFinConverter was built to solve this fragmentation. Whether you want to check how much Bitcoin is worth in Swiss Francs, calculate the value of Gold in Polish Zloty, or convert between Japanese Yen and US Dollars, AllFinConverter delivers responsive, high-precision calculations across asset boundaries.
           </p>
         </section>
 
@@ -73,13 +73,13 @@ const pageDescription =
           <h2 class="info-section-title">Core Operating Principles</h2>
           <ul class="info-list">
             <li>
-              <strong>Mathematical Exactness:</strong> We use arbitrary-precision decimal mathematics (<a href="https://github.com/MikeMcl/big.js" target="_blank" rel="noopener noreferrer">Big.js</a>) to eliminate floating-point rounding errors common in standard web calculators.
+              <strong>Decimal Arithmetic:</strong> We use arbitrary-precision decimal arithmetic with <a href="https://github.com/MikeMcl/big.js" target="_blank" rel="noopener noreferrer">Big.js</a>. Division precision is configured to 30 decimal places, so non-terminating decimal results are rounded to that precision. This avoids ordinary binary floating-point representation artefacts, but does not provide unlimited or mathematically exact precision.
             </li>
             <li>
-              <strong>Client-Side Privacy:</strong> All calculations run directly inside your browser. The numbers you enter and the conversions you perform are never transmitted to application servers, tracked, or saved.
+              <strong>Client-Side Privacy:</strong> All calculations run directly inside your browser, and entered values are not sent to application servers. When you navigate from a pair page to the homepage, navigation state—including the entered amount and selected assets—may be held temporarily in browser <code>sessionStorage</code> and is removed when the homepage restores it.
             </li>
             <li>
-              <strong>Source Transparency:</strong> We clearly disclose our rate providers, update frequencies, and rate timestamps on every conversion. If rate data is ever temporarily unavailable, we transparently state that demo rates are active.
+              <strong>Source Transparency:</strong> The converter displays the latest provider update information; individual asset update times may differ. See <a href="/how-it-works/">How It Works</a> for rate providers and their update schedules. If rate data is temporarily unavailable, the converter indicates demo mode.
             </li>
           </ul>
         </section>

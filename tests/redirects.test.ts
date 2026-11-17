@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 describe('Precious-metal asset-code redirects', () => {
-  it('defines permanent redirects for slashless and trailing-slash aliases', () => {
+  it('defines permanent redirects from slashless and trailing-slash aliases to canonical URLs', () => {
     const redirects = readFileSync(new URL('../public/_redirects', import.meta.url), 'utf8');
     const rules = redirects
       .split(/\r?\n/)
@@ -13,14 +13,14 @@ describe('Precious-metal asset-code redirects', () => {
       .filter((line) => line && !line.startsWith('#'))
       .map((line) => line.split(/\s+/));
     const expected = [
-      ['/xau-to-usd', '/gold-to-usd'],
-      ['/xau-to-usd/', '/gold-to-usd'],
-      ['/usd-to-xau', '/usd-to-gold'],
-      ['/usd-to-xau/', '/usd-to-gold'],
-      ['/xag-to-usd', '/silver-to-usd'],
-      ['/xag-to-usd/', '/silver-to-usd'],
-      ['/usd-to-xag', '/usd-to-silver'],
-      ['/usd-to-xag/', '/usd-to-silver'],
+      ['/xau-to-usd', '/gold-to-usd/'],
+      ['/xau-to-usd/', '/gold-to-usd/'],
+      ['/usd-to-xau', '/usd-to-gold/'],
+      ['/usd-to-xau/', '/usd-to-gold/'],
+      ['/xag-to-usd', '/silver-to-usd/'],
+      ['/xag-to-usd/', '/silver-to-usd/'],
+      ['/usd-to-xag', '/usd-to-silver/'],
+      ['/usd-to-xag/', '/usd-to-silver/'],
     ];
 
     for (const [source, destination] of expected) {
