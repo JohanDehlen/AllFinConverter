@@ -27,6 +27,7 @@ import {
   getRelatedPairs,
   FEATURED_PAIR_DEFINITIONS,
   isGoldOrSilverPair,
+  isSilverGuidePair,
 } from '../src/lib/pairs.ts';
 
 import {
@@ -419,6 +420,15 @@ describe('M1.6 + SEO Batches 1, 2 & 3 — Static Route Generation & Featured Pai
     ]);
   });
 
+  it('should restrict the Silver guide link to XAG/USD and USD/XAG', () => {
+    assert.equal(isSilverGuidePair('XAG', 'USD'), true);
+    assert.equal(isSilverGuidePair('USD', 'XAG'), true);
+    assert.equal(isSilverGuidePair('XAG', 'EUR'), false);
+    assert.equal(isSilverGuidePair('EUR', 'XAG'), false);
+    assert.equal(isSilverGuidePair('XAG', 'BTC'), false);
+    assert.equal(isSilverGuidePair('BTC', 'XAG'), false);
+  });
+
   it('should provide sensible related pairs for crawlable internal linking', () => {
     const related = getRelatedPairs('usd-to-eur', 4);
     assert.ok(related.length > 0 && related.length <= 4);
@@ -436,6 +446,60 @@ describe('M1.6 + SEO Batches 1, 2 & 3 — Static Route Generation & Featured Pai
     const related = getRelatedPairs('usd-to-pln', 4);
     assert.ok(related.length > 0, 'Must have related pairs for usd-to-pln');
     assert.equal(related[0].slug, 'pln-to-usd', 'Inverse pair must be ranked first');
+  });
+
+  it('should keep related fiat pairs within the fiat category', () => {
+    const related = getRelatedPairs('usd-to-eur', 4);
+    assert.ok(related.every((pair) =>
+      pair.fromAsset.category === 'fiat' && pair.toAsset.category === 'fiat'
+    ));
+  });
+
+  it('should keep crypto and precious-metal related pairs within their categories', () => {
+    const cryptoRelated = getRelatedPairs('btc-to-usd', 4);
+    assert.equal(cryptoRelated[0].slug, 'usd-to-btc');
+    assert.ok(cryptoRelated.every((pair) =>
+      pair.fromAsset.category === 'crypto' || pair.toAsset.category === 'crypto'
+    ));
+
+    const metalRelated = getRelatedPairs('gold-to-usd', 4);
+    assert.equal(metalRelated[0].slug, 'usd-to-gold');
+    assert.ok(metalRelated.every((pair) =>
+      pair.fromAsset.category === 'metal' || pair.toAsset.category === 'metal'
+    ));
+  });
+
+  it('should avoid duplicate slugs and nonexistent featured destinations', () => {
+    const featuredSlugs = new Set(getFeaturedPairs().map((pair) => pair.slug));
+
+    for (const pair of getFeaturedPairs()) {
+      const related = getRelatedPairs(pair.slug, 4);
+      assert.equal(new Set(related.map((item) => item.slug)).size, related.length);
+      assert.ok(related.every((item) => featuredSlugs.has(item.slug)));
+      assert.ok(related.every((item) => item.slug !== pair.slug));
+    }
+  });
+
+  it('should handle zero, small and large related-pair limits', () => {
+    assert.deepEqual(getRelatedPairs('usd-to-eur', 0), []);
+
+    const limitOne = getRelatedPairs('usd-to-eur', 1);
+    assert.equal(limitOne.length, 1);
+    assert.equal(limitOne[0].slug, 'eur-to-usd');
+
+    const limitTwo = getRelatedPairs('usd-to-eur', 2);
+    assert.equal(limitTwo.length, 2);
+    assert.equal(limitTwo[0].slug, 'eur-to-usd');
+    assert.equal(limitTwo[1].slug, 'usd-to-gbp');
+
+    const largeLimit = getRelatedPairs('usd-to-eur', 1000);
+    assert.ok(largeLimit.length > 2);
+    assert.ok(largeLimit.length <= getFeaturedPairs().length - 1);
+    assert.equal(new Set(largeLimit.map((pair) => pair.slug)).size, largeLimit.length);
+
+    const first = getRelatedPairs('usd-to-eur', 4).map((pair) => pair.slug);
+    const second = getRelatedPairs('usd-to-eur', 4).map((pair) => pair.slug);
+    assert.deepEqual(second, first);
   });
 });
 

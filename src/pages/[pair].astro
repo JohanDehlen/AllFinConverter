@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Converter from '../components/Converter.astro';
 import AdPlaceholder from '../components/AdPlaceholder.astro';
-import { getAssetNameWithCode, getFeaturedPairs, getRelatedPairs, type ConversionPair } from '../lib/pairs';
+import { getAssetNameWithCode, getFeaturedPairs, getRelatedPairs, isSilverGuidePair, type ConversionPair } from '../lib/pairs';
 import { GRAMS_PER_TROY_OUNCE_STR } from '../lib/assets.ts';
 import {
   getWebSiteStructuredData,
@@ -37,6 +37,7 @@ const isBtcToUsdPair = pair.fromCode === 'BTC' && pair.toCode === 'USD';
 const isUsdToBtcPair = pair.fromCode === 'USD' && pair.toCode === 'BTC';
 const isGoldToUsdPair = pair.fromCode === 'XAU' && pair.toCode === 'USD';
 const isUsdToGoldPair = pair.fromCode === 'USD' && pair.toCode === 'XAU';
+const showSilverGuideLink = isSilverGuidePair(pair.fromCode, pair.toCode);
 const isNzdToZarPair = pair.fromCode === 'NZD' && pair.toCode === 'ZAR';
 
 // Friendly category labels
@@ -217,37 +218,49 @@ const structuredData = [
 
           {isUsdToEurPair && (
             <p>
-              On this USD-to-EUR page, the entered amount is in US dollars and the estimate is in euros. The EUR-to-USD page reverses the direction, so always read the rate with its source and target currencies in mind.
+              On this USD-to-EUR page, the entered amount is in US dollars and the estimate is in euros. The EUR-to-USD page reverses the direction, so always read the rate with its source and target currencies in mind. See <a href="/guides/currency-exchange-rates/">the difference between reference rates and bank rates</a>.
+            </p>
+          )}
+
+          {pair.fromCode === 'EUR' && pair.toCode === 'USD' && (
+            <p>
+              On this EUR-to-USD page, the entered amount is in euros and the estimate is in US dollars. The USD-to-EUR page reverses the direction, so check the source and target before comparing an estimate with a provider quote. See <a href="/guides/currency-exchange-rates/">how reference exchange rates and bank rates differ</a>.
             </p>
           )}
 
           {isUsdToAedPair && (
             <p>
-              This USD-to-AED estimate uses AllFinConverter's separately configured fixed reference rate of 1 USD = 3.6725 AED, not a Frankfurter rate. A bank, card provider, or exchange service may apply its own rate or fees.
+              This USD-to-AED estimate uses AllFinConverter's separately configured fixed reference rate of 1 USD = 3.6725 AED, not a Frankfurter rate. A bank, card provider, or exchange service may apply its own rate or fees. <a href="/how-it-works/">See how AllFinConverter configures the AED fixed peg</a>.
             </p>
           )}
 
           {isBtcToUsdPair && (
             <p>
-              This BTC-to-USD page estimates the dollar value of the entered Bitcoin amount. A changing reference price does not predict the proceeds of a future sale; an exchange's execution price and fees may differ.
+              This BTC-to-USD page estimates the dollar value of the entered Bitcoin amount. A changing reference price does not predict the proceeds of a future sale; an exchange's execution price and fees may differ. Learn <a href="/guides/bitcoin-prices-across-exchanges/">why Bitcoin prices differ between exchanges</a>.
             </p>
           )}
 
           {isUsdToBtcPair && (
             <p>
-              This USD-to-BTC page estimates the Bitcoin equivalent of the entered dollar amount. It is not a promise of how much Bitcoin an exchange will sell for that amount; the price may change and provider fees may apply.
+              This USD-to-BTC page estimates the Bitcoin equivalent of the entered dollar amount. It is not a promise of how much Bitcoin an exchange will sell for that amount; the price may change and provider fees may apply. Read <a href="/guides/bitcoin-prices-across-exchanges/">about Bitcoin market prices and executable quotes</a>.
             </p>
           )}
 
           {isGoldToUsdPair && (
             <p>
-              On this Gold-to-USD page, the entered gold quantity is valued using a USD-per-troy-ounce reference price. If you select grams, the displayed metal quantity changes unit; the underlying reference is still per troy ounce.
+              On this Gold-to-USD page, the entered gold quantity is valued using a USD-per-troy-ounce reference price. If you select grams, the displayed metal quantity changes unit; the underlying reference is still per troy ounce. See the <a href="/guides/troy-ounce-vs-gram/">troy ounce and gram reference guide</a>.
             </p>
           )}
 
           {isUsdToGoldPair && (
             <p>
-              On this USD-to-Gold page, the dollar amount is converted to an indicative gold quantity using the USD-per-troy-ounce reference price. It does not guarantee that a physical coin or bar of that quantity can be bought for the displayed amount.
+              On this USD-to-Gold page, the dollar amount is converted to an indicative gold quantity using the USD-per-troy-ounce reference price. It does not guarantee that a physical coin or bar of that quantity can be bought for the displayed amount. Learn how <a href="/guides/troy-ounce-vs-gram/">troy ounces and grams are used for precious-metal references</a>.
+            </p>
+          )}
+
+          {showSilverGuideLink && (
+            <p>
+              Silver quantities on this page use the same reference convention: USD per troy ounce, with grams available through the unit selector. Learn more in the <a href="/guides/troy-ounce-vs-gram/">troy ounce versus gram guide</a>.
             </p>
           )}
 

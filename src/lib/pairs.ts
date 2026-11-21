@@ -65,6 +65,11 @@ export function isGoldOrSilverPair(pair: Pick<ConversionPair, 'fromCode' | 'toCo
     pair.fromCode === 'XAG' || pair.toCode === 'XAG';
 }
 
+export function isSilverGuidePair(fromCode: string, toCode: string): boolean {
+  return (fromCode === 'XAG' && toCode === 'USD') ||
+    (fromCode === 'USD' && toCode === 'XAG');
+}
+
 /**
  * Validates whether a pair of asset codes can form a valid conversion pair.
  *
@@ -277,33 +282,70 @@ export function getHomepagePairGroups(): readonly HomepagePairGroup[] {
 export function getRelatedPairs(currentSlug: string, limit = 4): readonly ConversionPair[] {
   const allPairs = getFeaturedPairs();
   const current = allPairs.find((p) => p.slug === currentSlug);
-  if (!current) return [];
+  if (!current || limit <= 0) return [];
 
-  const candidates = allPairs.filter((p) => p.slug !== currentSlug);
+  const getPairCategory = (pair: ConversionPair): 'fiat' | 'crypto' | 'metal' => {
+    if (pair.fromAsset.category === 'metal' || pair.toAsset.category === 'metal') return 'metal';
+    if (pair.fromAsset.category === 'crypto' || pair.toAsset.category === 'crypto') return 'crypto';
+    return 'fiat';
+  };
+
+  const currentCategory = getPairCategory(current);
+  const originalIndex = new Map(allPairs.map((pair, index) => [pair.slug, index]));
+
+  const candidates = allPairs
+    .filter((pair) => pair.slug !== currentSlug)
+    .filter((pair) => getPairCategory(pair) === currentCategory);
 
   const scored = candidates
     .map((pair) => {
       let score = 0;
       // Direct inverse pair (e.g. EUR->USD for USD->EUR)
       if (pair.fromCode === current.toCode && pair.toCode === current.fromCode) {
-        score += 10;
+        score += 100;
       }
-      // Same source asset
+      // Keep category-specific relationships ahead of unrelated featured pairs.
+      score += 30;
+
       if (pair.fromCode === current.fromCode) {
-        score += 5;
+        score += currentCategory === 'fiat' ? 20 : 12;
       }
-      // Same target asset
       if (pair.toCode === current.toCode) {
-        score += 4;
+        score += currentCategory === 'fiat' ? 18 : 12;
       }
-      // Same source asset category
-      if (pair.fromAsset.category === current.fromAsset.category) {
-        score += 2;
+
+      if (currentCategory === 'crypto') {
+        const currentCrypto = [current.fromCode, current.toCode].find((code) =>
+          allPairs.find((p) =>
+            p.slug === current.slug &&
+            ((p.fromCode === code && p.fromAsset.category === 'crypto') ||
+              (p.toCode === code && p.toAsset.category === 'crypto'))
+          )
+        );
+        if (
+          currentCrypto &&
+          ((pair.fromCode === currentCrypto && pair.fromAsset.category === 'crypto') ||
+            (pair.toCode === currentCrypto && pair.toAsset.category === 'crypto'))
+        ) {
+          score += 25;
+        }
+      }
+
+      if (currentCategory === 'metal') {
+        if (
+          (pair.fromAsset.category === 'metal' || pair.toAsset.category === 'metal') &&
+          (pair.fromCode === current.fromCode || pair.toCode === current.fromCode ||
+            pair.fromCode === current.toCode || pair.toCode === current.toCode)
+        ) {
+          score += 25;
+        }
       }
       return { pair, score };
     })
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) =>
+      b.score - a.score ||
+      (originalIndex.get(a.pair.slug) ?? 0) - (originalIndex.get(b.pair.slug) ?? 0)
+    )
     .map((item) => item.pair);
 
   return scored.slice(0, limit);

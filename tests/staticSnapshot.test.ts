@@ -63,6 +63,12 @@ function getConditionalParagraphs(source: string, condition: string): string[] {
 describe('How it works methodology content', () => {
   const methodology = readFileSync(new URL('../src/pages/how-it-works.astro', import.meta.url), 'utf8');
 
+  it('links to the relevant financial guides from existing methodology paragraphs', () => {
+    assert.ok(methodology.includes('href="/guides/currency-exchange-rates/"'));
+    assert.ok(methodology.includes('href="/guides/bitcoin-prices-across-exchanges/"'));
+    assert.ok(methodology.includes('href="/guides/troy-ounce-vs-gram/"'));
+  });
+
   it('explains Big.js arithmetic and its configured division precision without promising exact results', () => {
     assert.match(methodology, /Big\.js/);
     assert.match(methodology, /binary floating-point representation artefacts/i);
@@ -97,6 +103,37 @@ describe('How it works methodology content', () => {
     }
 
     assert.doesNotMatch(methodology, /institutional spot market quotes|Frankfurter API<\/a>[^<]*20 currencies/i);
+  });
+});
+
+describe('Pair-page contextual guide links', () => {
+  const pairPage = readFileSync(new URL('../src/pages/[pair].astro', import.meta.url), 'utf8');
+
+  it('links USD/EUR and EUR/USD only to the currency exchange guide', () => {
+    assert.match(pairPage, /const isUsdToEurPair = pair\.fromCode === 'USD' && pair\.toCode === 'EUR';/);
+    assert.match(pairPage, /pair\.fromCode === 'EUR' && pair\.toCode === 'USD'/);
+    assert.equal((pairPage.match(/href="\/guides\/currency-exchange-rates\/"/g) ?? []).length, 2);
+  });
+
+  it('links USD/AED only to the methodology page', () => {
+    assert.match(pairPage, /isUsdToAedPair &&/);
+    assert.match(pairPage, /<a href="\/how-it-works\/">See how AllFinConverter configures the AED fixed peg<\/a>/);
+  });
+
+  it('links BTC/USD and USD/BTC only to the Bitcoin exchange guide', () => {
+    assert.match(pairPage, /isBtcToUsdPair &&/);
+    assert.match(pairPage, /isUsdToBtcPair &&/);
+    assert.equal((pairPage.match(/href="\/guides\/bitcoin-prices-across-exchanges\/"/g) ?? []).length, 2);
+  });
+
+  it('links only the approved gold and silver pair pages to the troy-ounce guide', () => {
+    assert.match(pairPage, /isGoldToUsdPair &&/);
+    assert.match(pairPage, /isUsdToGoldPair &&/);
+    assert.match(pairPage, /isSilverGuidePair,\s*type ConversionPair/);
+    assert.match(pairPage, /const showSilverGuideLink = isSilverGuidePair\(pair\.fromCode, pair\.toCode\);/);
+    assert.match(pairPage, /\{showSilverGuideLink && \(/);
+    assert.doesNotMatch(pairPage, /pair\.fromCode === 'XAG' \|\| pair\.toCode === 'XAG'/);
+    assert.ok((pairPage.match(/href="\/guides\/troy-ounce-vs-gram\/"/g) ?? []).length >= 3);
   });
 });
 
