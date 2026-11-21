@@ -23,6 +23,9 @@
   --color-demo-text: #92400e;
   --color-brand-primary: #2563eb;
   --color-brand-focus: rgba(37, 99, 235, 0.25);
+  --color-link: #2563eb;
+  --color-link-hover: #1d4ed8;
+  --color-link-visited: #2563eb;
   --color-error: #dc2626;
   --color-error-border: #ef4444;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -47,6 +50,9 @@
     --color-demo-text: #fde68a;
     --color-brand-primary: #3b82f6;
     --color-brand-focus: rgba(59, 130, 246, 0.35);
+    --color-link: #60a5fa;
+    --color-link-hover: #3b82f6;
+    --color-link-visited: #60a5fa;
     --color-error: #f87171;
     --color-error-border: #dc2626;
   }
@@ -557,14 +563,24 @@ body {
 }
 
 .converter-disclaimer a {
-  color: inherit;
+  color: var(--color-link);
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color 0.15s ease;
 }
 
+.converter-disclaimer a:visited {
+  color: var(--color-link-visited);
+}
+
 .converter-disclaimer a:hover {
-  color: var(--color-brand-primary);
+  color: var(--color-link-hover);
+}
+
+.converter-disclaimer a:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* Supporting Asset Categories */
@@ -696,6 +712,27 @@ body {
   border-radius: 16px;
   padding: 1.75rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+.pair-details-card a {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.pair-details-card a:visited {
+  color: var(--color-link-visited);
+}
+
+.pair-details-card a:hover {
+  color: var(--color-link-hover);
+}
+
+.pair-details-card a:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .pair-details-header {
@@ -1020,6 +1057,27 @@ body {
   outline: 2px solid var(--color-brand-primary);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+.footer-attribution a {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.footer-attribution a:visited {
+  color: var(--color-link-visited);
+}
+
+.footer-attribution a:hover {
+  color: var(--color-link-hover);
+}
+
+.footer-attribution a:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* Responsive Breakpoints */
@@ -1362,13 +1420,23 @@ body {
 }
 
 .info-card a {
-  color: var(--color-brand-primary);
+  color: var(--color-link);
   text-decoration: underline;
-  transition: opacity 0.15s ease;
+  transition: color 0.15s ease;
+}
+
+.info-card a:visited {
+  color: var(--color-link-visited);
 }
 
 .info-card a:hover {
-  opacity: 0.85;
+  color: var(--color-link-hover);
+}
+
+.info-card a:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .info-contact-box {
