@@ -532,6 +532,69 @@ body {
   text-align: center;
 }
 
+.krw-shortcuts {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.krw-shortcuts-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.krw-shortcuts-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.krw-shortcut-btn {
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-brand-primary);
+  background-color: var(--color-unit-bg);
+  border: 1px solid var(--color-unit-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.625rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.krw-shortcut-btn:hover {
+  border-color: var(--color-brand-primary);
+  background-color: var(--color-surface);
+}
+
+.krw-shortcut-btn:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+}
+
+.krw-context {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--color-brand-primary);
+  background-color: var(--color-unit-bg);
+  border-radius: 8px;
+}
+
+.krw-context .asset-info-name {
+  margin-bottom: 0.5rem;
+}
+
+.krw-context p + p {
+  margin-top: 0.5rem;
+}
+
 .summary-calculation {
   font-size: 1.125rem;
   font-weight: 600;
@@ -1122,6 +1185,16 @@ body {
   .converter-grid {
     grid-template-columns: 1fr;
     gap: 0;
+  }
+
+  .krw-shortcuts {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .krw-shortcuts-list {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .swap-divider {

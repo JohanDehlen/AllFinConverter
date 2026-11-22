@@ -135,6 +135,28 @@ describe('Pair-page contextual guide links', () => {
     assert.doesNotMatch(pairPage, /pair\.fromCode === 'XAG' \|\| pair\.toCode === 'XAG'/);
     assert.ok((pairPage.match(/href="\/guides\/troy-ounce-vs-gram\/"/g) ?? []).length >= 3);
   });
+
+  it('adds the Korean won explanation only to KRW/USD', () => {
+    assert.match(pairPage, /const isKrwToUsdPair = pair\.fromCode === 'KRW' && pair\.toCode === 'USD';/);
+    assert.match(pairPage, /\{isKrwToUsdPair && \(/);
+    assert.match(pairPage, /South Korean won \(KRW\)/);
+    assert.match(pairPage, /historic subunit was the jeon/i);
+    assert.match(pairPage, /Bank, card, ATM and money-transfer providers may apply exchange-rate spreads or fees/i);
+    assert.match(pairPage, /not a guaranteed amount received/i);
+  });
+
+  it('shows and wires the four KRW shortcuts only for the KRW/USD converter', () => {
+    const converter = readFileSync(new URL('../src/components/Converter.astro', import.meta.url), 'utf8');
+
+    assert.match(converter, /const showKrwShortcuts = isPairPage && initialFrom === 'KRW' && initialTo === 'USD';/);
+    assert.match(converter, /data-krw-amount="1000">₩1,000<\/button>/);
+    assert.match(converter, /data-krw-amount="10000">₩10,000<\/button>/);
+    assert.match(converter, /data-krw-amount="100000">₩100,000<\/button>/);
+    assert.match(converter, /data-krw-amount="1000000">₩1,000,000<\/button>/);
+    assert.match(converter, /amountFrom\.value = amount;/);
+    assert.match(converter, /activeSide = 'from';/);
+    assert.match(converter, /assetFrom\.value !== 'KRW' \|\| assetTo\.value !== 'USD'/);
+  });
 });
 
 describe('Static snapshot metadata and expiry', () => {

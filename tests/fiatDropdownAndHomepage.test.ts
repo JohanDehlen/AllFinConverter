@@ -255,12 +255,27 @@ describe('Conversion Result Decimal Precision (Improvement 2)', () => {
       assert.equal(formatDisplayAmount(new Big('100'), 'AUD'), '100.00');
     });
 
-    it('should format all 21 fiat currencies with exactly 2 decimal places', () => {
+    it('should format KRW as whole won and retain existing formatting for other fiat currencies', () => {
       const fiats = getDropdownAssetsByCategory('fiat');
       for (const fiat of fiats) {
         const formatted = formatDisplayAmount('100', fiat.code);
-        assert.equal(formatted, '100.00', `Fiat ${fiat.code} must format to 100.00`);
+        if (fiat.code === 'KRW') {
+          assert.equal(formatted, '100', 'KRW must format without decimal places');
+        } else {
+          assert.equal(formatted, '100.00', `Fiat ${fiat.code} must retain two-decimal formatting`);
+        }
       }
+
+      assert.equal(formatDisplayAmount('1000', 'KRW'), '1,000');
+      assert.equal(formatDisplayAmount('10000', 'KRW'), '10,000');
+      assert.equal(formatDisplayAmount('100000', 'KRW'), '100,000');
+      assert.equal(formatDisplayAmount('1000000', 'KRW'), '1,000,000');
+    });
+
+    it('should preserve useful precision for small non-zero USD results', () => {
+      assert.equal(formatDisplayAmount('0.005', 'USD'), '0.005');
+      assert.equal(formatDisplayAmount('0.000746', 'USD'), '0.000746');
+      assert.equal(formatDisplayAmount('0', 'USD'), '0.00');
     });
   });
 

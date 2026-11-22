@@ -40,6 +40,7 @@ const initialPrefixFrom = getAssetAmountPrefix(initialFrom);
 const initialPrefixTo = getAssetAmountPrefix(initialTo);
 const initialSuffixFrom = getAssetAmountSuffix(initialFrom, initialFromUnit);
 const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
+const showKrwShortcuts = isPairPage && initialFrom === 'KRW' && initialTo === 'USD';
 
 ---
 
@@ -252,6 +253,18 @@ const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
           </div>
         </div>
       </div>
+
+      {showKrwShortcuts && (
+        <div class="krw-shortcuts" aria-label="Common Korean won amounts">
+          <span class="krw-shortcuts-label">Common amounts</span>
+          <div class="krw-shortcuts-list">
+            <button type="button" class="krw-shortcut-btn" data-krw-amount="1000">₩1,000</button>
+            <button type="button" class="krw-shortcut-btn" data-krw-amount="10000">₩10,000</button>
+            <button type="button" class="krw-shortcut-btn" data-krw-amount="100000">₩100,000</button>
+            <button type="button" class="krw-shortcut-btn" data-krw-amount="1000000">₩1,000,000</button>
+          </div>
+        </div>
+      )}
 
       <!-- Converted Result Display -->
       <div class="conversion-summary" aria-live="polite">
@@ -666,6 +679,18 @@ const initialSuffixTo = getAssetAmountSuffix(initialTo, initialToUnit);
         amountTo.value = amountTo.value.replace(/^0+/, '');
       }
       recalculate();
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-krw-amount]').forEach((shortcut) => {
+      shortcut.addEventListener('click', () => {
+        if (assetFrom.value !== 'KRW' || assetTo.value !== 'USD') return;
+        const amount = shortcut.getAttribute('data-krw-amount');
+        if (!amount) return;
+        amountFrom.value = amount;
+        activeSide = 'from';
+        syncInputSizes();
+        recalculate();
+      });
     });
 
     // Formatting on blur

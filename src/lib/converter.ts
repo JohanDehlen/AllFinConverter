@@ -262,7 +262,23 @@ function resolveCategory(assetCodeOrCategory?: string | AssetCategory): AssetCat
  * Always displays exactly 2 decimal places with comma grouping for the integer part.
  * Example: "123.40", not "123.4" or "123.400".
  */
-function formatFiatAmount(bigVal: Big): string {
+function formatFiatAmount(bigVal: Big, assetCode?: string): string {
+  if (assetCode === 'KRW') {
+    const fixed = bigVal.toFixed(0);
+    return fixed.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  if (assetCode === 'USD' && bigVal.gt(0) && bigVal.lt(0.01)) {
+    const rawStr = bigVal.toFixed();
+    const match = rawStr.match(/^0\.(0*)([1-9]\d*)/);
+    if (match) {
+      const leadingZeros = match[1].length;
+      const sigDigits = match[2];
+      const targetDecimals = leadingZeros + Math.min(sigDigits.length, 6);
+      return bigVal.toFixed(targetDecimals).replace(/0+$/, '').replace(/(\.\d*?[1-9])0+$/, '$1');
+    }
+  }
+
   const fixed = bigVal.toFixed(2);
   const [intPart, decPart] = fixed.split('.');
   const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -350,7 +366,13 @@ export function formatDisplayAmount(
   const category = resolveCategory(assetCodeOrCategory);
 
   if (category === 'fiat') {
-    return formatFiatAmount(bigVal);
+    return formatFiatAmount(
+      bigVal,
+      typeof assetCodeOrCategory === 'string' &&
+      !['fiat', 'crypto', 'metal'].includes(assetCodeOrCategory)
+        ? assetCodeOrCategory
+        : undefined
+    );
   }
 
   if (category === 'crypto') {

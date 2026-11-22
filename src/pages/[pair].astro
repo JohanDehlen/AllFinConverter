@@ -39,6 +39,7 @@ const isGoldToUsdPair = pair.fromCode === 'XAU' && pair.toCode === 'USD';
 const isUsdToGoldPair = pair.fromCode === 'USD' && pair.toCode === 'XAU';
 const showSilverGuideLink = isSilverGuidePair(pair.fromCode, pair.toCode);
 const isNzdToZarPair = pair.fromCode === 'NZD' && pair.toCode === 'ZAR';
+const isKrwToUsdPair = pair.fromCode === 'KRW' && pair.toCode === 'USD';
 
 // Friendly category labels
 function getCategoryDisplay(cat: string): string {
@@ -268,6 +269,18 @@ const structuredData = [
             <p>
               Use this page to estimate the South African rand value of New Zealand dollar amounts, including travel expenses. The displayed reference rate may differ from the amount received or charged by banks, card providers, ATMs, or currency exchange services because their rates, spreads, and fees can vary.
             </p>
+          )}
+
+          {isKrwToUsdPair && (
+            <div class="krw-context">
+              <h3 class="asset-info-name">About the Korean won</h3>
+              <p>
+                The South Korean won (KRW) uses the <strong>₩</strong> symbol and is normally used as a whole-unit currency in everyday transactions. The historic subunit was the jeon, but it is not used for ordinary modern prices or cash payments.
+              </p>
+              <p>
+                This reference conversion uses the displayed KRW and USD rates normalized through USD. Bank, card, ATM and money-transfer providers may apply exchange-rate spreads or fees, so the amount they offer or receive can differ from this estimate. The result is for reference only and is not a guaranteed amount received.
+              </p>
+            </div>
           )}
 
           {isMetalPair && (
